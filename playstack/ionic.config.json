@@ -1,8 +1,0 @@
-{
-  "name": "playstack",
-  "integrations": {
-    "capacitor": {},
-    "cordova": {}
-  },
-  "type": "angular"
-}
