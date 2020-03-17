@@ -1,7 +1,0 @@
-{
-  "name": "PlayStack",
-  "integrations": {
-    "capacitor": {}
-  },
-  "type": "angular"
-}
