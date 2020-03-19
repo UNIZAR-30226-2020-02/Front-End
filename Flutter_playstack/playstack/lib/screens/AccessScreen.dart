@@ -1,21 +1,86 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:playstack/shared/constants.dart';
 
 class AccessScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        backgroundColor: Colors.grey[900],
-        title: new Center(
-            child: new Text(
-          'PlayStack',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.red[700], fontFamily: 'Montserrat'),
-        )),
+      body: AccessOption(),
+    );
+  }
+}
+
+class AccessOption extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(0, 50, 0, 30),
+              child: Container(
+                  height: 130.0,
+                  width: 300.0,
+                  child: Row(
+                    children: <Widget>[
+                      Container(
+                          height: 90,
+                          width: 150,
+                          child: Image.asset('lib/assets/Photos/logo.png')),
+                      Container(
+                          width: 150,
+                          child: Image.asset('lib/assets/Photos/name.png'))
+                    ],
+                  )),
+            ),
+            Text(
+              'Login',
+              style: TextStyle(fontFamily: 'Circular', fontSize: 30),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(30, 30, 30, 10),
+              child: TextFormField(
+                  decoration: myTextInputDecoration.copyWith(
+                      hintText: 'Email or username')),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(30, 0, 30, 10),
+              child: TextFormField(
+                decoration:
+                    myTextInputDecoration.copyWith(hintText: 'Password'),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                  width: 300,
+                  height: 40,
+                  child: RaisedButton(
+                      disabledColor: Colors.red[400],
+                      onPressed: null,
+                      child: Text(
+                        'Log in',
+                        style: TextStyle(color: Colors.white, fontSize: 15),
+                      ))),
+            ),
+            Row(children: <Widget>[
+              Expanded(
+                  child: Divider(
+                endIndent: 15,
+                indent: 15,
+              )),
+              Text("OR"),
+              Expanded(
+                  child: Divider(
+                endIndent: 15,
+                indent: 15,
+              )),
+            ])
+          ],
+        ),
       ),
-      body: AccessOptions(),
     );
   }
 }
