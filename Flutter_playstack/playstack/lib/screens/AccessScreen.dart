@@ -7,11 +7,12 @@ class AccessScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
+        backgroundColor: Colors.grey[900],
         title: new Center(
             child: new Text(
           'PlayStack',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.indigoAccent),
+          style: TextStyle(color: Colors.red[700], fontFamily: 'Montserrat'),
         )),
       ),
       body: AccessOptions(),
@@ -29,60 +30,67 @@ class AccessOptions extends StatefulWidget {
 class AccessOptionsState extends State<AccessOptions> {
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        children: <Widget>[
-          const SizedBox(height: 30),
-          RaisedButton(
-            onPressed: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => Login(), fullscreenDialog: true));
-            },
-            textColor: Colors.white,
-            padding: const EdgeInsets.all(0.0),
-            child: Container(
-              width: 200,
-              height: 50,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: <Color>[Colors.indigo, Colors.indigo, Colors.indigo],
+    return Container(
+      color: Colors.grey[800],
+      child: Center(
+        child: Column(
+          children: <Widget>[
+            const SizedBox(height: 30),
+            RaisedButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => Login(), fullscreenDialog: true));
+              },
+              textColor: Colors.white,
+              padding: const EdgeInsets.all(0.0),
+              child: Container(
+                width: 200,
+                height: 50,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: <Color>[
+                      Colors.redAccent,
+                      Colors.redAccent,
+                      Colors.redAccent
+                    ],
+                  ),
+                ),
+                padding: const EdgeInsets.all(10.0),
+                child: const Text(
+                  'Login',
+                  style: TextStyle(fontStyle: FontStyle.italic),
                 ),
               ),
-              padding: const EdgeInsets.all(10.0),
-              child: const Text(
-                'Login',
-                style: TextStyle(fontStyle: FontStyle.italic),
-              ),
             ),
-          ),
-          const SizedBox(height: 30),
-          RaisedButton(
-            onPressed: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => Register(),
-                      fullscreenDialog: true));
-            },
-            textColor: Colors.white,
-            padding: const EdgeInsets.all(0.0),
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: <Color>[
-                    Colors.indigo,
-                    Colors.blueAccent,
-                    Colors.deepOrange,
-                  ],
+            const SizedBox(height: 30),
+            RaisedButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => Register(),
+                        fullscreenDialog: true));
+              },
+              textColor: Colors.white,
+              padding: const EdgeInsets.all(0.0),
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: <Color>[
+                      Colors.indigo,
+                      Colors.blueAccent,
+                      Colors.blue,
+                    ],
+                  ),
                 ),
+                padding: const EdgeInsets.all(10.0),
+                child: const Text('Register', style: TextStyle(fontSize: 20)),
               ),
-              padding: const EdgeInsets.all(10.0),
-              child: const Text('Register', style: TextStyle(fontSize: 20)),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
