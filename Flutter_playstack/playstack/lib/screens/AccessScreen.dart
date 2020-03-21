@@ -21,19 +21,9 @@ class AccessOption extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(0, 50, 0, 30),
               child: Container(
-                  height: 130.0,
-                  width: 300.0,
-                  child: Row(
-                    children: <Widget>[
-                      Container(
-                          height: 90,
-                          width: 150,
-                          child: Image.asset('lib/assets/Photos/logo.png')),
-                      Container(
-                          width: 150,
-                          child: Image.asset('lib/assets/Photos/name.png'))
-                    ],
-                  )),
+                  height: 200.0,
+                  width: 200.0,
+                  child: Image.asset('lib/assets/Photos/logo_name.png')),
             ),
             Text(
               'Login',
@@ -53,11 +43,14 @@ class AccessOption extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.fromLTRB(8, 10, 8, 20),
               child: Container(
-                  width: 300,
+                  width: 350,
                   height: 40,
                   child: RaisedButton(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: new BorderRadius.circular(15.0),
+                          side: BorderSide(color: Colors.black)),
                       disabledColor: Colors.red[400],
                       onPressed: null,
                       child: Text(
@@ -77,7 +70,23 @@ class AccessOption extends StatelessWidget {
                 endIndent: 15,
                 indent: 15,
               )),
-            ])
+            ]),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 30, 8, 10),
+              child: Container(
+                  width: 350,
+                  height: 60,
+                  child: RaisedButton(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: new BorderRadius.circular(15.0),
+                          side: BorderSide(color: Colors.black)),
+                      disabledColor: Colors.red[500],
+                      onPressed: null,
+                      child: Text(
+                        'Register',
+                        style: TextStyle(color: Colors.white, fontSize: 15),
+                      ))),
+            ),
           ],
         ),
       ),
