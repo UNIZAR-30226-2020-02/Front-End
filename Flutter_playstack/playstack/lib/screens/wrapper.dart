@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:playstack/screens/AccessScreen.dart';
-import 'package:playstack/screens/mainscreen.dart';
 
 class Wrapper extends StatelessWidget {
   @override
