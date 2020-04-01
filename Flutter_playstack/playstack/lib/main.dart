@@ -1,8 +1,9 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:playstack/screens/Search/SearchProcess.dart';
+import 'package:playstack/screens/authentication/Register.dart';
 import 'package:playstack/screens/mainscreen.dart';
-import 'package:playstack/screens/wrapper.dart';
 
 void main() => runApp(MyApp());
 
@@ -15,8 +16,12 @@ class MyApp extends StatelessWidget {
           brightness: Brightness.dark,
           fontFamily: 'Poppins',
           textTheme: TextTheme(title: TextStyle(fontFamily: 'Circular'))),
-      home: Wrapper(),
-      routes: {'mainscreen': (context) => MainScreen()},
+      home: MainScreen(),
+      routes: {
+        'mainscreen': (context) => MainScreen(),
+        'searchProcessScreen': (_) => SearchProcess(),
+        'Register': (_) => Register()
+      },
     );
   }
 }

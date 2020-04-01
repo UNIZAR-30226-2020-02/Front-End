@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:playstack/screens/authentication/AccessScreen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -7,6 +9,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  SharedPreferences sharedPreferences;
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -18,6 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: Scaffold(
             appBar: AppBar(
+              automaticallyImplyLeading: false,
               backgroundColor: Colors.transparent,
               centerTitle: true,
               title: Container(
@@ -29,9 +33,18 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               actions: <Widget>[
                 FlatButton.icon(
-                    onPressed: null,
-                    icon: Icon(CupertinoIcons.settings_solid),
-                    label: Text(''))
+                  label: Text('Log out', style: TextStyle(color: Colors.white)),
+                  icon: Icon(Icons.exit_to_app),
+                  onPressed: () async {
+                    sharedPreferences = await SharedPreferences.getInstance();
+                    sharedPreferences.clear();
+                    //sharedPreferences.commit();
+                    Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                            builder: (BuildContext context) => AccessScreen()),
+                        (Route<dynamic> route) => false);
+                  },
+                )
               ],
             ),
             backgroundColor: Colors.transparent,
