@@ -44,6 +44,9 @@ flutter:
     - lib/assets/Photos/logo.png
     - lib/assets/Photos/logo_name.png
     - lib/assets/Photos/name.png
+    - lib/assets/Photos/pic1.png
+    - lib/assets/Photos/i2.jpeg
+    - lib/assets/Photos/i3.jpeg
 
   #  - images/a_dot_burr.jpeg
   #  - images/a_dot_ham.jpeg

@@ -1,63 +1,69 @@
 import 'package:flutter/material.dart';
+import 'package:playstack/screens/Home.dart';
+import 'package:playstack/screens/SearchScreen.dart';
 import 'package:playstack/services/auth.dart';
+import 'package:flutter/cupertino.dart';
 
 class MainScreen extends StatefulWidget {
   @override
-  State<StatefulWidget> createState() {
-    return _MainScreenState();
-  }
+  _MainScreenState createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
-  final AuthService _auth = AuthService();
-
   int _currentIndex = 0;
-  final List<Widget> _children = [];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-          actions: <Widget>[
-            FlatButton.icon(
-              icon: Icon(Icons.person),
-              label: Text('logout'),
-              onPressed: () async {
-                //await _auth.signOut();
-              },
-            ),
-          ],
-          centerTitle: true,
-          title: Padding(
-            padding: const EdgeInsets.fromLTRB(85, 0, 0, 0),
-            child: new Center(
-                child: new Text('BubbleChat',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        color: Colors.deepOrange, fontFamily: 'Bellota'))),
-          )),
-      body: _children[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex:
-            _currentIndex, // this will be set when a new tab is tapped
-        onTap: tabbed,
-        fixedColor: Colors.deepOrange,
-        type: BottomNavigationBarType.fixed,
-        items: [
-          BottomNavigationBarItem(
-              icon: new Icon(Icons.camera_alt), title: new Text("")),
-          BottomNavigationBarItem(
-              icon: new Icon(Icons.chat_bubble_outline), title: new Text("")),
-          BottomNavigationBarItem(
-              icon: new Icon(Icons.group), title: new Text("")),
-        ],
+      body: show(_currentIndex),
+      bottomNavigationBar: SizedBox(
+        height: 75,
+        child: BottomNavigationBar(
+            fixedColor: Colors.red[600],
+            backgroundColor: Colors.grey[900],
+            currentIndex: _currentIndex,
+            onTap: (int index) {
+              setState(() {
+                _currentIndex = index;
+                show(index);
+              });
+            },
+            type: BottomNavigationBarType.shifting,
+            items: [
+              BottomNavigationBarItem(
+                  icon: new Icon(
+                    CupertinoIcons.home,
+                    size: 25,
+                  ),
+                  title: new Text(
+                    "Home",
+                    style: TextStyle(fontSize: 10),
+                  )),
+              BottomNavigationBarItem(
+                  icon: new Icon(CupertinoIcons.search, size: 25),
+                  title: new Text(
+                    "Search",
+                    style: TextStyle(fontSize: 10),
+                  )),
+              BottomNavigationBarItem(
+                  icon: new Icon(CupertinoIcons.collections, size: 25),
+                  title: new Text(
+                    "Library",
+                    style: TextStyle(fontSize: 10),
+                  )),
+            ]),
       ),
     );
   }
+}
 
-  void tabbed(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
+Widget show(int index) {
+  switch (index) {
+    case 0:
+      return HomeScreen();
+      break;
+    case 1:
+      return SearchScreen();
+      break;
   }
 }
