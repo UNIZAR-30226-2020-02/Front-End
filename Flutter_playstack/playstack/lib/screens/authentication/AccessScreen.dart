@@ -56,19 +56,15 @@ class _AccessScreenState extends State<AccessScreen> {
   signIn(String email, pass) async {
     print("Iniciando sesion con " + email + " y " + pass);
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    Map data = {'NombreUsuario': email, 'Contrasenya': pass};
+    dynamic data = {'NombreUsuario': email, 'Contrasenya': pass};
+    data = jsonEncode(data);
     var jsonResponse = null;
     var response = await http.post("https://playstack.azurewebsites.net/Login",
-        body: data);
-    print("Statuscode: " +
-        response.statusCode.toString() +
-        " \nbody: " +
-        response.body.toString());
+        headers: {"Content-Type": "application/json"}, body: data);
+
     if (response.statusCode == 200) {
       jsonResponse = json.decode(response.body);
-      setState(() async {
-        _loading = false;
-      });
+
       sharedPreferences.setString("token", 'LoggedIn');
       //print("Token es " + jsonResponse[0]['userId'].toString());
       Navigator.of(context).pushAndRemoveUntil(

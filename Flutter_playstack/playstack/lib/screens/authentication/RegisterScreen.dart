@@ -32,14 +32,19 @@ class RegisterState extends State<RegisterScreen> {
         password);
 
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    Map data = {
+    dynamic data = {
       'NombreUsuario': username,
       'Contrasenya': password,
       'Correo': email
     };
+
+    data = jsonEncode(data);
+
     //var jsonResponse = null;
-    var response = await http
-        .post("https://playstack.azurewebsites.net/crearUsuario", body: data);
+    var response = await http.post(
+        "https://playstack.azurewebsites.net/crearUsuario",
+        headers: {"Content-Type": "application/json"},
+        body: data);
     /*var response = await http.get(
       Uri.encodeFull("https://jsonplaceholder.typicode.com/posts"),
     );*/
@@ -50,9 +55,7 @@ class RegisterState extends State<RegisterScreen> {
           _loading = false;
         });
         */
-      setState(() {
-        _loading = false;
-      });
+
       sharedPreferences.setString("token", "ok");
       //print("Token es " + jsonResponse[0]['userId'].toString());
       Navigator.of(context).pushAndRemoveUntil(
