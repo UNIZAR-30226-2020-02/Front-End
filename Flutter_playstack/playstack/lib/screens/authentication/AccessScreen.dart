@@ -6,6 +6,7 @@ import 'package:playstack/shared/Loading.dart';
 import 'dart:convert';
 import 'package:playstack/shared/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:toast/toast.dart';
 
 class AccessScreen extends StatefulWidget {
   @override
@@ -22,9 +23,9 @@ class _AccessScreenState extends State<AccessScreen> {
   bool _loading = false;
 
   //Sign in function
-  signIn(String email, pass) async {
+  signInPrueba(String email, pass) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    Map data = {'email': email, 'password': pass};
+    Map data = {'NombreUsuario': email, 'Contrasenya': pass};
     var jsonResponse = null;
     var response = await http.get(
       Uri.encodeFull("https://jsonplaceholder.typicode.com/posts"),
@@ -48,6 +49,47 @@ class _AccessScreenState extends State<AccessScreen> {
         _loading = false;
       });
       print(response.body);
+    }
+  }
+
+  //Sign in function
+  signIn(String email, pass) async {
+    print("Iniciando sesion con " + email + " y " + pass);
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    Map data = {'NombreUsuario': email, 'Contrasenya': pass};
+    var jsonResponse = null;
+    var response = await http.post("https://playstack.azurewebsites.net/Login",
+        body: data);
+    print("Statuscode: " +
+        response.statusCode.toString() +
+        " \nbody: " +
+        response.body.toString());
+    if (response.statusCode == 200) {
+      jsonResponse = json.decode(response.body);
+      setState(() async {
+        _loading = false;
+      });
+      sharedPreferences.setString("token", 'LoggedIn');
+      //print("Token es " + jsonResponse[0]['userId'].toString());
+      Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (BuildContext context) => MainScreen()),
+          (Route<dynamic> route) => false);
+    } else {
+      if (response.statusCode == 404) {
+        setState(() {
+          _loading = false;
+          Toast.show("User is not registered", context,
+              duration: Toast.LENGTH_LONG, gravity: Toast.CENTER);
+        });
+      } else {
+        setState(() {
+          _loading = false;
+          Toast.show("Incorrect password", context,
+              duration: Toast.LENGTH_LONG, gravity: Toast.CENTER);
+        });
+      }
+
+      //print(response.body);
     }
   }
 
@@ -112,8 +154,8 @@ class _AccessScreenState extends State<AccessScreen> {
             hintText: 'Email or username',
             labelText: 'Email or username'),
         validator: (String value) {
-          if (!value.contains('@')) {
-            return 'Please enter a valid email';
+          if (value.length < 1) {
+            return 'Please enter a valid email or username';
           } else {
             return null;
           }

@@ -26,6 +26,7 @@ dependencies:
   flutter_spinkit: "^4.1.2"
   path_provider: ^1.2.0
   flutter_exoplayer: ^0.5.5
+  audioplayers: ^0.14.2
   dio: ^3.0.9
   #image_picker: 0.4.12+1
   #mime: ^0.9.6+3

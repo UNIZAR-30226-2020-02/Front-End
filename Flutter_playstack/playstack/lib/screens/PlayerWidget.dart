@@ -1,76 +1,52 @@
 import 'dart:async';
 
-import 'package:flutter_exoplayer/audio_notification.dart';
-import 'package:flutter_exoplayer/audioplayer.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:playstack/screens/ExampleApp.dart';
 
-const imageUrl1 = "https://www.bensound.com/bensound-img/buddy.jpg";
-const imageUrl2 = "https://www.bensound.com/bensound-img/epic.jpg";
-const imageUrl3 = "https://www.bensound.com/bensound-img/onceagain.jpg";
+enum PlayerState { stopped, playing, paused }
+enum PlayingRouteState { speakers, earpiece }
 
 class PlayerWidget extends StatefulWidget {
   final String url;
-  final List<String> urls;
+  final PlayerMode mode;
 
-  PlayerWidget({this.url, this.urls});
+  PlayerWidget(
+      {Key key, @required this.url, this.mode = PlayerMode.MEDIA_PLAYER})
+      : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
-    return _PlayerWidgetState(url, urls);
+    return _PlayerWidgetState(url, mode);
   }
 }
 
 class _PlayerWidgetState extends State<PlayerWidget> {
   String url;
-  List<String> urls;
+  PlayerMode mode;
 
   AudioPlayer _audioPlayer;
+  AudioPlayerState _audioPlayerState;
   Duration _duration;
   Duration _position;
-  int _currentIndex = 0;
 
-  PlayerState _playerState = PlayerState.RELEASED;
+  PlayerState _playerState = PlayerState.stopped;
+  PlayingRouteState _playingRouteState = PlayingRouteState.speakers;
   StreamSubscription _durationSubscription;
   StreamSubscription _positionSubscription;
   StreamSubscription _playerCompleteSubscription;
   StreamSubscription _playerErrorSubscription;
   StreamSubscription _playerStateSubscription;
-  StreamSubscription _playerIndexSubscription;
-  StreamSubscription _playerAudioSessionIdSubscription;
-  StreamSubscription _notificationActionCallbackSubscription;
 
-  final List<AudioNotification> audioNotifications = [
-    AudioNotification(
-      smallIconFileName: "ic_launcher",
-      title: "title1",
-      subTitle: "artist1",
-      largeIconUrl: imageUrl1,
-      isLocal: false,
-      notificationDefaultActions: NotificationDefaultActions.ALL,
-      notificationCustomActions: NotificationCustomActions.TWO,
-    ),
-    AudioNotification(
-        smallIconFileName: "ic_launcher",
-        title: "title2",
-        subTitle: "artist2",
-        largeIconUrl: imageUrl2,
-        isLocal: false,
-        notificationDefaultActions: NotificationDefaultActions.ALL),
-    AudioNotification(
-        smallIconFileName: "ic_launcher",
-        title: "title3",
-        subTitle: "artist3",
-        largeIconUrl: imageUrl3,
-        isLocal: false,
-        notificationDefaultActions: NotificationDefaultActions.ALL),
-  ];
-
-  get _isPlaying => _playerState == PlayerState.PLAYING;
+  get _isPlaying => _playerState == PlayerState.playing;
+  get _isPaused => _playerState == PlayerState.paused;
   get _durationText => _duration?.toString()?.split('.')?.first ?? '';
   get _positionText => _position?.toString()?.split('.')?.first ?? '';
 
-  _PlayerWidgetState(this.url, this.urls);
+  get _isPlayingThroughEarpiece =>
+      _playingRouteState == PlayingRouteState.earpiece;
+
+  _PlayerWidgetState(this.url, this.mode);
 
   @override
   void initState() {
@@ -80,162 +56,77 @@ class _PlayerWidgetState extends State<PlayerWidget> {
 
   @override
   void dispose() {
-    _audioPlayer.dispose();
+    _audioPlayer.stop();
     _durationSubscription?.cancel();
     _positionSubscription?.cancel();
     _playerCompleteSubscription?.cancel();
     _playerErrorSubscription?.cancel();
     _playerStateSubscription?.cancel();
-    _playerIndexSubscription?.cancel();
-    _playerAudioSessionIdSubscription?.cancel();
-    _notificationActionCallbackSubscription?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.only(top: 20),
-          child: Row(
-            children: <Widget>[
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: GestureDetector(
-                    child: Container(
-                      width: 70,
-                      height: 45,
-                      decoration: BoxDecoration(
-                          color: Colors.pink,
-                          borderRadius: BorderRadius.circular(5)),
-                      child: Center(
-                        child: Text(
-                          "Play",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    onTap: () => _play(),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: GestureDetector(
-                    child: Container(
-                      width: 70,
-                      height: 45,
-                      decoration: BoxDecoration(
-                          color: Colors.pink,
-                          borderRadius: BorderRadius.circular(5)),
-                      child: Center(
-                        child: Text(
-                          "Stop",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    onTap: () => _stop(),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: GestureDetector(
-                    child: Container(
-                      width: 70,
-                      height: 45,
-                      decoration: BoxDecoration(
-                          color: Colors.pink,
-                          borderRadius: BorderRadius.circular(5)),
-                      child: Center(
-                        child: Text(
-                          "Release",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    onTap: () => _release(),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 20),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                  onPressed: () => _previous(),
-                  iconSize: 45.0,
-                  icon: Icon(Icons.skip_previous),
-                  color: Colors.pink),
-              IconButton(
-                  onPressed: _isPlaying ? () => _pause() : () => _resume(),
-                  iconSize: 45.0,
-                  icon: _isPlaying ? Icon(Icons.pause) : Icon(Icons.play_arrow),
-                  color: Colors.pink),
-              IconButton(
-                  onPressed: () => _next(),
-                  iconSize: 45.0,
-                  icon: Icon(Icons.skip_next),
-                  color: Colors.pink),
-            ],
-          ),
-        ),
-        SizedBox(
-          width: 400,
-          height: 30,
-          child: SliderTheme(
-            data: SliderThemeData(
-              thumbShape: RoundSliderThumbShape(enabledThumbRadius: 5),
-              trackHeight: 3,
-              thumbColor: Colors.pink,
-              inactiveTrackColor: Colors.grey,
-              activeTrackColor: Colors.pink,
-              overlayColor: Colors.transparent,
-            ),
-            child: Slider(
-              value:
-                  _position != null ? _position.inMilliseconds.toDouble() : 0.0,
-              min: 0.0,
-              max:
-                  _duration != null ? _duration.inMilliseconds.toDouble() : 0.0,
-              onChanged: (double value) async {
-                final Result result = await _audioPlayer
-                    .seekPosition(Duration(milliseconds: value.toInt()));
-                if (result == Result.FAIL) {
-                  print(
-                      "you tried to call audio conrolling methods on released audio player :(");
-                } else if (result == Result.ERROR) {
-                  print("something went wrong in seek :(");
-                }
-                _position = Duration(milliseconds: value.toInt());
-              },
-            ),
-          ),
-        ),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            IconButton(
+              key: Key('play_button'),
+              onPressed: _isPlaying ? null : () => _play(),
+              iconSize: 64.0,
+              icon: Icon(Icons.play_arrow),
+              color: Colors.cyan,
+            ),
+            IconButton(
+              key: Key('pause_button'),
+              onPressed: _isPlaying ? () => _pause() : null,
+              iconSize: 64.0,
+              icon: Icon(Icons.pause),
+              color: Colors.cyan,
+            ),
+            IconButton(
+              key: Key('stop_button'),
+              onPressed: _isPlaying || _isPaused ? () => _stop() : null,
+              iconSize: 64.0,
+              icon: Icon(Icons.stop),
+              color: Colors.cyan,
+            ),
+            IconButton(
+              onPressed: _earpieceOrSpeakersToggle,
+              iconSize: 64.0,
+              icon: _isPlayingThroughEarpiece
+                  ? Icon(Icons.volume_up)
+                  : Icon(Icons.hearing),
+              color: Colors.cyan,
+            ),
+          ],
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: EdgeInsets.all(12.0),
+              child: Stack(
+                children: [
+                  Slider(
+                    onChanged: (v) {
+                      final Position = v * _duration.inMilliseconds;
+                      _audioPlayer
+                          .seek(Duration(milliseconds: Position.round()));
+                    },
+                    value: (_position != null &&
+                            _duration != null &&
+                            _position.inMilliseconds > 0 &&
+                            _position.inMilliseconds < _duration.inMilliseconds)
+                        ? _position.inMilliseconds / _duration.inMilliseconds
+                        : 0.0,
+                  ),
+                ],
+              ),
+            ),
             Text(
               _position != null
                   ? '${_positionText ?? ''} / ${_durationText ?? ''}'
@@ -244,160 +135,118 @@ class _PlayerWidgetState extends State<PlayerWidget> {
             ),
           ],
         ),
-        Text("State: $_playerState"),
-        Text("index: $_currentIndex"),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          child: Container(
-            height: 2,
-            //width: 350,
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Colors.pink,
-                ),
-              ),
-            ),
-          ),
-        ),
+        Text('State: $_audioPlayerState')
       ],
     );
   }
 
   void _initAudioPlayer() {
-    _audioPlayer = AudioPlayer();
+    _audioPlayer = AudioPlayer(mode: mode);
+
     _durationSubscription = _audioPlayer.onDurationChanged.listen((duration) {
-      setState(() {
-        _duration = duration;
-      });
-    });
-    _positionSubscription = _audioPlayer.onAudioPositionChanged.listen((pos) {
-      setState(() {
-        _position = pos;
-      });
-    });
-    _playerStateSubscription =
-        _audioPlayer.onPlayerStateChanged.listen((playerState) {
-      setState(() {
-        _playerState = playerState;
-        print(_playerState);
-      });
-    });
-    _playerIndexSubscription =
-        _audioPlayer.onCurrentAudioIndexChanged.listen((index) {
-      setState(() {
-        _position = Duration(milliseconds: 0);
-        _currentIndex = index;
-      });
-    });
-    _playerAudioSessionIdSubscription =
-        _audioPlayer.onAudioSessionIdChange.listen((audioSessionId) {
-      print("audio Session Id: $audioSessionId");
-    });
-    _notificationActionCallbackSubscription = _audioPlayer
-        .onNotificationActionCallback
-        .listen((notificationActionName) {
-      //do something
-    });
-    _playerCompleteSubscription = _audioPlayer.onPlayerCompletion.listen((a) {
-      _position = Duration(milliseconds: 0);
-    });
-  }
+      setState(() => _duration = duration);
 
-  Future<void> _play() async {
-    if (url != null) {
-      final Result result = await _audioPlayer.play(
-        url,
-        repeatMode: true,
-        respectAudioFocus: false,
-        playerMode: PlayerMode.BACKGROUND,
-      );
-      if (result == Result.ERROR) {
-        print("something went wrong in play method :(");
+      // TODO implemented for iOS, waiting for android impl
+      if (Theme.of(context).platform == TargetPlatform.iOS) {
+        // (Optional) listen for notification updates in the background
+        _audioPlayer.startHeadlessService();
+
+        // set at least title to see the notification bar on ios.
+        _audioPlayer.setNotification(
+            title: 'App Name',
+            artist: 'Artist or blank',
+            albumTitle: 'Name or blank',
+            imageUrl: 'url or blank',
+            forwardSkipInterval: const Duration(seconds: 30), // default is 30s
+            backwardSkipInterval: const Duration(seconds: 30), // default is 30s
+            duration: duration,
+            elapsedTime: Duration(seconds: 0));
       }
-    } else {
-      final Result result = await _audioPlayer.playAll(
-        urls,
-        repeatMode: false,
-        respectAudioFocus: true,
-        playerMode: PlayerMode.FOREGROUND,
-        audioNotifications: audioNotifications,
-      );
-      if (result == Result.ERROR) {
-        print("something went wrong in playAll method :(");
-      }
-    }
+    });
+
+    _positionSubscription =
+        _audioPlayer.onAudioPositionChanged.listen((p) => setState(() {
+              _position = p;
+            }));
+
+    _playerCompleteSubscription =
+        _audioPlayer.onPlayerCompletion.listen((event) {
+      _onComplete();
+      setState(() {
+        _position = _duration;
+      });
+    });
+
+    _playerErrorSubscription = _audioPlayer.onPlayerError.listen((msg) {
+      print('audioPlayer error : $msg');
+      setState(() {
+        _playerState = PlayerState.stopped;
+        _duration = Duration(seconds: 0);
+        _position = Duration(seconds: 0);
+      });
+    });
+
+    _audioPlayer.onPlayerStateChanged.listen((state) {
+      if (!mounted) return;
+      setState(() {
+        _audioPlayerState = state;
+      });
+    });
+
+    _audioPlayer.onNotificationPlayerStateChanged.listen((state) {
+      if (!mounted) return;
+      setState(() => _audioPlayerState = state);
+    });
+
+    _playingRouteState = PlayingRouteState.speakers;
   }
 
-  Future<void> _resume() async {
-    final Result result = await _audioPlayer.resume();
-    if (result == Result.FAIL) {
-      print(
-          "you tried to call audio conrolling methods on released audio player :(");
-    } else if (result == Result.ERROR) {
-      print("something went wrong in resume :(");
-    }
+  Future<int> _play() async {
+    final playPosition = (_position != null &&
+            _duration != null &&
+            _position.inMilliseconds > 0 &&
+            _position.inMilliseconds < _duration.inMilliseconds)
+        ? _position
+        : null;
+    final result = await _audioPlayer.play(url, position: playPosition);
+    if (result == 1) setState(() => _playerState = PlayerState.playing);
+
+    // default playback rate is 1.0
+    // this should be called after _audioPlayer.play() or _audioPlayer.resume()
+    // this can also be called everytime the user wants to change playback rate in the UI
+    _audioPlayer.setPlaybackRate(playbackRate: 1.0);
+
+    return result;
   }
 
-  Future<void> _pause() async {
-    final Result result = await _audioPlayer.pause();
-    if (result == Result.FAIL) {
-      print(
-          "you tried to call audio conrolling methods on released audio player :(");
-    } else if (result == Result.ERROR) {
-      print("something went wrong in pause :(");
-    }
+  Future<int> _pause() async {
+    final result = await _audioPlayer.pause();
+    if (result == 1) setState(() => _playerState = PlayerState.paused);
+    return result;
   }
 
-  Future<void> _stop() async {
-    final Result result = await _audioPlayer.stop();
-    if (result == Result.FAIL) {
-      print(
-          "you tried to call audio conrolling methods on released audio player :(");
-    } else if (result == Result.ERROR) {
-      print("something went wrong in stop :(");
-    }
+  Future<int> _earpieceOrSpeakersToggle() async {
+    final result = await _audioPlayer.earpieceOrSpeakersToggle();
+    if (result == 1)
+      setState(() => _playingRouteState =
+          _playingRouteState == PlayingRouteState.speakers
+              ? PlayingRouteState.earpiece
+              : PlayingRouteState.speakers);
+    return result;
   }
 
-  Future<void> _release() async {
-    final Result result = await _audioPlayer.release();
-    if (result == Result.FAIL) {
-      print(
-          "you tried to call audio conrolling methods on released audio player :(");
-    } else if (result == Result.ERROR) {
-      print("something went wrong in release :(");
+  Future<int> _stop() async {
+    final result = await _audioPlayer.stop();
+    if (result == 1) {
+      setState(() {
+        _playerState = PlayerState.stopped;
+        _position = Duration();
+      });
     }
+    return result;
   }
 
-  Future<void> _next() async {
-    final Result result = await _audioPlayer.next();
-    if (result == Result.FAIL) {
-      print(
-          "you tried to call audio conrolling methods on released audio player :(");
-    } else if (result == Result.ERROR) {
-      print("something went wrong in next :(");
-    }
-  }
-
-  Future<void> _previous() async {
-    final Result result = await _audioPlayer.previous();
-    if (result == Result.FAIL) {
-      print(
-          "you tried to call audio conrolling methods on released audio player :(");
-    } else if (result == Result.ERROR) {
-      print("something went wrong in previous :(");
-    }
-  }
-
-  String getUrlMatchingImage() {
-    if (url == kUrl1) {
-      return imageUrl1;
-    } else if (url == kUrl2) {
-      return imageUrl2;
-    } else if (url == kUrl2) {
-      return imageUrl3;
-    } else {
-      return imageUrl1;
-    }
+  void _onComplete() {
+    setState(() => _playerState = PlayerState.stopped);
   }
 }

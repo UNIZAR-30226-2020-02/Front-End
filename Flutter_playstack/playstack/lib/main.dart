@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:playstack/screens/Search/SearchProcess.dart';
 import 'package:playstack/screens/authentication/Register.dart';
+import 'package:playstack/screens/authentication/RegisterScreen.dart';
 import 'package:playstack/screens/mainscreen.dart';
 
 void main() => runApp(MyApp());

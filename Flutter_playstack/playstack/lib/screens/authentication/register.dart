@@ -12,7 +12,7 @@ class Register extends StatefulWidget {
 }
 
 class _RegisterState extends State<Register> {
-  //Sign in function
+  //Register function
   _Register(String username, String email, String password) async {
     print("Intento de registro con " + username + email + password);
 
@@ -60,7 +60,6 @@ class _RegisterState extends State<Register> {
 
   @override
   Widget build(BuildContext context) {
-    print("Entra en register");
     return _loading
         ? Loading()
         : Scaffold(
