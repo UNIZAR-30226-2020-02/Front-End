@@ -240,7 +240,9 @@ class _AccessScreenState extends State<AccessScreen> {
                     key: _formKey,
                     child: Column(
                       children: <Widget>[
+                        //Logo Image
                         logoFigure(),
+                        //Form fields
                         emailFormField(),
                         passwordFormField(),
                         FlatButton(
