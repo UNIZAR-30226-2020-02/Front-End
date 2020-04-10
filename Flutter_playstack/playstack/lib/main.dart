@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:playstack/screens/Homescreen/Settings.dart';
 import 'package:playstack/screens/Search/SearchProcess.dart';
 import 'package:playstack/screens/authentication/Register.dart';
 import 'package:playstack/screens/authentication/RegisterScreen.dart';
@@ -21,7 +22,8 @@ class MyApp extends StatelessWidget {
       routes: {
         'mainscreen': (context) => MainScreen(),
         'searchProcessScreen': (_) => SearchProcess(),
-        'Register': (_) => RegisterScreen()
+        'Register': (_) => RegisterScreen(),
+        'Settings': (_) => Settings()
       },
     );
   }

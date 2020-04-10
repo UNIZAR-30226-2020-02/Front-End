@@ -86,25 +86,22 @@ class RegisterState extends State<RegisterScreen> {
   }
 
   Widget logoRegister() {
-    return Row(
-      children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.fromLTRB(40, 40, 0, 40),
-          child: Container(
-            width: 64.0,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 40, 0, 40),
+      child: Row(
+        children: <Widget>[
+          Container(
+            width: MediaQuery.of(context).size.width / 3,
             height: 64.0,
             child: Image.asset('lib/assets/Photos/logo.png'),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
-          child: Container(
-            width: 260.0,
+          Container(
+            width: MediaQuery.of(context).size.width / 3 * 2,
             height: 34.0,
             child: Image.asset('lib/assets/Photos/name.png'),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

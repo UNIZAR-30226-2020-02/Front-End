@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:playstack/screens/ExampleApp.dart';
-import 'package:playstack/screens/Home.dart';
+import 'package:playstack/screens/Homescreen/Home.dart';
 import 'package:playstack/screens/Library.dart';
-import 'package:playstack/screens/PlayerScreen.dart';
 import 'package:playstack/screens/Search/SearchScreen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:playstack/screens/authentication/AccessScreen.dart';
