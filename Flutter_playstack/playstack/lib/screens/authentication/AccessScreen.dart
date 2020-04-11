@@ -37,8 +37,7 @@ class _AccessScreenState extends State<AccessScreen> {
         setState(() {
           _loading = false;
         });
-        sharedPreferences.setString(
-            "token", jsonResponse[0]['userId'].toString());
+        sharedPreferences.setString("LoggedIn", 'yes');
         //print("Token es " + jsonResponse[0]['userId'].toString());
         Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (BuildContext context) => MainScreen()),
@@ -54,18 +53,20 @@ class _AccessScreenState extends State<AccessScreen> {
 
   //Sign in function
   signIn(String email, pass) async {
-    print("Iniciando sesion con " + email + " y " + pass);
+    //print("Iniciando sesion con " + email + " y " + pass);
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     dynamic data = {'NombreUsuario': email, 'Contrasenya': pass};
     data = jsonEncode(data);
     var jsonResponse = null;
-    var response = await http.post("https://playstack.azurewebsites.net/Login",
-        headers: {"Content-Type": "application/json"}, body: data);
+    var response = await http.post(
+        "https://playstack.azurewebsites.net/user/login",
+        headers: {"Content-Type": "application/json"},
+        body: data);
 
     if (response.statusCode == 200) {
       jsonResponse = json.decode(response.body);
 
-      sharedPreferences.setString("token", 'LoggedIn');
+      sharedPreferences.setString("LoggedIn", 'yes');
       //print("Token es " + jsonResponse[0]['userId'].toString());
       Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (BuildContext context) => MainScreen()),
@@ -85,7 +86,7 @@ class _AccessScreenState extends State<AccessScreen> {
         });
       }
 
-      //print(response.body);
+      print(response.body);
     }
   }
 

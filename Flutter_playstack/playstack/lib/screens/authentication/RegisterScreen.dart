@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'package:playstack/screens/mainscreen.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'dart:convert';
@@ -24,13 +26,7 @@ class RegisterState extends State<RegisterScreen> {
   final TextEditingController _emailController = new TextEditingController();
 
   _register(String username, String email, String password) async {
-    print("Intento de registro con " +
-        username +
-        " email:  " +
-        email +
-        ' contrasenya: ' +
-        password);
-
+    // Se las pasa al servidor
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     dynamic data = {
       'NombreUsuario': username,
@@ -42,21 +38,16 @@ class RegisterState extends State<RegisterScreen> {
 
     //var jsonResponse = null;
     var response = await http.post(
-        "https://playstack.azurewebsites.net/crearUsuario",
+        "https://playstack.azurewebsites.net/create/user",
         headers: {"Content-Type": "application/json"},
         body: data);
-    /*var response = await http.get(
-      Uri.encodeFull("https://jsonplaceholder.typicode.com/posts"),
-    );*/
     if (response.statusCode == 201) {
-      /*jsonResponse = json.decode(response.body);
-      if (jsonResponse != null) {
-        setState(() {
-          _loading = false;
-        });
-        */
-
-      sharedPreferences.setString("token", "ok");
+      _loading = false;
+      // Se guardan los campos para poder ser modificados posteriormente
+      sharedPreferences.setString('username', username);
+      sharedPreferences.setString('email', email);
+      sharedPreferences.setString('password', password);
+      sharedPreferences.setString("LoggedIn", "ok");
       //print("Token es " + jsonResponse[0]['userId'].toString());
       Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (BuildContext context) => MainScreen()),
@@ -65,9 +56,7 @@ class RegisterState extends State<RegisterScreen> {
       setState(() {
         _loading = false;
       });
-      print(response.body);
     }
-    print("Statuscode: " + response.statusCode.toString());
   }
 
   // Toggles the password show status
@@ -142,11 +131,12 @@ class RegisterState extends State<RegisterScreen> {
                 // el formulario no es válido.
                 if (_formKey.currentState.validate()) {
                   // Si el formulario es válido, queremos mostrar un Snackbar
-                  Toast.show("Loading...", context,
-                      duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+                  setState(() {
+                    _loading = true;
+                  });
                   _register(_usernameController.text, _emailController.text,
                       _passwordController.text);
-                } else if (!_formKey.currentState.validate()) {
+                } else {
                   Toast.show("Invalid credentials", context,
                       duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
                 }
@@ -186,7 +176,7 @@ class RegisterState extends State<RegisterScreen> {
             hintText: 'example@gmail.com',
             icon: Icon(Icons.email)),
         validator: (String value) {
-          if (!value.contains('@')) {
+          if (!value.contains('@') || !value.contains('.')) {
             return 'Please enter a valid email';
           } else {
             return null;
@@ -203,7 +193,7 @@ class RegisterState extends State<RegisterScreen> {
         controller: _passwordController,
         decoration: myTextInputDecoration.copyWith(
             labelText: 'Password', icon: Icon(Icons.lock)),
-        obscureText: true,
+        obscureText: _obscureText,
         validator: (val) {
           if (passwordIsSafe(val)) {
             return null;
@@ -221,7 +211,7 @@ class RegisterState extends State<RegisterScreen> {
       child: TextFormField(
           decoration: myTextInputDecoration.copyWith(
               labelText: 'Confirm password', icon: Icon(Icons.check_circle)),
-          obscureText: true,
+          obscureText: _obscureText,
           validator: (val) {
             if (_passwordController.text == val) {
               return null;
@@ -254,6 +244,9 @@ class RegisterState extends State<RegisterScreen> {
                     emailField(),
                     passwordField(),
                     confirmField(),
+                    FlatButton(
+                        onPressed: _toggle,
+                        child: new Text(_obscureText ? "Show" : "Hide")),
                     registerButton(),
                   ],
                 )),
