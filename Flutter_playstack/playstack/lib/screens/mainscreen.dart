@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:playstack/screens/ExampleApp.dart';
 import 'package:playstack/screens/Homescreen/Home.dart';
 import 'package:playstack/screens/Library.dart';
+import 'package:playstack/screens/PlayingNow.dart';
 import 'package:playstack/screens/Search/SearchScreen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:playstack/screens/authentication/AccessScreen.dart';
@@ -92,7 +92,7 @@ Widget show(int index) {
       return Library();
       break;
     case 3:
-      return ExampleApp();
+      return PlayingNowScreen();
       break;
   }
 }

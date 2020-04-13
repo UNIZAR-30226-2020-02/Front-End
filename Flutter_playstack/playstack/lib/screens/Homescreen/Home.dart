@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:playstack/screens/Homescreen/HomeScreenElements.dart';
 import 'package:playstack/screens/authentication/AccessScreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -10,6 +11,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   SharedPreferences sharedPreferences;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -46,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
+                      genres(),
                       Padding(
                         padding: const EdgeInsets.fromLTRB(10, 10, 0, 10),
                         child: Text(

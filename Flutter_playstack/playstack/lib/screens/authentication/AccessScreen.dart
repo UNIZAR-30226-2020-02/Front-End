@@ -32,6 +32,9 @@ class _AccessScreenState extends State<AccessScreen> {
     );
 
     if (response.statusCode == 200) {
+      List<String> credentials;
+      credentials.add(email);
+      credentials.add(pass);
       jsonResponse = json.decode(response.body);
       if (jsonResponse != null) {
         setState(() {
@@ -173,52 +176,78 @@ class _AccessScreenState extends State<AccessScreen> {
 
   Widget loginButton() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 5, 8, 10),
-      child: Container(
+        padding: const EdgeInsets.fromLTRB(8, 5, 8, 10),
+        child: Container(
           width: 350,
           height: 40,
           child: RaisedButton(
-              shape: RoundedRectangleBorder(
-                  borderRadius: new BorderRadius.circular(15.0),
-                  side: BorderSide(color: Colors.black)),
-              color: Colors.red[400],
-              onPressed: () {
-                if (_formKey.currentState.validate()) {
-                  setState(() {
-                    _loading = true;
-                  });
-                  /*signIn(
+            onPressed: () {
+              if (_formKey.currentState.validate()) {
+                setState(() {
+                  _loading = true;
+                });
+                /*signIn(
                       emailOrUsernameController.text, passwordController.text);*/
-                  signInPrueba(
-                      emailOrUsernameController.text, passwordController.text);
-                }
-              },
-              child: Text(
-                'Log in',
-                style: TextStyle(color: Colors.white, fontSize: 15),
-              ))),
-    );
+                signInPrueba(
+                    emailOrUsernameController.text, passwordController.text);
+              }
+            },
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(80.0),
+                side: BorderSide(color: Colors.black)),
+            padding: EdgeInsets.all(0.0),
+            child: Ink(
+              decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.red[700], Colors.red[300], Colors.red[700]],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20.0)),
+              child: Container(
+                constraints: BoxConstraints(maxWidth: 350.0, minHeight: 50.0),
+                alignment: Alignment.center,
+                child: Text(
+                  'Log in',
+                  style: TextStyle(color: Colors.white, fontSize: 15),
+                ),
+              ),
+            ),
+          ),
+        ));
   }
 
   Widget registerButton() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 10, 8, 10),
-      child: Container(
+        padding: const EdgeInsets.fromLTRB(8, 10, 8, 10),
+        child: Container(
           width: 350,
           height: 60,
           child: RaisedButton(
-              shape: RoundedRectangleBorder(
-                  borderRadius: new BorderRadius.circular(15.0),
-                  side: BorderSide(color: Colors.black)),
-              onPressed: () {
-                Navigator.of(context).pushNamed("Register");
-              },
-              color: Colors.red[500],
-              child: Text(
-                'Register',
-                style: TextStyle(color: Colors.white, fontSize: 15),
-              ))),
-    );
+            onPressed: () {
+              Navigator.of(context).pushNamed("Register");
+            },
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(80.0)),
+            padding: EdgeInsets.all(0.0),
+            child: Ink(
+              decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.red[900], Colors.red[500], Colors.red[900]],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20.0)),
+              child: Container(
+                  constraints: BoxConstraints(maxWidth: 350.0, minHeight: 50.0),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'Register',
+                    style: TextStyle(color: Colors.white, fontSize: 15),
+                  )),
+            ),
+          ),
+        ));
   }
 
   @override

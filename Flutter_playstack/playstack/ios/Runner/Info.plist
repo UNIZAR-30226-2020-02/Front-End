@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Playstack requiere acceso a Fotos para cambiar la foto de perfil</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Playstack requiere acceso a la Camara para cambiar la foto de perfil</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Playstack requiere acceso al microfono</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
     	<key>NSAllowsArbitraryLoads</key>

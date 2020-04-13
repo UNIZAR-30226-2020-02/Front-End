@@ -2,7 +2,9 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:playstack/screens/Homescreen/ProfileSettings.dart';
+import 'package:playstack/screens/Homescreen/PublicProfile.dart';
 import 'package:playstack/screens/Homescreen/Settings.dart';
+import 'package:playstack/screens/PlayingNow.dart';
 import 'package:playstack/screens/Search/SearchProcess.dart';
 import 'package:playstack/screens/authentication/RegisterScreen.dart';
 import 'package:playstack/screens/mainscreen.dart';
@@ -27,7 +29,8 @@ class MyApp extends StatelessWidget {
           'searchProcessScreen': (_) => SearchProcess(),
           'Register': (_) => RegisterScreen(),
           'Settings': (_) => Settings(),
-          'ProfileSettings': (_) => ProfileSettings()
+          'ProfileSettings': (_) => ProfileSettings(),
+          'YourPublicProfile': (_) => YourPublicProfile(),
         },
       ),
     );
