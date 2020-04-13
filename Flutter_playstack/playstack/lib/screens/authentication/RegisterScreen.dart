@@ -117,6 +117,18 @@ class RegisterState extends State<RegisterScreen> {
     return isSafe;
   }
 
+  Future<bool> _onBackPressed() {
+    if (_pageController.page.round() == _pageController.initialPage)
+      return Future.value(true);
+    else {
+      _pageController.previousPage(
+        duration: Duration(milliseconds: 400),
+        curve: Curves.linear,
+      );
+      return Future.value(false);
+    }
+  }
+
   Widget registerButton() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 50, 8, 10),
@@ -135,10 +147,9 @@ class RegisterState extends State<RegisterScreen> {
                   curve: Curves.easeInOut,
                 );
 
-
                 // devolverá true si el formulario es válido, o falso si
                 // el formulario no es válido.
-          /*      if (_formKey.currentState.validate()) {
+                /*      if (_formKey.currentState.validate()) {
                   Toast.show("Loading...", context,
                       duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
                 if (_formKey.currentState.validate()) {
@@ -203,8 +214,8 @@ class RegisterState extends State<RegisterScreen> {
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
       child: TextFormField(
         controller: _passwordController,
-        decoration: InputDecoration(
-            labelText: 'Password', icon: Icon(Icons.lock)),
+        decoration:
+            InputDecoration(labelText: 'Password', icon: Icon(Icons.lock)),
         obscureText: _obscureText,
         validator: (val) {
           if (passwordIsSafe(val)) {
@@ -237,60 +248,60 @@ class RegisterState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-          gradient: LinearGradient(
-              colors: [Colors.red[900], Colors.grey[900], Colors.grey[900]],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter)),
-      child: _loading
-          ? Center(child: Loading())
-          : Column(
-        children: <Widget>[
-          logoRegister(),
-    Expanded(
-        child:PageView(
-    physics: new NeverScrollableScrollPhysics(),
-    controller: _pageController,
-    children: <Widget>[
-    Center(child: Scaffold(
-    backgroundColor: Colors.transparent,
-    body: Form(
-    key: _formKey,
-    child: Center(
-    child: ListView(
-    children: <Widget>[
-    usernameField(),
-    emailField(),
-    passwordField(),
-    confirmField(),
-    FlatButton(
-    onPressed: _toggle,
-    child: new Text(_obscureText ? "Show" : "Hide")),
-    ],
-    )),
-    ),
-    ),
-    ),
-    Center(child: Scaffold(
-    backgroundColor: Colors.transparent,
-    body: Form(
-    key: _imageKey,
-    child: Center(
-    child: Container(
-    width: 128.0,
-    height: 128.0,
-    child: Image.asset('lib/assets/Photos/abstract-user-flat-3.png'),
-    ),
-    )
-    )
-    ),
-    )
-    ]
-    )
-    ),
-          registerButton(),
-        ]
-      )
-);
+        decoration: BoxDecoration(
+            gradient: LinearGradient(
+                colors: [Colors.red[900], Colors.grey[900], Colors.grey[900]],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter)),
+        child: _loading
+            ? Center(child: Loading())
+            : Column(children: <Widget>[
+                logoRegister(),
+                WillPopScope(
+                  onWillPop: _onBackPressed,
+                  child: Expanded(
+                      child: PageView(
+                          physics: new NeverScrollableScrollPhysics(),
+                          controller: _pageController,
+                          children: <Widget>[
+                        Center(
+                          child: Scaffold(
+                            backgroundColor: Colors.transparent,
+                            body: Form(
+                              key: _formKey,
+                              child: Center(
+                                  child: ListView(
+                                children: <Widget>[
+                                  usernameField(),
+                                  emailField(),
+                                  passwordField(),
+                                  confirmField(),
+                                  FlatButton(
+                                      onPressed: _toggle,
+                                      child: new Text(
+                                          _obscureText ? "Show" : "Hide")),
+                                ],
+                              )),
+                            ),
+                          ),
+                        ),
+                        Center(
+                          child: Scaffold(
+                              backgroundColor: Colors.transparent,
+                              body: Form(
+                                  key: _imageKey,
+                                  child: Center(
+                                    child: Container(
+                                      width: 128.0,
+                                      height: 128.0,
+                                      child: Image.asset(
+                                          'lib/assets/Photos/abstract-user-flat-3.png'),
+                                    ),
+                                  ))),
+                        )
+                      ])),
+                ),
+                registerButton(),
+              ]));
   }
 }
