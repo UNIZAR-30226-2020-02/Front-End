@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'package:playstack/screens/mainscreen.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'dart:convert';
@@ -16,45 +18,38 @@ class RegisterScreen extends StatefulWidget {
 
 class RegisterState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _imageKey = GlobalKey<FormState>();
   bool _obscureText = true;
   bool _loading = false;
-  int _step = 1;
+  PageController _pageController = new PageController();
 
   final TextEditingController _usernameController = new TextEditingController();
   final TextEditingController _passwordController = new TextEditingController();
   final TextEditingController _emailController = new TextEditingController();
 
   _register(String username, String email, String password) async {
-    print("Intento de registro con " +
-        username +
-        " email:  " +
-        email +
-        ' contrasenya: ' +
-        password);
-
+    // Se las pasa al servidor
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    Map data = {
+    dynamic data = {
       'NombreUsuario': username,
       'Contrasenya': password,
       'Correo': email
     };
+
+    data = jsonEncode(data);
+
     //var jsonResponse = null;
-    var response = await http
-        .post("https://playstack.azurewebsites.net/crearUsuario", body: data);
-    /*var response = await http.get(
-      Uri.encodeFull("https://jsonplaceholder.typicode.com/posts"),
-    );*/
+    var response = await http.post(
+        "https://playstack.azurewebsites.net/create/user",
+        headers: {"Content-Type": "application/json"},
+        body: data);
     if (response.statusCode == 201) {
-      /*jsonResponse = json.decode(response.body);
-      if (jsonResponse != null) {
-        setState(() {
-          _loading = false;
-        });
-        */
-      setState(() {
-        _loading = false;
-      });
-      sharedPreferences.setString("token", "ok");
+      _loading = false;
+      // Se guardan los campos para poder ser modificados posteriormente
+      sharedPreferences.setString('username', username);
+      sharedPreferences.setString('email', email);
+      sharedPreferences.setString('password', password);
+      sharedPreferences.setString("LoggedIn", "ok");
       //print("Token es " + jsonResponse[0]['userId'].toString());
       Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (BuildContext context) => MainScreen()),
@@ -63,9 +58,7 @@ class RegisterState extends State<RegisterScreen> {
       setState(() {
         _loading = false;
       });
-      print(response.body);
     }
-    print("Statuscode: " + response.statusCode.toString());
   }
 
   // Toggles the password show status
@@ -84,25 +77,22 @@ class RegisterState extends State<RegisterScreen> {
   }
 
   Widget logoRegister() {
-    return Row(
-      children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.fromLTRB(40, 40, 0, 40),
-          child: Container(
-            width: 64.0,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 40, 0, 40),
+      child: Row(
+        children: <Widget>[
+          Container(
+            width: MediaQuery.of(context).size.width / 3,
             height: 64.0,
             child: Image.asset('lib/assets/Photos/logo.png'),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
-          child: Container(
-            width: 260.0,
+          Container(
+            width: MediaQuery.of(context).size.width / 3 * 2,
             height: 34.0,
             child: Image.asset('lib/assets/Photos/name.png'),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -139,18 +129,26 @@ class RegisterState extends State<RegisterScreen> {
                   side: BorderSide(color: Colors.black)),
               color: Colors.red[400],
               onPressed: () {
+                _pageController.animateToPage(
+                  1,
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                );
 
-                print(_step);
-                _step++;
 
                 // devolverá true si el formulario es válido, o falso si
                 // el formulario no es válido.
           /*      if (_formKey.currentState.validate()) {
                   Toast.show("Loading...", context,
                       duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+                if (_formKey.currentState.validate()) {
+                  // Si el formulario es válido, queremos mostrar un Snackbar
+                  setState(() {
+                    _loading = true;
+                  });
                   _register(_usernameController.text, _emailController.text,
                       _passwordController.text);
-                } else if (!_formKey.currentState.validate()) {
+                } else {
                   Toast.show("Invalid credentials", context,
                       duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
                 }*/
@@ -190,7 +188,7 @@ class RegisterState extends State<RegisterScreen> {
             hintText: 'example@gmail.com',
             icon: Icon(Icons.email)),
         validator: (String value) {
-          if (!value.contains('@')) {
+          if (!value.contains('@') || !value.contains('.')) {
             return 'Please enter a valid email';
           } else {
             return null;
@@ -207,7 +205,7 @@ class RegisterState extends State<RegisterScreen> {
         controller: _passwordController,
         decoration: InputDecoration(
             labelText: 'Password', icon: Icon(Icons.lock)),
-        obscureText: true,
+        obscureText: _obscureText,
         validator: (val) {
           if (passwordIsSafe(val)) {
             return null;
@@ -225,7 +223,7 @@ class RegisterState extends State<RegisterScreen> {
       child: TextFormField(
           decoration: InputDecoration(
               labelText: 'Confirm password', icon: Icon(Icons.check_circle)),
-          obscureText: true,
+          obscureText: _obscureText,
           validator: (val) {
             if (_passwordController.text == val) {
               return null;
@@ -246,38 +244,53 @@ class RegisterState extends State<RegisterScreen> {
               end: Alignment.bottomCenter)),
       child: _loading
           ? Center(child: Loading())
-          : (_step == 1) ?
-      Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Form(
-          key: _formKey,
-          child: Center(
-              child: ListView(
-                children: <Widget>[
-                  logoRegister(),
-                  usernameField(),
-                  emailField(),
-                  passwordField(),
-                  confirmField(),
-                  registerButton(),
-                ],
-              )),
-        ),
-    )
-    : //TODO: Esto no funciona, cambiar y mirar https://stackoverflow.com/questions/48043908/pageview-disable-the-default-scrolling-and-replace-it-with-tap-event
-      Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Form(
+          : Column(
+        children: <Widget>[
+          logoRegister(),
+    Expanded(
+        child:PageView(
+    physics: new NeverScrollableScrollPhysics(),
+    controller: _pageController,
+    children: <Widget>[
+    Center(child: Scaffold(
+    backgroundColor: Colors.transparent,
+    body: Form(
     key: _formKey,
+    child: Center(
+    child: ListView(
+    children: <Widget>[
+    usernameField(),
+    emailField(),
+    passwordField(),
+    confirmField(),
+    FlatButton(
+    onPressed: _toggle,
+    child: new Text(_obscureText ? "Show" : "Hide")),
+    ],
+    )),
+    ),
+    ),
+    ),
+    Center(child: Scaffold(
+    backgroundColor: Colors.transparent,
+    body: Form(
+    key: _imageKey,
     child: Center(
     child: Container(
     width: 128.0,
     height: 128.0,
-    child: Image.asset('lib/assets/Photos/abstract-user-flat-3.svg'),
+    child: Image.asset('lib/assets/Photos/abstract-user-flat-3.png'),
     ),
     )
-      )
+    )
     ),
-    );
+    )
+    ]
+    )
+    ),
+          registerButton(),
+        ]
+      )
+);
   }
 }

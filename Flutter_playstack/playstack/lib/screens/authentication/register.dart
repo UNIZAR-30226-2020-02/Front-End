@@ -17,14 +17,19 @@ class _RegisterState extends State<Register> {
     print("Intento de registro con " + username + email + password);
 
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    Map data = {
+    Map<String, String> data = {
       'NombreUsuario': username,
       'Contrasenya': password,
       'Correo': email
     };
+
+    String jsonString = jsonEncode(data);
+    print("Enviando " + jsonString);
+
     //var jsonResponse = null;
-    var response = await http
-        .post("https://playstack.azurewebsites.net/crearUsuario", body: data);
+    var response = await http.post(
+        "https://playstack.azurewebsites.net/crearUsuario",
+        body: jsonString);
     /*var response = await http.get(
       Uri.encodeFull("https://jsonplaceholder.typicode.com/posts"),
     );*/
@@ -49,7 +54,8 @@ class _RegisterState extends State<Register> {
       });
       print(response.body);
     }
-    print("Statuscode: " + response.statusCode.toString());
+    //print("Statuscode: " + response.statusCode.toString());
+    print('Response: ' + response.body);
   }
 
   bool _loading = false;

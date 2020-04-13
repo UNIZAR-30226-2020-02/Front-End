@@ -37,8 +37,7 @@ class _AccessScreenState extends State<AccessScreen> {
         setState(() {
           _loading = false;
         });
-        sharedPreferences.setString(
-            "token", jsonResponse[0]['userId'].toString());
+        sharedPreferences.setString("LoggedIn", 'yes');
         //print("Token es " + jsonResponse[0]['userId'].toString());
         Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (BuildContext context) => MainScreen()),
@@ -54,22 +53,20 @@ class _AccessScreenState extends State<AccessScreen> {
 
   //Sign in function
   signIn(String email, pass) async {
-    print("Iniciando sesion con " + email + " y " + pass);
+    //print("Iniciando sesion con " + email + " y " + pass);
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    Map data = {'NombreUsuario': email, 'Contrasenya': pass};
+    dynamic data = {'NombreUsuario': email, 'Contrasenya': pass};
+    data = jsonEncode(data);
     var jsonResponse = null;
-    var response = await http.post("https://playstack.azurewebsites.net/Login",
+    var response = await http.post(
+        "https://playstack.azurewebsites.net/user/login",
+        headers: {"Content-Type": "application/json"},
         body: data);
-    print("Statuscode: " +
-        response.statusCode.toString() +
-        " \nbody: " +
-        response.body.toString());
+
     if (response.statusCode == 200) {
       jsonResponse = json.decode(response.body);
-      setState(() async {
-        _loading = false;
-      });
-      sharedPreferences.setString("token", 'LoggedIn');
+
+      sharedPreferences.setString("LoggedIn", 'yes');
       //print("Token es " + jsonResponse[0]['userId'].toString());
       Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (BuildContext context) => MainScreen()),
@@ -89,7 +86,7 @@ class _AccessScreenState extends State<AccessScreen> {
         });
       }
 
-      //print(response.body);
+      print(response.body);
     }
   }
 
@@ -190,7 +187,9 @@ class _AccessScreenState extends State<AccessScreen> {
                   setState(() {
                     _loading = true;
                   });
-                  signIn(
+                  /*signIn(
+                      emailOrUsernameController.text, passwordController.text);*/
+                  signInPrueba(
                       emailOrUsernameController.text, passwordController.text);
                 }
               },

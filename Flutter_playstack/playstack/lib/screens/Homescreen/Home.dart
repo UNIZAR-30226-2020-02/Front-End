@@ -32,19 +32,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 borderRadius: new BorderRadius.circular(10.0),
               ),
               actions: <Widget>[
-                FlatButton.icon(
-                  label: Text('Log out', style: TextStyle(color: Colors.white)),
-                  icon: Icon(Icons.exit_to_app),
-                  onPressed: () async {
-                    sharedPreferences = await SharedPreferences.getInstance();
-                    sharedPreferences.clear();
-                    //sharedPreferences.commit();
-                    Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                            builder: (BuildContext context) => AccessScreen()),
-                        (Route<dynamic> route) => false);
-                  },
-                )
+                IconButton(
+                    icon: Icon(CupertinoIcons.settings),
+                    onPressed: () =>
+                        Navigator.of(context).pushNamed('Settings'))
               ],
             ),
             backgroundColor: Colors.transparent,
@@ -159,25 +150,3 @@ List<String> txt = [
   "The Eminem show",
   'Greatest Hits',
 ];
-
-/*
-return Scaffold(
-        appBar: AppBar(
-              backgroundColor: Colors.transparent,
-              centerTitle: true,
-              title: Container(
-                  height: 40,
-                  width: 40,
-                  child: Image.asset('lib/assets/Photos/logo.png')),
-              shape: RoundedRectangleBorder(
-                borderRadius: new BorderRadius.circular(10.0),
-              ),
-              actions: <Widget>[
-                FlatButton.icon(
-                    onPressed: null,
-                    icon: Icon(CupertinoIcons.settings_solid),
-                    label: Text(''))
-              ],
-            ),
-
-*/

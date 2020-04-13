@@ -31,7 +31,7 @@ class _SearchProcessState extends State<SearchProcess> {
 
   @override
   void initState() {
-    this._getNames();
+    //this._getNames();
     super.initState();
   }
 
