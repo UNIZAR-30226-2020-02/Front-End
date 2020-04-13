@@ -26,8 +26,6 @@ class _SettingsState extends State<Settings> {
 
   List<String> credentials;
   String _username;
-  String _email;
-  String _password;
 
   bool _loading = true;
 
@@ -39,11 +37,10 @@ class _SettingsState extends State<Settings> {
 
   Future<void> getFieldValues() async {
     sharedPreferences = await SharedPreferences.getInstance();
-    
     setState(() {
-      _username = sharedPreferences.getString('username');
-      _email = sharedPreferences.getString('email');
-      _password = sharedPreferences.getString('password');
+      List<String> credentials = sharedPreferences.getStringList('Credentials');
+      // Coge el username
+      _username = credentials.elementAt(0);
       _loading = false;
     });
   }
@@ -111,7 +108,10 @@ class _SettingsState extends State<Settings> {
                       _username,
                       style: TextStyle(fontSize: 15),
                     ),
-                    RaisedButton(onPressed: null, child: Text("Ver perfil"))
+                    RaisedButton(
+                        onPressed: () => Navigator.of(context)
+                            .pushNamed('YourPublicProfile'),
+                        child: Text("Ver perfil"))
                   ],
                 ),
               ))
@@ -149,7 +149,7 @@ class _SettingsState extends State<Settings> {
                 _profileInfo(context),
                 FlatButton(
                     onPressed: () =>
-                        Navigator.of(context).pushNamed('ProfileSettings',arguments: ),
+                        Navigator.of(context).pushNamed('ProfileSettings'),
                     child: Text('Perfil de usuario')),
                 FlatButton(onPressed: null, child: Text('Cuenta')),
                 FlatButton(onPressed: null, child: Text('Configuración'))

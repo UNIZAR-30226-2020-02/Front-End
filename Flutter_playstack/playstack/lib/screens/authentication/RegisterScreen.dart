@@ -46,9 +46,11 @@ class RegisterState extends State<RegisterScreen> {
     if (response.statusCode == 201) {
       _loading = false;
       // Se guardan los campos para poder ser modificados posteriormente
-      sharedPreferences.setString('username', username);
-      sharedPreferences.setString('email', email);
-      sharedPreferences.setString('password', password);
+      List<String> credentials = new List();
+      credentials.add(username);
+      credentials.add(email);
+      credentials.add(password);
+      sharedPreferences.setStringList('Credentials', credentials);
       sharedPreferences.setString("LoggedIn", "ok");
       //print("Token es " + jsonResponse[0]['userId'].toString());
       Navigator.of(context).pushAndRemoveUntil(
@@ -59,6 +61,7 @@ class RegisterState extends State<RegisterScreen> {
         _loading = false;
       });
     }
+    print("Statuscode " + response.statusCode.toString());
   }
 
   // Toggles the password show status
@@ -302,6 +305,8 @@ class RegisterState extends State<RegisterScreen> {
                       ])),
                 ),
                 registerButton(),
-              ]));
+              ]
+        )
+    );
   }
 }

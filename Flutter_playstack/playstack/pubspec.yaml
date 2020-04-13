@@ -64,6 +64,7 @@ flutter:
     - assets/audio2.mp3
     - assets/messenger.mp3
     - assets/Pictures/
+    - assets/images/
 
   #  - images/a_dot_burr.jpeg
   #  - images/a_dot_ham.jpeg
