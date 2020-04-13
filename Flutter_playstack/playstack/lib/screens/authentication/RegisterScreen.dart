@@ -18,6 +18,7 @@ class RegisterState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _obscureText = true;
   bool _loading = false;
+  int _step = 1;
 
   final TextEditingController _usernameController = new TextEditingController();
   final TextEditingController _passwordController = new TextEditingController();
@@ -128,7 +129,7 @@ class RegisterState extends State<RegisterScreen> {
 
   Widget registerButton() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 5, 8, 10),
+      padding: const EdgeInsets.fromLTRB(8, 50, 8, 10),
       child: Container(
           width: 350,
           height: 40,
@@ -138,10 +139,13 @@ class RegisterState extends State<RegisterScreen> {
                   side: BorderSide(color: Colors.black)),
               color: Colors.red[400],
               onPressed: () {
+
+                print(_step);
+                _step++;
+
                 // devolverá true si el formulario es válido, o falso si
                 // el formulario no es válido.
-                if (_formKey.currentState.validate()) {
-                  // Si el formulario es válido, queremos mostrar un Snackbar
+          /*      if (_formKey.currentState.validate()) {
                   Toast.show("Loading...", context,
                       duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
                   _register(_usernameController.text, _emailController.text,
@@ -149,10 +153,10 @@ class RegisterState extends State<RegisterScreen> {
                 } else if (!_formKey.currentState.validate()) {
                   Toast.show("Invalid credentials", context,
                       duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
-                }
+                }*/
               },
               child: Text(
-                'Register',
+                'Next',
                 style: TextStyle(color: Colors.white, fontSize: 15),
               ))),
     );
@@ -163,10 +167,10 @@ class RegisterState extends State<RegisterScreen> {
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
       child: TextFormField(
           controller: _usernameController,
-          decoration: myTextInputDecoration.copyWith(
-              labelText: 'Username', icon: Icon(Icons.account_circle)),
+          decoration: InputDecoration(
+              labelText: 'Username', icon: Icon(Icons.alternate_email)),
           validator: (String value) {
-            if (value == null)
+            if (value.length < 1)
               return '''Must provide a username''';
             else if (!usernameNotTaken(value))
               return '''The username you provided is already being used, please choose a new one and try again''';
@@ -181,7 +185,7 @@ class RegisterState extends State<RegisterScreen> {
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
       child: TextFormField(
         controller: _emailController,
-        decoration: myTextInputDecoration.copyWith(
+        decoration: InputDecoration(
             labelText: 'Email',
             hintText: 'example@gmail.com',
             icon: Icon(Icons.email)),
@@ -201,7 +205,7 @@ class RegisterState extends State<RegisterScreen> {
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
       child: TextFormField(
         controller: _passwordController,
-        decoration: myTextInputDecoration.copyWith(
+        decoration: InputDecoration(
             labelText: 'Password', icon: Icon(Icons.lock)),
         obscureText: true,
         validator: (val) {
@@ -219,7 +223,7 @@ class RegisterState extends State<RegisterScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
       child: TextFormField(
-          decoration: myTextInputDecoration.copyWith(
+          decoration: InputDecoration(
               labelText: 'Confirm password', icon: Icon(Icons.check_circle)),
           obscureText: true,
           validator: (val) {
@@ -242,23 +246,38 @@ class RegisterState extends State<RegisterScreen> {
               end: Alignment.bottomCenter)),
       child: _loading
           ? Center(child: Loading())
-          : Scaffold(
-              backgroundColor: Colors.transparent,
-              body: Form(
-                key: _formKey,
-                child: Center(
-                    child: ListView(
-                  children: <Widget>[
-                    logoRegister(),
-                    usernameField(),
-                    emailField(),
-                    passwordField(),
-                    confirmField(),
-                    registerButton(),
-                  ],
-                )),
-              ),
-            ),
+          : (_step == 1) ?
+      Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Form(
+          key: _formKey,
+          child: Center(
+              child: ListView(
+                children: <Widget>[
+                  logoRegister(),
+                  usernameField(),
+                  emailField(),
+                  passwordField(),
+                  confirmField(),
+                  registerButton(),
+                ],
+              )),
+        ),
+    )
+    : //TODO: Esto no funciona, cambiar y mirar https://stackoverflow.com/questions/48043908/pageview-disable-the-default-scrolling-and-replace-it-with-tap-event
+      Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Form(
+    key: _formKey,
+    child: Center(
+    child: Container(
+    width: 128.0,
+    height: 128.0,
+    child: Image.asset('lib/assets/Photos/abstract-user-flat-3.svg'),
+    ),
+    )
+      )
+    ),
     );
   }
 }

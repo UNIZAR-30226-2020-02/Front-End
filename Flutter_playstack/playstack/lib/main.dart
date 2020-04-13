@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
       routes: {
         'mainscreen': (context) => MainScreen(),
         'searchProcessScreen': (_) => SearchProcess(),
-        'Register': (_) => Register()
+        'Register': (_) => RegisterScreen()
       },
     );
   }
