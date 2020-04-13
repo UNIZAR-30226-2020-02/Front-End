@@ -10,6 +10,8 @@ import 'package:playstack/shared/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:toast/toast.dart';
+import 'package:playstack/shared/common.dart';
+
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -27,9 +29,11 @@ class RegisterState extends State<RegisterScreen> {
   final TextEditingController _passwordController = new TextEditingController();
   final TextEditingController _emailController = new TextEditingController();
 
+  SharedPreferences sharedPreferences;
+
   _register(String username, String email, String password) async {
     // Se las pasa al servidor
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    sharedPreferences = await SharedPreferences.getInstance();
     dynamic data = {
       'NombreUsuario': username,
       'Contrasenya': password,
@@ -297,12 +301,18 @@ class RegisterState extends State<RegisterScreen> {
                                     child: Container(
                                       width: 128.0,
                                       height: 128.0,
-                                      child: Image.asset(
-                                          'lib/assets/Photos/abstract-user-flat-3.png'),
+                                      child: GestureDetector(
+                                        //onTap: uploadImage(sharedPreferences),
+                                        child: ProfilePicture(),
                                     ),
-                                  ))),
+                                    ),
+                                  )
+                              )
+                          ),
                         )
-                      ])),
+                      ]
+                      )
+                  ),
                 ),
                 registerButton(),
               ]

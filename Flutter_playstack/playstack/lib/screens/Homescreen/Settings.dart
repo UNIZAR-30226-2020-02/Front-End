@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:playstack/screens/authentication/AccessScreen.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:playstack/shared/common.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:async/async.dart';
 import 'package:path/path.dart';
@@ -17,10 +18,6 @@ class Settings extends StatefulWidget {
 }
 
 class _SettingsState extends State<Settings> {
-  var defaultImagePath =
-      'https://i7.pngguru.com/preview/753/432/885/user-profile-2018-in-sight-user-conference-expo-business-default-business.jpg';
-
-  var imagePath;
 
   SharedPreferences sharedPreferences;
 
@@ -45,41 +42,6 @@ class _SettingsState extends State<Settings> {
     });
   }
 
-  Future uploadImage() async {
-    sharedPreferences = await SharedPreferences.getInstance();
-
-    var image = await ImagePicker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      // Abre un stream de bytes
-      var stream = http.ByteStream(DelegatingStream.typed(image.openRead()));
-      //Longitud de la imagen
-      var length = await image.length();
-      // Uri del servidor
-      var uri = Uri.parse("https://playstack.azurewebsites.net/");
-      // Crer peticion multiparte
-      var request = new http.MultipartRequest("POST", uri);
-      // multipart that takes file
-      var multipartFile = new http.MultipartFile('NuevaFoto', stream, length,
-          filename: basename(image.path));
-      // add file to multipart
-      request.files.add(multipartFile);
-      // send
-      var response = await request.send();
-      print("Status code devuelto " + response.statusCode.toString());
-
-      // listen for response
-      response.stream.transform(utf8.decoder).listen((value) {
-        print(value);
-      });
-
-      /*
-      setState(() {
-        imagePath = ...
-      });
-      */
-    }
-  }
-
   Widget _profileInfo(context) {
     return Container(
       height: MediaQuery.of(context).size.height / 5,
@@ -89,12 +51,7 @@ class _SettingsState extends State<Settings> {
               flex: 1,
               child: Padding(
                 padding: const EdgeInsets.all(10.0),
-                child: CircleAvatar(
-                    //backgroundColor: Color(0xFF191414),
-                    radius: 60,
-                    backgroundImage: (imagePath != null)
-                        ? NetworkImage(imagePath)
-                        : NetworkImage(defaultImagePath)),
+                child: ProfilePicture(),
               )),
           Expanded(
               flex: 2,
