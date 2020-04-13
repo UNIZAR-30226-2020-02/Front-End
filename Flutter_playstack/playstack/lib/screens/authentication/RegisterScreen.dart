@@ -12,7 +12,6 @@ import 'package:playstack/shared/Loading.dart';
 import 'package:toast/toast.dart';
 import 'package:playstack/shared/common.dart';
 
-
 class RegisterScreen extends StatefulWidget {
   @override
   RegisterState createState() => RegisterState();
@@ -23,6 +22,7 @@ class RegisterState extends State<RegisterScreen> {
   final _imageKey = GlobalKey<FormState>();
   bool _obscureText = true;
   bool _loading = false;
+  int _step = 0;
   PageController _pageController = new PageController();
 
   final TextEditingController _usernameController = new TextEditingController();
@@ -103,31 +103,17 @@ class RegisterState extends State<RegisterScreen> {
     );
   }
 
-  // Check if its a digit
-  bool isDigit(String s) =>
-      "0".compareTo(s[0]) <= 0 && "9".compareTo(s[0]) >= 0;
-
-  bool passwordIsSafe(String password) {
-    bool isSafe = false;
-    var char = '';
-
-    if (password.length >= 8) {
-      for (int i = 0; i < password.length; i++) {
-        char = password.substring(i, i + 1);
-        if (!isDigit(char)) {
-          if (char == char.toUpperCase()) {
-            isSafe = true;
-          }
-        }
-      }
-    }
-    return isSafe;
+  bool _canGoBack() {
+    return (_step == 0);
   }
 
   Future<bool> _onBackPressed() {
-    if (_pageController.page.round() == _pageController.initialPage)
+    if (_canGoBack())
       return Future.value(true);
     else {
+      setState(() {
+        _step--;
+      });
       _pageController.previousPage(
         duration: Duration(milliseconds: 400),
         curve: Curves.linear,
@@ -136,27 +122,30 @@ class RegisterState extends State<RegisterScreen> {
     }
   }
 
-  Widget registerButton() {
+  Widget registerButtons() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 50, 8, 10),
-      child: Container(
-          width: 350,
-          height: 40,
-          child: RaisedButton(
-              shape: RoundedRectangleBorder(
-                  borderRadius: new BorderRadius.circular(15.0),
-                  side: BorderSide(color: Colors.black)),
-              color: Colors.red[400],
-              onPressed: () {
-                _pageController.animateToPage(
-                  1,
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeInOut,
-                );
+        padding: const EdgeInsets.fromLTRB(8, 50, 8, 10),
+        child: Container(
+            width: 350,
+            height: 40,
+            child: _canGoBack()
+                ? RaisedButton(
+                shape: RoundedRectangleBorder(
+                    borderRadius: new BorderRadius.circular(15.0),
+                    side: BorderSide(color: Colors.black)),
+                color: Colors.red[400],
+                onPressed: () {
+                  setState(() {
+                    _step++;
+                  });
+                  _pageController.nextPage(
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeInOut,
+                  );
 
-                // devolverá true si el formulario es válido, o falso si
-                // el formulario no es válido.
-                /*      if (_formKey.currentState.validate()) {
+                  // devolverá true si el formulario es válido, o falso si
+                  // el formulario no es válido.
+                  /*      if (_formKey.currentState.validate()) {
                   Toast.show("Loading...", context,
                       duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
                 if (_formKey.currentState.validate()) {
@@ -170,14 +159,57 @@ class RegisterState extends State<RegisterScreen> {
                   Toast.show("Invalid credentials", context,
                       duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
                 }*/
-              },
-              child: Text(
-                'Next',
-                style: TextStyle(color: Colors.white, fontSize: 15),
-              ))),
+                },
+                child: Text(
+                  'Next',
+                  style: TextStyle(color: Colors.white, fontSize: 15),
+                )
+            )
+                : Row(
+              children: <Widget>[
+                RaisedButton(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: new BorderRadius.circular(15.0),
+                        side: BorderSide(color: Colors.black)),
+                    color: Colors.red[400],
+                    onPressed: () {
+                      setState(() {
+                        _step--;
+                      });
+                      _pageController.previousPage(
+                        duration: const Duration(milliseconds: 400),
+                        curve: Curves.easeInOut,
+                      );
+                    },
+                    child: Text(
+                      'Back',
+                      style: TextStyle(color: Colors.white, fontSize: 15),
+                    )
+                ),
+                RaisedButton(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: new BorderRadius.circular(15.0),
+                        side: BorderSide(color: Colors.black)),
+                    color: Colors.red[400],
+                    onPressed: () {
+                      setState(() {
+                        _step++;
+                      });
+                      _pageController.nextPage(
+                        duration: const Duration(milliseconds: 400),
+                        curve: Curves.easeInOut,
+                      );
+                    },
+                    child: Text(
+                      'Next',
+                      style: TextStyle(color: Colors.white, fontSize: 15),
+                    )
+                ),
+              ],
+            )
+        )
     );
   }
-
   Widget usernameField() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
@@ -279,6 +311,12 @@ class RegisterState extends State<RegisterScreen> {
                               child: Center(
                                   child: ListView(
                                 children: <Widget>[
+                                  Center(
+                                      child: Text(
+                                    'Register',
+                                    style: TextStyle(
+                                        fontFamily: 'Circular', fontSize: 30),
+                                  )),
                                   usernameField(),
                                   emailField(),
                                   passwordField(),
@@ -297,26 +335,49 @@ class RegisterState extends State<RegisterScreen> {
                               backgroundColor: Colors.transparent,
                               body: Form(
                                   key: _imageKey,
-                                  child: Center(
-                                    child: Container(
-                                      width: 128.0,
-                                      height: 128.0,
-                                      child: GestureDetector(
-                                        //onTap: uploadImage(sharedPreferences),
-                                        child: ProfilePicture(),
-                                    ),
-                                    ),
-                                  )
-                              )
-                          ),
-                        )
-                      ]
-                      )
-                  ),
+                                  child: Column(children: <Widget>[
+                                    Center(
+                                        child: Text(
+                                      'Say Cheese!',
+                                      style: TextStyle(
+                                          fontFamily: 'Circular', fontSize: 30),
+                                    )),
+                                    Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                            0, 15, 0, 10),
+                                        child: Center(
+                                            child: Text(
+                                                '''Add a profile picture.\nDon\'t worry, you can change it later!''',
+                                                style: TextStyle(
+                                                    fontFamily: 'Circular',
+                                                    fontSize: 15),
+                                                textAlign: TextAlign.center))),
+                                    Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                            0, 30, 0, 0),
+                                        child: Center(
+                                          child: Container(
+                                            width: 128.0,
+                                            height: 128.0,
+                                            child: GestureDetector(
+                                              onTap: () => uploadImage(
+                                                  sharedPreferences),
+                                              child: ProfilePicture(),
+                                            ),
+                                          ),
+                                        ))
+                                  ]))),
+                        ),
+                        Center(
+                            child: Scaffold(
+                                body: Text(
+                          'Premium (WIP)',
+                          style:
+                              TextStyle(fontFamily: 'Circular', fontSize: 30),
+                        )))
+                      ])),
                 ),
-                registerButton(),
-              ]
-        )
-    );
+                registerButtons(),
+              ]));
   }
 }

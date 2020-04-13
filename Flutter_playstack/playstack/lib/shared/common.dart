@@ -59,3 +59,25 @@ class ProfilePicture extends StatelessWidget{
   }
 }
 
+// Check if its a digit
+bool isDigit(String s) =>
+    "0".compareTo(s[0]) <= 0 && "9".compareTo(s[0]) >= 0;
+
+// Checks if the password is secure enough
+bool passwordIsSafe(String password) {
+  bool isSafe = false;
+  var char = '';
+
+  if (password.length >= 8) {
+    for (int i = 0; i < password.length; i++) {
+      char = password.substring(i, i + 1);
+      if (!isDigit(char)) {
+        if (char == char.toUpperCase()) {
+          isSafe = true;
+        }
+      }
+    }
+  }
+  return isSafe;
+}
+

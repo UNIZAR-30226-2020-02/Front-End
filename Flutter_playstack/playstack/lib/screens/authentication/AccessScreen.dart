@@ -6,6 +6,7 @@ import 'package:playstack/shared/Loading.dart';
 import 'dart:convert';
 import 'package:playstack/shared/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:playstack/shared/common.dart';
 import 'package:toast/toast.dart';
 
 class AccessScreen extends StatefulWidget {
@@ -98,28 +99,6 @@ class _AccessScreenState extends State<AccessScreen> {
     setState(() {
       _obscureText = !_obscureText;
     });
-  }
-
-  // Check if its a digit
-  bool isDigit(String s) =>
-      "0".compareTo(s[0]) <= 0 && "9".compareTo(s[0]) >= 0;
-
-  // Checks if the password is secure enough
-  bool passwordIsSafe(String password) {
-    bool isSafe = false;
-    var char = '';
-
-    if (password.length >= 8) {
-      for (int i = 0; i < password.length; i++) {
-        char = password.substring(i, i + 1);
-        if (!isDigit(char)) {
-          if (char == char.toUpperCase()) {
-            isSafe = true;
-          }
-        }
-      }
-    }
-    return isSafe;
   }
 
   Widget passwordFormField() {
