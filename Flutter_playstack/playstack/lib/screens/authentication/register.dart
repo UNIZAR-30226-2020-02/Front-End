@@ -12,38 +12,32 @@ class Register extends StatefulWidget {
 }
 
 class _RegisterState extends State<Register> {
+  SharedPreferences sharedPreferences;
   //Register function
-  _Register(String username, String email, String password) async {
-    print("Intento de registro con " + username + email + password);
-
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    Map<String, String> data = {
+  _register(String username, String email, String password) async {
+    // Se las pasa al servidor
+    sharedPreferences = await SharedPreferences.getInstance();
+    dynamic data = {
       'NombreUsuario': username,
       'Contrasenya': password,
       'Correo': email
     };
 
-    String jsonString = jsonEncode(data);
-    print("Enviando " + jsonString);
+    data = jsonEncode(data);
 
     //var jsonResponse = null;
     var response = await http.post(
-        "https://playstack.azurewebsites.net/crearUsuario",
-        body: jsonString);
-    /*var response = await http.get(
-      Uri.encodeFull("https://jsonplaceholder.typicode.com/posts"),
-    );*/
+        "https://playstack.azurewebsites.net/create/user",
+        headers: {"Content-Type": "application/json"},
+        body: data);
     if (response.statusCode == 201) {
-      /*jsonResponse = json.decode(response.body);
-      if (jsonResponse != null) {
-        setState(() {
-          _loading = false;
-        });
-        */
-      setState(() {
-        _loading = false;
-      });
-      sharedPreferences.setString("token", "ok");
+      _loading = false;
+      // Se guardan los campos para poder ser modificados posteriormente
+      List<String> credentials = new List();
+      credentials.add(username);
+      credentials.add(email);
+      sharedPreferences.setStringList('Credentials', credentials);
+      sharedPreferences.setString("LoggedIn", "ok");
       //print("Token es " + jsonResponse[0]['userId'].toString());
       Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (BuildContext context) => MainScreen()),
@@ -52,10 +46,8 @@ class _RegisterState extends State<Register> {
       setState(() {
         _loading = false;
       });
-      print(response.body);
     }
-    //print("Statuscode: " + response.statusCode.toString());
-    print('Response: ' + response.body);
+    print("Statuscode " + response.statusCode.toString());
   }
 
   bool _loading = false;
@@ -89,7 +81,7 @@ class _RegisterState extends State<Register> {
                       onPressed: () {
                         setState(() {
                           _loading = true;
-                          _Register(_usernameController.text,
+                          _register(_usernameController.text,
                               _emailController.text, _passwordController.text);
                         });
                       },

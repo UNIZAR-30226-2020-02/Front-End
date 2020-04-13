@@ -19,8 +19,6 @@ class _ProfileSettingsState extends State<ProfileSettings> {
   //Campos a modificar
   String _username;
   String _email;
-  String _password;
-  String _repeatPassword;
   bool _obscureText = true;
   bool _loading = true;
 
@@ -45,9 +43,8 @@ class _ProfileSettingsState extends State<ProfileSettings> {
     setState(() {
       List<String> credentials = sharedPreferences.getStringList('Credentials');
       // Coge el username
-      _username = credentials.elementAt(0);
-      _email = credentials.elementAt(1);
-      _password = credentials.elementAt(2);
+      _username = credentials.elementAt(1);
+      _email = credentials.elementAt(0);
       _loading = false;
     });
   }
@@ -161,43 +158,16 @@ class _ProfileSettingsState extends State<ProfileSettings> {
                       SizedBox(height: 10),
                       // Campo para el email
                       TextField(
+                          readOnly: true,
                           controller: TextEditingController.fromValue(
                               new TextEditingValue(
                                   text: _email,
                                   selection: new TextSelection.collapsed(
                                       offset: _email.length))),
-                          onChanged: (val) {
-                            _email = val;
-                          },
-                          decoration: InputDecoration(
-                              icon: Icon(Icons.email), labelText: 'Email')),
+                          decoration: InputDecoration(icon: Icon(Icons.email))),
                       SizedBox(height: 15),
                       // Campo para la contraseña
-                      TextField(
-                          obscureText: _obscureText,
-                          controller: TextEditingController.fromValue(
-                              new TextEditingValue(
-                                  text: _password,
-                                  selection: new TextSelection.collapsed(
-                                      offset: _password.length))),
-                          onChanged: (val) {
-                            _password = val;
-                          },
-                          decoration: InputDecoration(
-                              icon: Icon(Icons.lock), labelText: 'Password')),
-                      TextField(
-                          obscureText: _obscureText,
-                          controller: TextEditingController.fromValue(
-                              new TextEditingValue(
-                                  text: _password,
-                                  selection: new TextSelection.collapsed(
-                                      offset: _password.length))),
-                          onChanged: (val) {
-                            _repeatPassword = val;
-                          },
-                          decoration: InputDecoration(
-                              icon: Icon(Icons.check),
-                              labelText: 'Repeat password')),
+
                       FlatButton(
                           onPressed: _toggle,
                           child: new Text(_obscureText ? "Show" : "Hide")),

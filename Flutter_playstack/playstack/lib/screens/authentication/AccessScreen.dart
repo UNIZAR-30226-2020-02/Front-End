@@ -55,26 +55,47 @@ class _AccessScreenState extends State<AccessScreen> {
     }
   }
 
+  // Para recuperar el correo o usuario del usuario que acaba de iniciar sesión
+  Future getUserInfo(String name) async {
+    var response = await http.get(
+      "https://playstack.azurewebsites.net/user/getinfo?NombreUsuario=$name",
+      headers: {"Content-Type": "application/json"},
+    );
+    if (response.statusCode == 200) {
+      var credentials = jsonDecode(response.body);
+      return credentials;
+    } else {
+      return "error";
+    }
+  }
+
   //Sign in function
   signIn(String email, pass) async {
     //print("Iniciando sesion con " + email + " y " + pass);
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     dynamic data = {'NombreUsuario': email, 'Contrasenya': pass};
     data = jsonEncode(data);
-    var jsonResponse = null;
     var response = await http.post(
         "https://playstack.azurewebsites.net/user/login",
         headers: {"Content-Type": "application/json"},
         body: data);
 
+    print("Statuscode " + response.statusCode.toString());
     if (response.statusCode == 200) {
-      jsonResponse = json.decode(response.body);
-
+      print("usuario registrado, comprobando otro campo...");
+      var credentials = await getUserInfo(email);
+      List<String> credentialsList = new List();
+      credentialsList.add(credentials['Correo']);
+      credentialsList.add(credentials['NombreUsuario']);
+      sharedPreferences.setStringList('Credentials', credentialsList);
       sharedPreferences.setString("LoggedIn", 'yes');
-      //print("Token es " + jsonResponse[0]['userId'].toString());
       Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (BuildContext context) => MainScreen()),
           (Route<dynamic> route) => false);
+
+      setState(() {
+        _loading = false;
+      });
     } else {
       if (response.statusCode == 404) {
         setState(() {
@@ -165,10 +186,11 @@ class _AccessScreenState extends State<AccessScreen> {
                 setState(() {
                   _loading = true;
                 });
-                /*signIn(
-                      emailOrUsernameController.text, passwordController.text);*/
+                signIn(emailOrUsernameController.text, passwordController.text);
+                /*  
                 signInPrueba(
                     emailOrUsernameController.text, passwordController.text);
+                    */
               }
             },
             shape: RoundedRectangleBorder(

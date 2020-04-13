@@ -51,9 +51,8 @@ class RegisterState extends State<RegisterScreen> {
       _loading = false;
       // Se guardan los campos para poder ser modificados posteriormente
       List<String> credentials = new List();
-      credentials.add(username);
       credentials.add(email);
-      credentials.add(password);
+      credentials.add(username);
       sharedPreferences.setStringList('Credentials', credentials);
       sharedPreferences.setString("LoggedIn", "ok");
       //print("Token es " + jsonResponse[0]['userId'].toString());
@@ -130,22 +129,22 @@ class RegisterState extends State<RegisterScreen> {
             height: 40,
             child: _canGoBack()
                 ? RaisedButton(
-                shape: RoundedRectangleBorder(
-                    borderRadius: new BorderRadius.circular(15.0),
-                    side: BorderSide(color: Colors.black)),
-                color: Colors.red[400],
-                onPressed: () {
-                  setState(() {
-                    _step++;
-                  });
-                  _pageController.nextPage(
-                    duration: const Duration(milliseconds: 400),
-                    curve: Curves.easeInOut,
-                  );
+                    shape: RoundedRectangleBorder(
+                        borderRadius: new BorderRadius.circular(15.0),
+                        side: BorderSide(color: Colors.black)),
+                    color: Colors.red[400],
+                    onPressed: () {
+                      setState(() {
+                        _step++;
+                      });
+                      _pageController.nextPage(
+                        duration: const Duration(milliseconds: 400),
+                        curve: Curves.easeInOut,
+                      );
 
-                  // devolverá true si el formulario es válido, o falso si
-                  // el formulario no es válido.
-                  /*      if (_formKey.currentState.validate()) {
+                      // devolverá true si el formulario es válido, o falso si
+                      // el formulario no es válido.
+                      /*      if (_formKey.currentState.validate()) {
                   Toast.show("Loading...", context,
                       duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
                 if (_formKey.currentState.validate()) {
@@ -159,57 +158,53 @@ class RegisterState extends State<RegisterScreen> {
                   Toast.show("Invalid credentials", context,
                       duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
                 }*/
-                },
-                child: Text(
-                  'Next',
-                  style: TextStyle(color: Colors.white, fontSize: 15),
-                )
-            )
-                : Row(
-              children: <Widget>[
-                RaisedButton(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: new BorderRadius.circular(15.0),
-                        side: BorderSide(color: Colors.black)),
-                    color: Colors.red[400],
-                    onPressed: () {
-                      setState(() {
-                        _step--;
-                      });
-                      _pageController.previousPage(
-                        duration: const Duration(milliseconds: 400),
-                        curve: Curves.easeInOut,
-                      );
-                    },
-                    child: Text(
-                      'Back',
-                      style: TextStyle(color: Colors.white, fontSize: 15),
-                    )
-                ),
-                RaisedButton(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: new BorderRadius.circular(15.0),
-                        side: BorderSide(color: Colors.black)),
-                    color: Colors.red[400],
-                    onPressed: () {
-                      setState(() {
-                        _step++;
-                      });
-                      _pageController.nextPage(
-                        duration: const Duration(milliseconds: 400),
-                        curve: Curves.easeInOut,
-                      );
                     },
                     child: Text(
                       'Next',
                       style: TextStyle(color: Colors.white, fontSize: 15),
-                    )
-                ),
-              ],
-            )
-        )
-    );
+                    ))
+                : Row(
+                    children: <Widget>[
+                      RaisedButton(
+                          shape: RoundedRectangleBorder(
+                              borderRadius: new BorderRadius.circular(15.0),
+                              side: BorderSide(color: Colors.black)),
+                          color: Colors.red[400],
+                          onPressed: () {
+                            setState(() {
+                              _step--;
+                            });
+                            _pageController.previousPage(
+                              duration: const Duration(milliseconds: 400),
+                              curve: Curves.easeInOut,
+                            );
+                          },
+                          child: Text(
+                            'Back',
+                            style: TextStyle(color: Colors.white, fontSize: 15),
+                          )),
+                      RaisedButton(
+                          shape: RoundedRectangleBorder(
+                              borderRadius: new BorderRadius.circular(15.0),
+                              side: BorderSide(color: Colors.black)),
+                          color: Colors.red[400],
+                          onPressed: () {
+                            setState(() {
+                              _step++;
+                            });
+                            _pageController.nextPage(
+                              duration: const Duration(milliseconds: 400),
+                              curve: Curves.easeInOut,
+                            );
+                          },
+                          child: Text(
+                            'Next',
+                            style: TextStyle(color: Colors.white, fontSize: 15),
+                          )),
+                    ],
+                  )));
   }
+
   Widget usernameField() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
