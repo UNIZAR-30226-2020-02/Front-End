@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:playstack/screens/GenresSongs.dart';
+import 'package:playstack/shared/common.dart';
 
 var blueColor = Color(0xFF090e42);
 var pinkColor = Color(0xFFff6b80);
@@ -63,79 +65,6 @@ Widget genres() {
   );
 }
 
-class SongItem extends StatelessWidget {
-  final title;
-  final artist;
-  final image;
-  SongItem(this.title, this.artist, this.image);
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => DetailedScreen(title, artist, image)));
-      },
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 26.0),
-        child: Row(
-          children: <Widget>[
-            Stack(
-              children: <Widget>[
-                Container(
-                  height: 80.0,
-                  width: 80.0,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: Image.network(
-                      image,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                Container(
-                    height: 80.0,
-                    width: 80.0,
-                    child: Icon(
-                      Icons.play_circle_filled,
-                      color: Colors.white.withOpacity(0.7),
-                      size: 42.0,
-                    ))
-              ],
-            ),
-            SizedBox(width: 16.0),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  title,
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 24.0),
-                ),
-                SizedBox(height: 8.0),
-                Text(
-                  artist,
-                  style: TextStyle(
-                      color: Colors.white.withOpacity(0.5), fontSize: 18.0),
-                ),
-              ],
-            ),
-            Spacer(),
-            Icon(
-              Icons.more_horiz,
-              color: Colors.white.withOpacity(0.6),
-              size: 32.0,
-            )
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class ItemCard extends StatelessWidget {
   final image;
   final title;
@@ -164,7 +93,11 @@ class ItemCard extends StatelessWidget {
                   width: double.infinity,
                   child: FlatButton(
                     color: Colors.transparent,
-                    onPressed: () => print('hi'),
+                    onPressed: () =>
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (BuildContext context) => GenresSongs(
+                                  genre: 'Copla',
+                                ))),
                     child: null,
                   ),
                 ),

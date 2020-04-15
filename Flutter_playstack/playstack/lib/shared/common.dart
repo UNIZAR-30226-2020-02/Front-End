@@ -8,7 +8,8 @@ import 'package:async/async.dart';
 import 'package:path/path.dart';
 import 'dart:convert';
 
-var defaultImagePath = 'https://i7.pngguru.com/preview/753/432/885/user-profile-2018-in-sight-user-conference-expo-business-default-business.jpg';
+var defaultImagePath =
+    'https://i7.pngguru.com/preview/753/432/885/user-profile-2018-in-sight-user-conference-expo-business-default-business.jpg';
 var imagePath;
 
 Future uploadImage(SharedPreferences sharedPreferences) async {
@@ -46,8 +47,7 @@ Future uploadImage(SharedPreferences sharedPreferences) async {
   }
 }
 
-
-class ProfilePicture extends StatelessWidget{
+class ProfilePicture extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CircleAvatar(
@@ -60,8 +60,7 @@ class ProfilePicture extends StatelessWidget{
 }
 
 // Check if its a digit
-bool isDigit(String s) =>
-    "0".compareTo(s[0]) <= 0 && "9".compareTo(s[0]) >= 0;
+bool isDigit(String s) => "0".compareTo(s[0]) <= 0 && "9".compareTo(s[0]) >= 0;
 
 // Checks if the password is secure enough
 bool passwordIsSafe(String password) {
@@ -81,3 +80,72 @@ bool passwordIsSafe(String password) {
   return isSafe;
 }
 
+class SongItem extends StatelessWidget {
+  final title;
+  final artist;
+  final image;
+  SongItem(this.title, this.artist, this.image);
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        print('Se reproducirá la canción');
+      },
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 26.0),
+        child: Row(
+          children: <Widget>[
+            Stack(
+              children: <Widget>[
+                Container(
+                  height: 80.0,
+                  width: 80.0,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8.0),
+                    child: Image.network(
+                      image,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                Container(
+                    height: 80.0,
+                    width: 80.0,
+                    child: Icon(
+                      Icons.play_circle_filled,
+                      color: Colors.white.withOpacity(0.7),
+                      size: 42.0,
+                    ))
+              ],
+            ),
+            SizedBox(width: 16.0),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  title,
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24.0),
+                ),
+                SizedBox(height: 8.0),
+                Text(
+                  artist,
+                  style: TextStyle(
+                      color: Colors.white.withOpacity(0.5), fontSize: 18.0),
+                ),
+              ],
+            ),
+            Spacer(),
+            Icon(
+              Icons.more_horiz,
+              color: Colors.white.withOpacity(0.6),
+              size: 32.0,
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -143,7 +143,7 @@ class RegisterState extends State<RegisterScreen> {
 
   Widget registerButtons() {
     return Padding(
-        padding: const EdgeInsets.fromLTRB(8, 50, 8, 10),
+        padding: const EdgeInsets.fromLTRB(8, 50, 8, 40),
         child: Container(
             width: 350,
             height: 40,
@@ -364,49 +364,47 @@ class RegisterState extends State<RegisterScreen> {
 
   Widget thirdPage() {
     return Scaffold(
-            backgroundColor: Colors.transparent,
-            body: ListView(children: <Widget>[
-              Center(
+        backgroundColor: Colors.transparent,
+        body: ListView(children: <Widget>[
+          Center(
+              child: Text(
+            'One more step',
+            style: TextStyle(fontFamily: 'Circular', fontSize: 30),
+          )),
+          Padding(
+              padding: const EdgeInsets.fromLTRB(0, 15, 0, 10),
+              child: Center(
                   child: Text(
-                'One more step',
-                style: TextStyle(fontFamily: 'Circular', fontSize: 30),
-              )),
-              Padding(
-                  padding: const EdgeInsets.fromLTRB(0, 15, 0, 10),
-                  child: Center(
-                      child: Text(
-                          '''Get Playstack Premium now and enjoy these features''',
-                          style:
-                              TextStyle(fontFamily: 'Circular', fontSize: 20),
-                          textAlign: TextAlign.center))),
-              Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 20, 30, 0),
-                  child: Center(
-                      child: Table(children: <TableRow>[
-                    premiumAdvantagesCell(Icon(Icons.music_note),
-                        '''Play any song you want, anytime you want!'''),
-                    premiumAdvantagesCell(Icon(Icons.queue_music),
-                        '''You control what plays next!'''),
-                    premiumAdvantagesCell(Icon(Icons.signal_wifi_off),
-                        '''Listen to your favourite songs, even offline!'''),
-                    premiumAdvantagesCell(Icon(Icons.library_music),
-                        '''Combine the songs in your device with our songs in the same playlist!'''),
-                    premiumAdvantagesCell(Icon(Icons.skip_next),
-                        '''Unlimited skips, forwards and backwards!'''),
-                  ]))),
-              Padding(
-                  padding: const EdgeInsets.fromLTRB(70, 10, 70, 10),
-                  child: RaisedButton(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: new BorderRadius.circular(15.0),
-                          side: BorderSide(color: Colors.black)),
-                      color: Colors.red[400],
-                      onPressed: _launchPremiumURL,
-                      child: Text('''Get Premium''',
-                          style:
-                              TextStyle(fontFamily: 'Circular', fontSize: 20),
-                          textAlign: TextAlign.center)))
-            ]));
+                      '''Get Playstack Premium now and enjoy these features''',
+                      style: TextStyle(fontFamily: 'Circular', fontSize: 20),
+                      textAlign: TextAlign.center))),
+          Padding(
+              padding: const EdgeInsets.fromLTRB(10, 20, 30, 0),
+              child: Center(
+                  child: Table(children: <TableRow>[
+                premiumAdvantagesCell(Icon(Icons.music_note),
+                    '''Play any song you want, anytime you want!'''),
+                premiumAdvantagesCell(Icon(Icons.queue_music),
+                    '''You control what plays next!'''),
+                premiumAdvantagesCell(Icon(Icons.signal_wifi_off),
+                    '''Listen to your favourite songs, even offline!'''),
+                premiumAdvantagesCell(Icon(Icons.library_music),
+                    '''Combine the songs in your device with our songs in the same playlist!'''),
+                premiumAdvantagesCell(Icon(Icons.skip_next),
+                    '''Unlimited skips, forwards and backwards!'''),
+              ]))),
+          Padding(
+              padding: const EdgeInsets.fromLTRB(70, 10, 70, 10),
+              child: RaisedButton(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: new BorderRadius.circular(15.0),
+                      side: BorderSide(color: Colors.black)),
+                  color: Colors.red[400],
+                  onPressed: _launchPremiumURL,
+                  child: Text('''Get Premium''',
+                      style: TextStyle(fontFamily: 'Circular', fontSize: 20),
+                      textAlign: TextAlign.center)))
+        ]));
   }
 
   @override

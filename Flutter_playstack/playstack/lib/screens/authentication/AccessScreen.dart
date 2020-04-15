@@ -33,7 +33,7 @@ class _AccessScreenState extends State<AccessScreen> {
     );
 
     if (response.statusCode == 200) {
-      List<String> credentials;
+      List<String> credentials = new List();
       credentials.add(email);
       credentials.add(pass);
       jsonResponse = json.decode(response.body);
@@ -186,11 +186,10 @@ class _AccessScreenState extends State<AccessScreen> {
                 setState(() {
                   _loading = true;
                 });
-                signIn(emailOrUsernameController.text, passwordController.text);
-                /*  
+                //signIn(emailOrUsernameController.text, passwordController.text);
+
                 signInPrueba(
                     emailOrUsernameController.text, passwordController.text);
-                    */
               }
             },
             shape: RoundedRectangleBorder(
