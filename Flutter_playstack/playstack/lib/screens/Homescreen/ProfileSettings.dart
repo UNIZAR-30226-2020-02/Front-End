@@ -133,9 +133,8 @@ class _ProfileSettingsState extends State<ProfileSettings> {
                         style: TextStyle(fontSize: 20),
                       ),
                       Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: ProfilePicture()
-                      ),
+                          padding: const EdgeInsets.all(10.0),
+                          child: ProfilePicture()),
                       changeProfilePhotoButton(),
                       SizedBox(
                         height: 15,
@@ -164,9 +163,6 @@ class _ProfileSettingsState extends State<ProfileSettings> {
                       SizedBox(height: 15),
                       // Campo para la contraseña
 
-                      FlatButton(
-                          onPressed: _toggle,
-                          child: new Text(_obscureText ? "Show" : "Hide")),
                       SizedBox(height: 15),
                       updateButton()
                     ],
