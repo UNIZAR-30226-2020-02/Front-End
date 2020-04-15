@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:playstack/shared/Loading.dart';
+import 'package:playstack/shared/common.dart';
 import 'package:playstack/shared/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -133,12 +134,7 @@ class _ProfileSettingsState extends State<ProfileSettings> {
                       ),
                       Padding(
                         padding: const EdgeInsets.all(10.0),
-                        child: CircleAvatar(
-                            //backgroundColor: Color(0xFF191414),
-                            radius: 60,
-                            backgroundImage: (imagePath != null)
-                                ? NetworkImage(imagePath)
-                                : NetworkImage(defaultImagePath)),
+                        child: ProfilePicture()
                       ),
                       changeProfilePhotoButton(),
                       SizedBox(
