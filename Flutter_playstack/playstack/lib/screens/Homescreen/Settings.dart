@@ -18,7 +18,6 @@ class Settings extends StatefulWidget {
 }
 
 class _SettingsState extends State<Settings> {
-
   SharedPreferences sharedPreferences;
 
   List<String> credentials;
@@ -37,7 +36,7 @@ class _SettingsState extends State<Settings> {
     setState(() {
       List<String> credentials = sharedPreferences.getStringList('Credentials');
       // Coge el username
-      _username = credentials.elementAt(0);
+      _username = credentials.elementAt(1);
       _loading = false;
     });
   }

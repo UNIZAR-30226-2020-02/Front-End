@@ -52,9 +52,8 @@ class RegisterState extends State<RegisterScreen> {
       _loading = false;
       // Se guardan los campos para poder ser modificados posteriormente
       List<String> credentials = new List();
-      credentials.add(username);
       credentials.add(email);
-      credentials.add(password);
+      credentials.add(username);
       sharedPreferences.setStringList('Credentials', credentials);
       sharedPreferences.setString("LoggedIn", "ok");
       //print("Token es " + jsonResponse[0]['userId'].toString());

@@ -6,6 +6,7 @@ import 'package:playstack/screens/Homescreen/PublicProfile.dart';
 import 'package:playstack/screens/Homescreen/Settings.dart';
 import 'package:playstack/screens/PlayingNow.dart';
 import 'package:playstack/screens/Search/SearchProcess.dart';
+import 'package:playstack/screens/authentication/Register.dart';
 import 'package:playstack/screens/authentication/RegisterScreen.dart';
 import 'package:playstack/screens/mainscreen.dart';
 import 'package:bot_toast/bot_toast.dart';

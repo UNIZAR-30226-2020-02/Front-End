@@ -18,7 +18,7 @@ Widget genres() {
         Text(
           'Géneros',
           style: TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 30.0),
+              color: Colors.white, fontFamily: 'Circular', fontSize: 30.0),
         ),
         SizedBox(height: 16.0),
         Row(
@@ -35,11 +35,11 @@ Widget genres() {
         ),
         Row(
           children: <Widget>[
-            ItemCard('assets/images/orange.jpg', 'Extremely loud'),
+            ItemCard('assets/images/PopGenre.png', 'Pop'),
             SizedBox(
               width: 16.0,
             ),
-            ItemCard('assets/images/yellow.jpg', 'Old Soul'),
+            ItemCard('assets/images/TechnoGenre.png', 'Techno'),
           ],
         ),
         SizedBox(
@@ -159,15 +159,15 @@ class ItemCard extends StatelessWidget {
                       height: 140.0,
                       width: double.infinity,
                     )),
-                Positioned(
-                  right: 16.0,
-                  top: 16.0,
-                  child: Icon(
-                    Icons.bookmark,
-                    color: Colors.white.withOpacity(0.6),
-                    size: 24.0,
+                Container(
+                  height: 120,
+                  width: double.infinity,
+                  child: FlatButton(
+                    color: Colors.transparent,
+                    onPressed: () => print('hi'),
+                    child: null,
                   ),
-                )
+                ),
               ],
             ),
           ),
