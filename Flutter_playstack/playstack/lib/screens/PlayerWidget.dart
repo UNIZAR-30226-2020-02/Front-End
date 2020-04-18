@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 import 'dart:async';
 import 'dart:convert';
 
@@ -8,33 +9,38 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:audioplayers/audio_cache.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:playstack/models/Song.dart';
+import 'package:playstack/shared/common.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/src/foundation/constants.dart';
 import 'package:http/http.dart' as http;
+import 'Homescreen/Home.dart';
 
 enum PlayerState { stopped, playing, paused }
 enum PlayingRouteState { speakers, earpiece }
 
 class PlayerWidget extends StatefulWidget {
-  final String url;
+  final Song song;
   final PlayerMode mode;
   final AudioPlayer advancedPlayer;
 
   PlayerWidget(
       {Key key,
-      @required this.url,
+      @required this.song,
       @required this.advancedPlayer,
       this.mode = PlayerMode.MEDIA_PLAYER})
       : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
-    return _PlayerWidgetState(url, mode);
+    return _PlayerWidgetState(song, mode);
   }
 }
 
-class _PlayerWidgetState extends State<PlayerWidget> {
-  String url;
+class _PlayerWidgetState extends State<PlayerWidget>
+    with SingleTickerProviderStateMixin {
+  bool _showCover;
+  Song song;
   bool seekDone;
 
   PlayerMode mode;
@@ -52,7 +58,11 @@ class _PlayerWidgetState extends State<PlayerWidget> {
   StreamSubscription _playerErrorSubscription;
   StreamSubscription _playerStateSubscription;
 
-  _PlayerWidgetState(this.url, this.mode);
+  _PlayerWidgetState(this.song, this.mode);
+
+  AnimationController _animationController;
+  Animation<Color> _animateColor;
+  Animation<double> _animateIcon;
 
   get _isPlaying => _playerState == PlayerState.playing;
   get _isPaused => _playerState == PlayerState.paused;
@@ -61,33 +71,14 @@ class _PlayerWidgetState extends State<PlayerWidget> {
 
   @override
   void initState() {
+    print("Url de la cancion: " + song.url);
     widget.advancedPlayer.seekCompleteHandler =
         (finished) => setState(() => seekDone = finished);
     super.initState();
+    _showCover = false;
+    initAnim();
     _initAudioPlayer();
-  }
-
-  Future<String> _getSongUrl(String songName) async {
-    print("Intento conger url");
-
-    var jsonResponse = null;
-    var response = await http
-        .get("https://playstack.azurewebsites.net/GetSong?Titulo=$songName");
-    /*var response = await http.get(
-      Uri.encodeFull("https://jsonplaceholder.typicode.com/posts"),
-    );*/
-    if (response.statusCode == 200) {
-      jsonResponse = json.decode(response.body);
-      if (jsonResponse != null) {
-        print("Json response: " + jsonResponse.toString());
-        print("Url: " + jsonResponse[0]["URL"].toString());
-        return jsonResponse[0]["URL"];
-      }
-    } else {
-      print("Status code not 200, body: " + response.body);
-      return null;
-    }
-    print("Statuscode: " + response.statusCode.toString());
+    togglePlayPause();
   }
 
   void _onComplete() {
@@ -181,7 +172,7 @@ class _PlayerWidgetState extends State<PlayerWidget> {
             _position.inMilliseconds < _duration.inMilliseconds)
         ? _position
         : null;
-    final result = await _audioPlayer.play(url, position: playPosition);
+    final result = await _audioPlayer.play(song.url, position: playPosition);
     if (result == 1) setState(() => _playerState = PlayerState.playing);
 
     // default playback rate is 1.0
@@ -210,8 +201,407 @@ class _PlayerWidgetState extends State<PlayerWidget> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
+  dynamic getImage(Song song) {
+    if (song.albumCoverUrl == null) return null;
+    return song == null
+        ? null
+        : new File.fromUri(Uri.parse(song.albumCoverUrl));
+  }
+
+  initAnim() {
+    _animationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 500))
+          ..addListener(() {
+            setState(() {});
+          });
+    _animateIcon =
+        Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
+    _animateColor = ColorTween(
+      begin: Colors.white.withOpacity(0.7),
+      end: Colors.white.withOpacity(0.7),
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Interval(
+        0.00,
+        1.00,
+        curve: Curves.linear,
+      ),
+    ));
+  }
+
+  void togglePlayPause() {
+    if (_isPlaying) {
+      _animationController.forward();
+      _pause();
+    } else {
+      _animationController.reverse();
+      _play();
+    }
+  }
+
+  Widget player() {
+    double width = MediaQuery.of(context).size.width;
+    final double cutRadius = 8.0;
+    final double statusBarHeight = MediaQuery.of(context).padding.top;
+    final double ccPadding = MediaQuery.of(context).size.width / 12;
+    return Stack(
+      children: <Widget>[
+        Container(
+            height: MediaQuery.of(context).size.height,
+            child: song.albumCoverUrl == null
+                ? Image.asset(
+                    'assets/images/defaultCover.png',
+                    fit: BoxFit.fitWidth,
+                    width: MediaQuery.of(context).size.width,
+                  )
+                : Image.network(song.albumCoverUrl, fit: BoxFit.fitHeight)),
+        Positioned(
+          top: width,
+          child: Container(
+            color: Colors.transparent,
+            height: MediaQuery.of(context).size.height - width,
+            width: width,
+          ),
+        ),
+        BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+          child: Container(
+            height: MediaQuery.of(context).size.height,
+            width: MediaQuery.of(context).size.width,
+            decoration:
+                new BoxDecoration(color: Colors.black54.withOpacity(0.5)),
+          ),
+        ),
+        Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: EdgeInsets.only(top: width * 0.06 * 2),
+              child: Container(
+                width: width - 2 * width * 0.06,
+                height: width - width * 0.06,
+                child: new AspectRatio(
+                    aspectRatio: 15 / 15,
+                    child: Hero(
+                      tag: song.id,
+                      child: song.albumCoverUrl != null
+                          ? Material(
+                              color: Colors.transparent,
+                              elevation: 22,
+                              child: InkWell(
+                                onDoubleTap: () {
+                                  setState(() {
+                                    _showCover = !_showCover;
+                                  });
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                      color: Colors.transparent,
+                                      borderRadius:
+                                          BorderRadius.circular(cutRadius),
+                                      image: DecorationImage(
+                                          image:
+                                              NetworkImage(song.albumCoverUrl),
+                                          fit: BoxFit.cover)),
+                                  child: Stack(
+                                    children: <Widget>[
+                                      _showCover
+                                          ? Container(
+                                              width: width - 2 * width * 0.06,
+                                              height: width - width * 0.06,
+                                              child: Text("GetArtist details"))
+                                          : Container(),
+                                      Positioned(
+                                        bottom: -width * 0.15,
+                                        right: -width * 0.15,
+                                        child: Container(
+                                          decoration: ShapeDecoration(
+                                              color: Colors.white,
+                                              shape: BeveledRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.only(
+                                                          topLeft:
+                                                              Radius.circular(
+                                                                  width *
+                                                                      0.15)))),
+                                          height: width * 0.15 * 2,
+                                          width: width * 0.15 * 2,
+                                        ),
+                                      ),
+                                      Positioned(
+                                        bottom: 0.0,
+                                        right: 0.0,
+                                        child: Padding(
+                                          padding: EdgeInsets.only(
+                                              right: 4.0, bottom: 6.0),
+                                          child: Text(
+                                            _durationText,
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 18.0,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Material(
+                              shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(cutRadius)),
+                              clipBehavior: Clip.antiAlias,
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: <Widget>[
+                                  Image.asset(
+                                    "assets/images/defaultCover.png",
+                                    fit: BoxFit.cover,
+                                  ),
+                                  Positioned(
+                                    bottom: -width * 0.15,
+                                    right: -width * 0.15,
+                                    child: Container(
+                                      decoration: ShapeDecoration(
+                                          color: Colors.white,
+                                          shape: BeveledRectangleBorder(
+                                              borderRadius: BorderRadius.only(
+                                                  topLeft: Radius.circular(
+                                                      width * 0.15)))),
+                                      height: width * 0.15 * 2,
+                                      width: width * 0.15 * 2,
+                                    ),
+                                  ),
+                                  Positioned(
+                                    bottom: 0.0,
+                                    right: 0.0,
+                                    child: Padding(
+                                      padding: EdgeInsets.only(
+                                          right: 4.0, bottom: 6.0),
+                                      child: Text(
+                                        _durationText,
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 16.0,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                    )),
+              ),
+            )),
+        Align(
+          alignment: Alignment.topCenter,
+          child: Padding(
+            padding: EdgeInsets.only(top: width * 1.11),
+            child: Container(
+              color: Colors.transparent,
+              height: MediaQuery.of(context).size.height - width * 1.11,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  SizedBox(height: 100),
+                  Expanded(
+                    flex: 1,
+                    child: Center(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: Container(
+                          color: Colors.transparent,
+                          child: Column(
+                            children: <Widget>[
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    left: 10.0, right: 10.0, top: 5),
+                                child: new Text(
+                                  '${song.title}\n',
+                                  style: new TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 24,
+                                      letterSpacing: 1.5,
+                                      fontWeight: FontWeight.w500,
+                                      height: 1.5),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              Text(
+                                getSongArtists(song.artists),
+                                style: new TextStyle(
+                                    color: Colors.white.withOpacity(0.6),
+                                    fontSize: 18.0,
+                                    letterSpacing: 1.8,
+                                    height: 1.5),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.max,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Material(
+                          color: Colors.transparent,
+                          child: Container(
+                            color: Colors.transparent,
+                            width: width * 0.85,
+                            padding: EdgeInsets.only(
+                              left: statusBarHeight * 0.5,
+                            ),
+                            child: Slider(
+                              activeColor: Colors.white.withOpacity(0.8),
+                              inactiveColor: Colors.grey.withOpacity(0.5),
+                              onChanged: (v) {
+                                final Position = v * _duration.inMilliseconds;
+                                _audioPlayer.seek(
+                                    Duration(milliseconds: Position.round()));
+                              },
+                              value: (_position != null &&
+                                      _duration != null &&
+                                      _position.inMilliseconds > 0 &&
+                                      _position.inMilliseconds <
+                                          _duration.inMilliseconds)
+                                  ? _position.inMilliseconds /
+                                      _duration.inMilliseconds
+                                  : 0.0,
+                            ),
+                          ),
+                        ),
+                        Material(
+                          color: Colors.transparent,
+                          child: Text(
+                            _positionText,
+                            style: TextStyle(
+                                fontSize: 15.0,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1.0),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Container(
+                        color: Colors.transparent,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 15.0),
+                          child: new Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              SizedBox(width: ccPadding),
+                              Padding(
+                                  padding:
+                                      EdgeInsets.symmetric(horizontal: 15.0)),
+                              new IconButton(
+                                splashColor: Colors.blueGrey[200],
+                                highlightColor: Colors.transparent,
+                                icon: new Icon(
+                                  Icons.skip_previous,
+                                  color: Colors.white.withOpacity(0.8),
+                                  size: 50.0,
+                                ),
+                                //TODO: boton de anterior cancion
+                                onPressed: null,
+                              ),
+                              Padding(
+                                padding:
+                                    EdgeInsets.only(left: 35.0, right: 20.0),
+                                child: Container(
+                                  height: 80,
+                                  width: 80,
+                                  child: FloatingActionButton(
+                                    backgroundColor: _animateColor.value,
+                                    child: new AnimatedIcon(
+                                        color: Colors.white,
+                                        size: 45,
+                                        icon: AnimatedIcons.pause_play,
+                                        progress: _animateIcon),
+                                    onPressed: () => togglePlayPause(),
+                                  ),
+                                ),
+                              ),
+                              new IconButton(
+                                splashColor:
+                                    Colors.blueGrey[200].withOpacity(0.5),
+                                highlightColor: Colors.transparent,
+                                icon: new Icon(
+                                  Icons.skip_next,
+                                  color: Colors.white.withOpacity(0.8),
+                                  size: 50.0,
+                                ),
+                                onPressed: null,
+                              ),
+                              Padding(
+                                  padding:
+                                      EdgeInsets.symmetric(horizontal: 15.0)),
+                              new IconButton(
+                                  icon: song.isFav
+                                      ? new Icon(
+                                          Icons.favorite,
+                                          color: Colors.red,
+                                          size: 35.0,
+                                        )
+                                      : new Icon(
+                                          Icons.favorite_border,
+                                          color: Colors.red,
+                                          size: 35.0,
+                                        ),
+                                  onPressed: () {
+                                    song.setAsFav();
+                                    setState(() {});
+                                  })
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: width,
+                    color: Colors.transparent,
+                    child: FlatButton(
+                      onPressed: null,
+                      highlightColor: Colors.blueGrey[200].withOpacity(0.1),
+                      child: Text(
+                        "UP NEXT",
+                        style: TextStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            letterSpacing: 2.0,
+                            fontWeight: FontWeight.bold),
+                      ),
+                      splashColor: Colors.blueGrey[200].withOpacity(0.1),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+        )
+      ],
+    );
+  }
+
+  Widget oldPlayer() {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -284,5 +674,10 @@ class _PlayerWidgetState extends State<PlayerWidget> {
         ],
       ),
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return player();
   }
 }

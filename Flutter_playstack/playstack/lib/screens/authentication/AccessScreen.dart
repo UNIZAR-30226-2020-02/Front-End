@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import 'package:playstack/screens/mainscreen.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'dart:convert';
-import 'package:playstack/shared/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:playstack/shared/common.dart';
 import 'package:toast/toast.dart';
@@ -23,42 +22,10 @@ class _AccessScreenState extends State<AccessScreen> {
   bool _obscureText = true;
   bool _loading = false;
 
-  //Sign in function
-  signInPrueba(String email, pass) async {
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    Map data = {'NombreUsuario': email, 'Contrasenya': pass};
-    var jsonResponse = null;
-    var response = await http.get(
-      Uri.encodeFull("https://jsonplaceholder.typicode.com/posts"),
-    );
-
-    if (response.statusCode == 200) {
-      List<String> credentials = new List();
-      credentials.add(email);
-      credentials.add(pass);
-      jsonResponse = json.decode(response.body);
-      if (jsonResponse != null) {
-        setState(() {
-          _loading = false;
-        });
-        sharedPreferences.setString("LoggedIn", 'yes');
-        //print("Token es " + jsonResponse[0]['userId'].toString());
-        Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (BuildContext context) => MainScreen()),
-            (Route<dynamic> route) => false);
-      }
-    } else {
-      setState(() {
-        _loading = false;
-      });
-      print(response.body);
-    }
-  }
-
   // Para recuperar el correo o usuario del usuario que acaba de iniciar sesión
   Future getUserInfo(String name) async {
     var response = await http.get(
-      "https://playstack.azurewebsites.net/user/getinfo?NombreUsuario=$name",
+      "https://playstack.azurewebsites.net/user/get/info?NombreUsuario=$name",
       headers: {"Content-Type": "application/json"},
     );
     if (response.statusCode == 200) {
@@ -70,10 +37,10 @@ class _AccessScreenState extends State<AccessScreen> {
   }
 
   //Sign in function
-  signIn(String email, pass) async {
-    //print("Iniciando sesion con " + email + " y " + pass);
+  signIn(String mail, pass) async {
+    //print("Iniciando sesion con " + mail + " y " + pass);
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    dynamic data = {'NombreUsuario': email, 'Contrasenya': pass};
+    dynamic data = {'NombreUsuario': mail, 'Contrasenya': pass};
     data = jsonEncode(data);
     var response = await http.post(
         "https://playstack.azurewebsites.net/user/login",
@@ -83,11 +50,10 @@ class _AccessScreenState extends State<AccessScreen> {
     print("Statuscode " + response.statusCode.toString());
     if (response.statusCode == 200) {
       print("usuario registrado, comprobando otro campo...");
-      var credentials = await getUserInfo(email);
-      List<String> credentialsList = new List();
-      credentialsList.add(credentials['Correo']);
-      credentialsList.add(credentials['NombreUsuario']);
-      sharedPreferences.setStringList('Credentials', credentialsList);
+      var credentials = await getUserInfo(mail);
+      print("Username set to " + credentials['NombreUsuario'].toString());
+      userName = credentials['NombreUsuario'];
+      userEmail = credentials['Correo'];
       sharedPreferences.setString("LoggedIn", 'yes');
       Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (BuildContext context) => MainScreen()),
@@ -186,10 +152,10 @@ class _AccessScreenState extends State<AccessScreen> {
                 setState(() {
                   _loading = true;
                 });
-                //signIn(emailOrUsernameController.text, passwordController.text);
+                signIn(emailOrUsernameController.text, passwordController.text);
 
-                signInPrueba(
-                    emailOrUsernameController.text, passwordController.text);
+                /* signInPrueba(
+                    emailOrUsernameController.text, passwordController.text); */
               }
             },
             shape: RoundedRectangleBorder(
@@ -302,3 +268,34 @@ class _AccessScreenState extends State<AccessScreen> {
     );
   }
 }
+
+/* signInPrueba(String email, pass) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    Map data = {'NombreUsuario': email, 'Contrasenya': pass};
+    var jsonResponse = null;
+    var response = await http.get(
+      Uri.encodeFull("https://jsonplaceholder.typicode.com/posts"),
+    );
+
+    if (response.statusCode == 200) {
+      List<String> credentials = new List();
+      credentials.add(email);
+      credentials.add(pass);
+      jsonResponse = json.decode(response.body);
+      if (jsonResponse != null) {
+        setState(() {
+          _loading = false;
+        });
+        sharedPreferences.setString("LoggedIn", 'yes');
+        //print("Token es " + jsonResponse[0]['userId'].toString());
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (BuildContext context) => MainScreen()),
+            (Route<dynamic> route) => false);
+      }
+    } else {
+      setState(() {
+        _loading = false;
+      });
+      print(response.body);
+    }
+  } */

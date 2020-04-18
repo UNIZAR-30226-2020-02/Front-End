@@ -1,9 +1,13 @@
+import 'package:bot_toast/bot_toast.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
 import 'package:playstack/shared/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ProfileSettings extends StatefulWidget {
   @override
@@ -11,82 +15,54 @@ class ProfileSettings extends StatefulWidget {
 }
 
 class _ProfileSettingsState extends State<ProfileSettings> {
-  // Imagen por defecto
-  var defaultImagePath =
-      'https://i7.pngguru.com/preview/753/432/885/user-profile-2018-in-sight-user-conference-expo-business-default-business.jpg';
+  //SnackBars
+  final snackBarUpdatingPhoto = SnackBar(
+      content: Text(
+        'Actualizando foto de perfil...',
+        style: TextStyle(color: Colors.white),
+      ),
+      backgroundColor: Colors.grey[700]);
+  final snackBarPhotoUpdated = SnackBar(
+      content: Text(
+        'Foto de perfil actualizada!',
+        style: TextStyle(color: Colors.white),
+      ),
+      backgroundColor: Colors.grey[700]);
+  final snackBarUpdatingUsername = SnackBar(
+      content: Text(
+        'Actualizando nombre de usuario...',
+        style: TextStyle(color: Colors.white),
+      ),
+      backgroundColor: Colors.grey[700]);
+  final snackBarUsernameUpdated = SnackBar(
+      content: Text(
+        'Nombre de usuario actualizado!',
+        style: TextStyle(color: Colors.white),
+      ),
+      backgroundColor: Colors.grey[700]);
 
-  var imagePath;
-
-  //Campos a modificar
+  // Local Variables
   String _username;
-  String _email;
-  bool _obscureText = true;
-  bool _loading = true;
-
-  // Para comprartir variables entre pantallas
-  SharedPreferences sharedPreferences;
+  bool _loading = false;
 
   @override
   void initState() {
     super.initState();
-    getFieldValues();
   }
 
-  // Toggles the password show status
-  void _toggle() {
-    setState(() {
-      _obscureText = !_obscureText;
-    });
-  }
-
-  Future<void> getFieldValues() async {
-    sharedPreferences = await SharedPreferences.getInstance();
-    setState(() {
-      List<String> credentials = sharedPreferences.getStringList('Credentials');
-      // Coge el username
-      _username = credentials.elementAt(1);
-      _email = credentials.elementAt(0);
-      _loading = false;
-    });
-  }
-
-  Widget updateButton() {
-    return Container(
-      height: 50.0,
-      width: MediaQuery.of(context).size.width / 2,
-      child: RaisedButton(
-        onPressed: () {},
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(80.0)),
-        padding: EdgeInsets.all(0.0),
-        child: Ink(
-          decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.grey[800], Colors.grey[700], Colors.grey[800]],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
-              borderRadius: BorderRadius.circular(10.0)),
-          child: Container(
-            constraints: BoxConstraints(maxWidth: 300.0, minHeight: 50.0),
-            alignment: Alignment.center,
-            child: Text(
-              "Actualizar",
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget changeProfilePhotoButton() {
+  Widget changeProfilePhotoButton(BuildContext context) {
     return Container(
       height: 30.0,
       width: MediaQuery.of(context).size.width / 3,
       child: RaisedButton(
-        onPressed: () {},
+        onPressed: () async {
+          Scaffold.of(context).showSnackBar(snackBarUpdatingPhoto);
+          await uploadImage();
+          await getProfilePhoto();
+          Scaffold.of(context).showSnackBar(snackBarPhotoUpdated);
+
+          setState(() {});
+        },
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(80.0)),
         padding: EdgeInsets.all(0.0),
@@ -112,6 +88,42 @@ class _ProfileSettingsState extends State<ProfileSettings> {
     );
   }
 
+  Widget updateButton(BuildContext context) {
+    return Container(
+      height: 50.0,
+      width: MediaQuery.of(context).size.width / 2,
+      child: RaisedButton(
+        onPressed: () async {
+          Scaffold.of(context).showSnackBar(snackBarUpdatingUsername);
+          await updateUsername(_username);
+
+          Scaffold.of(context).showSnackBar(snackBarUsernameUpdated);
+        },
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(80.0)),
+        padding: EdgeInsets.all(0.0),
+        child: Ink(
+          decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.grey[800], Colors.grey[700], Colors.grey[800]],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(10.0)),
+          child: Container(
+            constraints: BoxConstraints(maxWidth: 300.0, minHeight: 50.0),
+            alignment: Alignment.center,
+            child: Text(
+              "Actualizar",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return _loading
@@ -122,54 +134,53 @@ class _ProfileSettingsState extends State<ProfileSettings> {
               centerTitle: true,
               title: Text("Configuración"),
             ),
-            body: ListView(children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Center(
-                  child: Column(
-                    children: <Widget>[
-                      Text(
-                        'Perfil de usuario',
-                        style: TextStyle(fontSize: 20),
-                      ),
-                      Padding(
-                          padding: const EdgeInsets.all(10.0),
-                          child: ProfilePicture()),
-                      changeProfilePhotoButton(),
-                      SizedBox(
-                        height: 15,
-                      ),
-                      TextField(
-                          controller: TextEditingController.fromValue(
-                              new TextEditingValue(
-                                  text: _username,
-                                  selection: new TextSelection.collapsed(
-                                      offset: _username.length))),
-                          onChanged: (val) {
-                            _username = val;
-                          },
-                          decoration: InputDecoration(
-                              icon: Icon(Icons.person), labelText: 'Username')),
-                      SizedBox(height: 10),
-                      // Campo para el email
-                      TextField(
-                          readOnly: true,
-                          controller: TextEditingController.fromValue(
-                              new TextEditingValue(
-                                  text: _email,
-                                  selection: new TextSelection.collapsed(
-                                      offset: _email.length))),
-                          decoration: InputDecoration(icon: Icon(Icons.email))),
-                      SizedBox(height: 15),
-                      // Campo para la contraseña
+            body: Builder(
+              builder: (BuildContext context) {
+                return ListView(children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Center(
+                      child: Column(
+                        children: <Widget>[
+                          Text(
+                            'Perfil de usuario',
+                            style: TextStyle(fontSize: 20),
+                          ),
+                          Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: ProfilePicture()),
+                          changeProfilePhotoButton(context),
+                          SizedBox(
+                            height: 15,
+                          ),
+                          TextField(
+                              controller: TextEditingController.fromValue(
+                                  new TextEditingValue(
+                                      text: userName,
+                                      selection: new TextSelection.collapsed(
+                                          offset: userName.length))),
+                              onChanged: (val) {
+                                _username = val;
+                              },
+                              decoration: InputDecoration(
+                                  icon: Icon(Icons.person),
+                                  labelText: 'Username')),
+                          SizedBox(height: 20),
+                          // Campo para el email
 
-                      SizedBox(height: 15),
-                      updateButton()
-                    ],
+                          SizedBox(height: 15),
+                          // Campo para la contraseña
+
+                          SizedBox(height: 15),
+                          //Boton de actualizar
+                          updateButton(context),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ]),
+                ]);
+              },
+            ),
           );
   }
 }

@@ -7,20 +7,22 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:playstack/models/Song.dart';
 import 'package:playstack/screens/AdvancedPlayer.dart';
 import 'package:playstack/screens/PlayerWidget.dart';
+import 'package:playstack/shared/common.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/src/foundation/constants.dart';
 import 'package:http/http.dart' as http;
 
-const kUrl1 = 'https://luan.xyz/files/audio/ambient_c_motion.mp3';
-
 class PlayingNowScreen extends StatefulWidget {
+  PlayingNowScreen();
   @override
   _PlayingNowScreenState createState() => _PlayingNowScreenState();
 }
 
 class _PlayingNowScreenState extends State<PlayingNowScreen> {
+  Song song = currentSong;
   // Para canciones de assets
   AudioCache audioCache = AudioCache();
   //Para canciones online SOLO HTTPS no HTTP
@@ -44,6 +46,6 @@ class _PlayingNowScreenState extends State<PlayingNowScreen> {
       StreamProvider<Duration>.value(
           initialData: Duration(),
           value: advancedPlayer.onAudioPositionChanged),
-    ], child: PlayerWidget(url: kUrl1, advancedPlayer: advancedPlayer));
+    ], child: PlayerWidget(song: song, advancedPlayer: advancedPlayer));
   }
 }

@@ -11,7 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter/src/foundation/constants.dart';
 import 'package:http/http.dart' as http;
 
-import 'PlayingNow.dart';
+var kUrl1 = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
 
 class Advanced extends StatefulWidget {
   final AudioPlayer advancedPlayer;

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:playstack/screens/GenresSongs.dart';
 import 'package:playstack/shared/common.dart';
 
+import 'Home.dart';
+
 var blueColor = Color(0xFF090e42);
 var pinkColor = Color(0xFFff6b80);
 
@@ -15,16 +17,17 @@ Widget genres() {
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16.0),
     child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         SizedBox(height: 15.0),
         Text(
           'Géneros',
-          style: TextStyle(
-              color: Colors.white, fontFamily: 'Circular', fontSize: 30.0),
+          style: TextStyle(fontFamily: 'Circular', fontSize: 22.0),
         ),
         SizedBox(height: 16.0),
         Row(
           children: <Widget>[
+            //TODO: Cambiarlo a rap
             ItemCard('assets/images/RapGenre.png', 'Rap'),
             SizedBox(
               width: 16.0,
@@ -47,19 +50,6 @@ Widget genres() {
         SizedBox(
           height: 32.0,
         ),
-        Text(
-          'Recommend',
-          style: TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 38.0),
-        ),
-        SizedBox(
-          height: 16.0,
-        ),
-        SongItem('In the Name of Love', 'Martin Garrix', martinGarrix),
-        SongItem('Never Be Like You', 'Flume', flume),
-        SongItem('Worry Bout Us', 'Rosie Lowe', rosieLowe),
-        SongItem('In the Name of Love', 'Martin Garrix', martinGarrix),
-        SongItem('In the Name of Love', 'Martin Garrix', martinGarrix),
       ],
     ),
   );
@@ -93,11 +83,10 @@ class ItemCard extends StatelessWidget {
                   width: double.infinity,
                   child: FlatButton(
                     color: Colors.transparent,
-                    onPressed: () =>
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (BuildContext context) => GenresSongs(
-                                  genre: 'Copla',
-                                ))),
+                    onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (BuildContext context) =>
+                                GenresSongs(genre: title))),
                     child: null,
                   ),
                 ),
@@ -277,4 +266,59 @@ class DetailedScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget lists() {
+  Column(
+    children: <Widget>[
+      Container(
+        height: 250.0,
+        child: Column(
+          children: <Widget>[
+            Text(
+              'Recommendation',
+              style: TextStyle(
+                color: Colors.white.withOpacity(1.0),
+                fontSize: 23.0,
+                fontFamily: 'Circular',
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(10.0),
+            ),
+            Container(
+              height: 165.0,
+              child: ListView.builder(
+                itemCount: imageurl.length,
+                scrollDirection: Axis.horizontal,
+                itemBuilder: (BuildContext context, int index) {
+                  return Column(
+                    children: <Widget>[
+                      SizedBox(
+                        height: 130.0,
+                        width: 140.0,
+                        child: Image.asset(
+                          imageurl[index],
+                          fit: BoxFit.fitHeight,
+                        ),
+                      ),
+                      Padding(padding: EdgeInsets.all(5.0)),
+                      Text(
+                        artists[index],
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(1.0),
+                          fontFamily: 'Circular',
+                          fontSize: 10.0,
+                        ),
+                      )
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      )
+    ],
+  );
 }

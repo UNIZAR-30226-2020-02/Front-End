@@ -1,49 +1,49 @@
 import 'dart:io';
+import 'package:dio/dio.dart';
+import 'package:dio/adapter.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:playstack/models/Song.dart';
+import 'package:playstack/screens/Homescreen/Home.dart';
+import 'package:playstack/screens/Library.dart';
+import 'package:playstack/screens/PlayingNow.dart';
+import 'package:playstack/screens/Search/SearchScreen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:async/async.dart';
-import 'package:path/path.dart';
-import 'dart:convert';
 
+//Shared variables
+
+var dio = Dio();
 var defaultImagePath =
     'https://i7.pngguru.com/preview/753/432/885/user-profile-2018-in-sight-user-conference-expo-business-default-business.jpg';
 var imagePath;
+var backgroundColor = Color(0xFF191414);
 
-Future uploadImage(SharedPreferences sharedPreferences) async {
-  sharedPreferences = await SharedPreferences.getInstance();
+String userName;
+String userEmail;
+int currentIndex = 0;
+Song currentSong;
 
-  var image = await ImagePicker.pickImage(source: ImageSource.gallery);
-  if (image != null) {
-    // Abre un stream de bytes
-    var stream = http.ByteStream(DelegatingStream.typed(image.openRead()));
-    //Longitud de la imagen
-    var length = await image.length();
-    // Uri del servidor
-    var uri = Uri.parse("https://playstack.azurewebsites.net/");
-    // Crear peticion multiparte
-    var request = new http.MultipartRequest("POST", uri);
-    // multipart that takes file
-    var multipartFile = new http.MultipartFile('NuevaFoto', stream, length,
-        filename: basename(image.path));
-    // add file to multipart
-    request.files.add(multipartFile);
-    // send
-    var response = await request.send();
-    print("Status code devuelto " + response.statusCode.toString());
+List<Widget> mainScreens = [
+  HomeScreen(),
+  SearchScreen(),
+  Library(),
+  PlayingNowScreen()
+];
 
-    // listen for response
-    response.stream.transform(utf8.decoder).listen((value) {
-      print(value);
-    });
-
-    /*
-      setState(() {
-        imagePath = ...
-      });
-      */
+Widget show(int index) {
+  switch (index) {
+    case 0:
+      return HomeScreen();
+      break;
+    case 1:
+      return SearchScreen();
+      break;
+    case 2:
+      return Library();
+      break;
+    /* case 3:
+      return PlayingNowScreen();
+      break; */
   }
 }
 
@@ -80,72 +80,114 @@ bool passwordIsSafe(String password) {
   return isSafe;
 }
 
+String getSongArtists(List artists) {
+  String res = artists.elementAt(0);
+  for (var i = 1; i < artists.length; i++) {
+    res = res + "," + artists.elementAt(i);
+  }
+  return res;
+}
+
 class SongItem extends StatelessWidget {
-  final title;
-  final artist;
-  final image;
-  SongItem(this.title, this.artist, this.image);
+  final Song song;
+  SongItem(this.song);
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        print('Se reproducirá la canción');
+        currentSong = song;
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (BuildContext context) => PlayingNowScreen()));
       },
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 26.0),
-        child: Row(
-          children: <Widget>[
-            Stack(
-              children: <Widget>[
-                Container(
-                  height: 80.0,
-                  width: 80.0,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: Image.network(
-                      image,
-                      fit: BoxFit.cover,
+        padding: const EdgeInsets.all(10),
+        child: Container(
+          height: MediaQuery.of(context).size.height / 13,
+          width: MediaQuery.of(context).size.width,
+          child: Row(
+            children: <Widget>[
+              Stack(
+                children: <Widget>[
+                  Container(
+                    height: MediaQuery.of(context).size.height / 13,
+                    width: MediaQuery.of(context).size.width / 5.8,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8.0),
+                      child: Image.network(
+                        song.albumCoverUrl,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
-                ),
-                Container(
-                    height: 80.0,
-                    width: 80.0,
-                    child: Icon(
-                      Icons.play_circle_filled,
-                      color: Colors.white.withOpacity(0.7),
-                      size: 42.0,
-                    ))
-              ],
-            ),
-            SizedBox(width: 16.0),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  title,
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 24.0),
-                ),
-                SizedBox(height: 8.0),
-                Text(
-                  artist,
-                  style: TextStyle(
-                      color: Colors.white.withOpacity(0.5), fontSize: 18.0),
-                ),
-              ],
-            ),
-            Spacer(),
-            Icon(
-              Icons.more_horiz,
-              color: Colors.white.withOpacity(0.6),
-              size: 32.0,
-            )
-          ],
+                  Container(
+                      height: MediaQuery.of(context).size.height / 13,
+                      width: 80.0,
+                      child: Icon(
+                        Icons.play_circle_filled,
+                        color: Colors.white.withOpacity(0.7),
+                        size: 42.0,
+                      ))
+                ],
+              ),
+              SizedBox(width: 16.0),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    song.title,
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 24.0),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    getSongArtists(song.artists),
+                    style: TextStyle(
+                        color: Colors.white.withOpacity(0.5), fontSize: 18.0),
+                  ),
+                ],
+              ),
+              Spacer(),
+              Icon(
+                Icons.more_horiz,
+                color: Colors.white.withOpacity(0.6),
+                size: 32.0,
+              )
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+class ArtistItem extends StatelessWidget {
+  ArtistItem(this.artistName, this.image);
+
+  final String artistName;
+  final image;
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        SizedBox(
+          height: 130.0,
+          width: 140.0,
+          child: Image.asset(
+            image,
+            fit: BoxFit.fitHeight,
+          ),
+        ),
+        Padding(padding: EdgeInsets.all(5.0)),
+        Text(
+          artistName,
+          style: TextStyle(
+            color: Colors.white.withOpacity(1.0),
+            fontSize: 15.0,
+          ),
+        )
+      ],
     );
   }
 }
