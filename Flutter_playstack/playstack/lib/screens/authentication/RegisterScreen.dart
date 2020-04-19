@@ -47,8 +47,9 @@ class RegisterState extends State<RegisterScreen> {
     if (response.statusCode == 201) {
       print("Registrado!");
       // Se guardan los campos para poder ser modificados posteriormente
-
       userName = username;
+      print("Username with name " + userName + " created");
+
       userEmail = mail;
       sharedPreferences.setString("LoggedIn", "ok");
       //print("Token es " + jsonResponse[0]['userId'].toString());

@@ -27,6 +27,10 @@ class _HomeScreenState extends State<HomeScreen> {
     if (imagePath == null) {
       getProfilePhoto();
     }
+    if (currentSong == null) {
+      print("Va a setear la ultima cancion");
+      setLastSongAsCurrent();
+    }
   }
 
   Widget recommendedPlaylists() {

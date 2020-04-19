@@ -1,16 +1,15 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:dio/adapter.dart';
-import 'package:http/http.dart' as http;
 import 'package:playstack/models/Song.dart';
 import 'package:playstack/screens/Homescreen/Home.dart';
-import 'package:playstack/screens/Library.dart';
-import 'package:playstack/screens/PlayingNow.dart';
+import 'package:playstack/screens/Library/Library.dart';
+import 'package:playstack/screens/Player/PlayingNow.dart';
 import 'package:playstack/screens/Search/SearchScreen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-//Shared variables
+//////////////////////////////////////////////////////////////////////////////////
+/////                   SHARED VARIABLES DO NOT TOUCH                       //////
+//////////////////////////////////////////////////////////////////////////////////
 
 var dio = Dio();
 var defaultImagePath =
@@ -23,12 +22,18 @@ String userEmail;
 int currentIndex = 0;
 Song currentSong;
 
+String songsNextUpName;
+List songsNextUp = new List();
+List songsPlayed = new List();
+
 List<Widget> mainScreens = [
   HomeScreen(),
   SearchScreen(),
   Library(),
   PlayingNowScreen()
 ];
+
+/////////////////////////////////////////////////////////////////////////////////////
 
 Widget show(int index) {
   switch (index) {
@@ -41,9 +46,9 @@ Widget show(int index) {
     case 2:
       return Library();
       break;
-    /* case 3:
+    case 3:
       return PlayingNowScreen();
-      break; */
+      break;
   }
 }
 
@@ -89,13 +94,27 @@ String getSongArtists(List artists) {
 }
 
 class SongItem extends StatelessWidget {
+  final String songsListName;
+  final List songsList;
   final Song song;
-  SongItem(this.song);
+  SongItem(this.song, this.songsList, this.songsListName);
+
+  void setQueue(List songsList) {
+    List tmpList = new List();
+    tmpList.addAll(songsList);
+    tmpList.remove(song);
+    songsNextUpName = songsListName;
+    currentSong = song;
+    songsNextUp = tmpList;
+    print("Tocada se marcara como escuchada");
+    song.markAsListened();
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        currentSong = song;
+        setQueue(songsList);
         Navigator.of(context).push(MaterialPageRoute(
             builder: (BuildContext context) => PlayingNowScreen()));
       },
@@ -114,7 +133,7 @@ class SongItem extends StatelessWidget {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8.0),
                       child: Image.network(
-                        song.albumCoverUrl,
+                        song.albumCoverUrls.elementAt(0),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -188,6 +207,143 @@ class ArtistItem extends StatelessWidget {
           ),
         )
       ],
+    );
+  }
+}
+
+class GenericSongItem extends StatelessWidget {
+  final Song song;
+  GenericSongItem(this.song);
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        currentSong = song;
+        songsNextUp.remove(currentSong);
+        // Se notifica que la canción se escucha
+        currentSong.markAsListened();
+        Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (BuildContext context) => PlayingNowScreen()));
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Container(
+          height: MediaQuery.of(context).size.height / 13,
+          width: MediaQuery.of(context).size.width,
+          child: Row(
+            children: <Widget>[
+              Stack(
+                children: <Widget>[
+                  Container(
+                    height: MediaQuery.of(context).size.height / 13,
+                    width: MediaQuery.of(context).size.width / 5.8,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8.0),
+                      child: Image.network(
+                        song.albumCoverUrls.elementAt(0),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(width: 16.0),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    song.title,
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 24.0),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    getSongArtists(song.artists),
+                    style: TextStyle(
+                        color: Colors.white.withOpacity(0.5), fontSize: 18.0),
+                  ),
+                ],
+              ),
+              Spacer(),
+              Icon(
+                Icons.more_horiz,
+                color: Colors.white.withOpacity(0.6),
+                size: 32.0,
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class PlaylistElement {
+  String name;
+  List albumcovers = new List();
+  PlaylistElement({this.name, this.albumcovers});
+}
+
+//TODO: poner las fotos de las canciones de dentro
+class PlaylistItem extends StatelessWidget {
+  final String name;
+  final List coverUrls;
+  PlaylistItem(this.name, this.coverUrls);
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (BuildContext context) => PlayingNowScreen()));
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Container(
+          height: MediaQuery.of(context).size.height / 13,
+          width: MediaQuery.of(context).size.width,
+          child: Row(
+            children: <Widget>[
+              Stack(
+                children: <Widget>[
+                  Container(
+                    height: MediaQuery.of(context).size.height / 13,
+                    width: MediaQuery.of(context).size.width / 5.8,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8.0),
+                      child: Image.asset(
+                        'assets/images/defaultCover.png',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(width: 16.0),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    name,
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 24.0),
+                  ),
+                  SizedBox(height: 5),
+                ],
+              ),
+              Spacer(),
+              Icon(
+                Icons.more_horiz,
+                color: Colors.white.withOpacity(0.6),
+                size: 32.0,
+              )
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -27,7 +27,6 @@ Widget genres() {
         SizedBox(height: 16.0),
         Row(
           children: <Widget>[
-            //TODO: Cambiarlo a rap
             ItemCard('assets/images/RapGenre.png', 'Rap'),
             SizedBox(
               width: 16.0,

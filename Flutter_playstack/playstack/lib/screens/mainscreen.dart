@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:playstack/screens/Homescreen/Home.dart';
-import 'package:playstack/screens/Library.dart';
-import 'package:playstack/screens/PlayingNow.dart';
-import 'package:playstack/screens/Search/SearchScreen.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:playstack/screens/Player/PlayingNow.dart';
 import 'package:playstack/screens/authentication/AccessScreen.dart';
 import 'package:playstack/shared/common.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -42,10 +39,15 @@ class _MainScreenState extends State<MainScreen> {
             fixedColor: Colors.red[600],
             currentIndex: currentIndex,
             onTap: (int index) {
-              setState(() {
-                currentIndex = index;
-                show(index);
-              });
+              if (index == 3) {
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (BuildContext context) => PlayingNowScreen()));
+              } else {
+                setState(() {
+                  currentIndex = index;
+                  show(index);
+                });
+              }
             },
             type: BottomNavigationBarType.shifting,
             items: [

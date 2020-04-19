@@ -1,5 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:playstack/screens/Library/Playlist.dart';
+import 'package:playstack/services/database.dart';
+import 'package:playstack/shared/common.dart';
 
 class Library extends StatefulWidget {
   @override
@@ -7,12 +10,26 @@ class Library extends StatefulWidget {
 }
 
 class _LibraryState extends State<Library> {
+  List playlists = new List();
+
+  @override
+  void initState() {
+    super.initState();
+    //getPlaylist();
+  }
+
+  void getPlaylists() async {
+    playlists = await getUserPlaylists();
+    setState(() {});
+  }
+
   Widget musicTab() {
     return DefaultTabController(
         length: 3,
         child: Scaffold(
           backgroundColor: Color(0xFF191414),
           appBar: AppBar(
+            automaticallyImplyLeading: false,
             backgroundColor: Colors.transparent,
             bottomOpacity: 1.0,
             actions: <Widget>[
@@ -65,7 +82,8 @@ class _LibraryState extends State<Library> {
           leading: Icon(Icons.favorite, color: Colors.red),
           title: Text('Favoritas'),
           subtitle: Text('Canciones favoritas'),
-          onTap: null,
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (BuildContext context) => Playlist('Favoritas'))),
         ),
         ListTile(
           leading: Icon(
@@ -74,6 +92,14 @@ class _LibraryState extends State<Library> {
           title: Text('Música del dispositivo'),
           subtitle: Text('Música local'),
           onTap: null,
+        ),
+        ListView.builder(
+          scrollDirection: Axis.vertical,
+          shrinkWrap: true,
+          itemCount: playlists.isEmpty ? 0 : playlists.length,
+          itemBuilder: (BuildContext context, int index) {
+            return new PlaylistItem(playlists[index], new List());
+          },
         )
       ],
     );
@@ -90,6 +116,7 @@ class _LibraryState extends State<Library> {
         child: Scaffold(
           backgroundColor: Color(0xFF191414),
           appBar: AppBar(
+            automaticallyImplyLeading: false,
             backgroundColor: Colors.transparent,
             bottomOpacity: 1.0,
             actions: <Widget>[

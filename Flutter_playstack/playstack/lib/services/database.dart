@@ -2,14 +2,117 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:playstack/models/Song.dart';
 import 'package:playstack/shared/common.dart';
 
+void setLastSongAsCurrent() async {
+  dynamic response = await http.get(
+      "https://playstack.azurewebsites.net/user/get/lastsong?Usuario=$userName");
+
+  print("Statuscode " + response.statusCode.toString());
+  //print("Body:" + response.body.toString());
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    response.forEach((title, info) => print(title + info.toString()));
+    currentSong = new Song();
+    response.forEach((title, info) => currentSong.setInfo(
+        title,
+        info['Artistas'],
+        info['url'],
+        info['Albumes'],
+        info['ImagenesAlbums'],
+        info['Generos']));
+    print("Ultima cancion seteada");
+  } else {
+    print('Error cogiendo ultima cancion escuchada');
+  }
+}
+
+addPlaylistToList(List playlists, String name, dynamic covers) {
+  if (covers == null) {
+    covers = new List();
+  } else if (covers is String) {
+    covers = covers.toList();
+  }
+
+  PlaylistElement newPlaylist =
+      new PlaylistElement(name: name, albumcovers: covers);
+
+  playlists.add(newPlaylist);
+}
+
+Future<List<PlaylistElement>> getUserPlaylists() async {
+  List playlists = new List();
+
+  print("Recuperando playlists de " + userName);
+  dynamic response = await http.get(
+      "https://playstack.azurewebsites.net/user/get/playlists?Usuario=$userName");
+
+  print("Statuscode playlists: " + response.statusCode.toString());
+
+  if (response.statusCode == 200) {
+    response = json.decode(response.body);
+    response.forEach((name, covers) => print(name + covers.toString()));
+    /* response
+        .forEach((name, covers) => addPlaylistToList(playlists, name, covers)); */
+
+  } else {
+    print("Status code not 200, body: " + response.body);
+  }
+
+  return playlists;
+}
+
+addSongToList(List songs, String title, List artists, List albums,
+    List albumCoverUrls, String url) {
+  Song newSong = new Song(
+      title: title,
+      artists: artists,
+      url: url,
+      albums: albums,
+      albumCoverUrls: albumCoverUrls);
+  songs.add(newSong);
+}
+
+Future<List> getFavoriteSongs() async {
+  List favSongs = new List();
+
+  print("Recuperando favoritas de " + userName);
+  dynamic response = await http.get(
+      "https://playstack.azurewebsites.net/user/get/favoritesongs?Usuario=$userName");
+
+  print("Statuscode favoritas: " + response.statusCode.toString());
+
+  if (response.statusCode == 200) {
+    response = json.decode(response.body);
+
+    response.forEach((title, info) => print(title + info.toString()));
+    response.forEach((title, info) => addSongToList(
+        favSongs,
+        title,
+        info['Artistas'],
+        info['Albumes'],
+        info['ImagenesAlbums'],
+        info['url']));
+
+    //title, info['Artistas'],info['url'], info['Albunes'], info['ImagenesAlbum']
+  } else {
+    print("Status code not 200, body: " + response.body);
+  }
+
+  return favSongs;
+}
+
 void markAsListenedDB(String songTitle) async {
+  print(
+      "Probando con nombre de usuario " + userName + " y titulo " + songTitle);
   dynamic data = {'Usuario': userName, 'Titulo': songTitle};
 
   data = jsonEncode(data);
-  dynamic response = await http.post("https://playstack.azurewebsites.net/",
-      headers: {"Content-Type": "application/json"}, body: data);
+  dynamic response = await http.post(
+      "https://playstack.azurewebsites.net/user/add/song/tolistened",
+      headers: {"Content-Type": "application/json"},
+      body: data);
 
   print("Statuscode marcar como escuchada: " + response.statusCode.toString());
 
@@ -20,22 +123,33 @@ void markAsListenedDB(String songTitle) async {
   }
 }
 
-Future<bool> setAsFavDB(String songTitle) async {
+Future<bool> toggleFav(String songTitle, bool add) async {
+  print("Cambiando estado de fav con " + userName + " y cancion " + songTitle);
   dynamic data = {'Usuario': userName, 'Titulo': songTitle};
 
   data = jsonEncode(data);
-  dynamic response = await http.post(
-      "https://playstack.azurewebsites.net/user/add/song/tofavourites",
-      headers: {"Content-Type": "application/json"},
-      body: data);
 
-  print("Statuscode agnadir a favoritos: " + response.statusCode.toString());
+  dynamic response;
+  if (add) {
+    response = await http.post(
+        "https://playstack.azurewebsites.net/user/add/song/tofavorites",
+        headers: {"Content-Type": "application/json"},
+        body: data);
+    print("Statuscode agnadir a favoritos: " + response.statusCode.toString());
+  } else {
+    print("La intenta quitar de favs...");
+    response = await http.post(
+        "https://playstack.azurewebsites.net/user/remove/song/fromfavorites",
+        headers: {"Content-Type": "application/json"},
+        body: data);
+    print("Statuscode quitar de favoritos: " + response.statusCode.toString());
+  }
 
   if (response.statusCode == 200) {
-    print("Agnadida a favoritos");
+    print("Agnadida/quitada a favoritos");
     return true;
   } else {
-    print("Status code not 200, body: " + response.body.toString());
+    //print("Status code not 200, body: " + response.body.toString());
     return false;
   }
 }
@@ -79,6 +193,7 @@ Future uploadImage() async {
       print((received / total * 100).toStringAsFixed(0) + "%");
     }
   });
+  imagePath = null;
 }
 
 Future<String> _getSongUrl(String songName) async {

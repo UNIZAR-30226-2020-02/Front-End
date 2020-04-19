@@ -24,7 +24,6 @@ class GenresSongs extends StatefulWidget {
 
 class _GenresSongsState extends State<GenresSongs> {
   String genre;
-  bool _loading = true;
 
   List<Song> songs = new List();
 
@@ -37,27 +36,41 @@ class _GenresSongsState extends State<GenresSongs> {
     getSongsByGenre(genre);
   }
 
-  void addSong(
-      String title, List artists, String url, List albunes, String urlAlbum) {
-    Song newSong = new Song(title, artists, url, albunes, urlAlbum);
+  void addSong(String title, List artists, String url, List albunes,
+      dynamic urlAlbums, bool isFavorite) {
+    if (urlAlbums is String) {
+      urlAlbums = urlAlbums.toList();
+    }
+    Song newSong = new Song(
+        title: title,
+        artists: artists,
+        url: url,
+        albums: albunes,
+        albumCoverUrls: urlAlbums,
+        isFav: isFavorite);
 
     songs.add(newSong);
   }
 
   Future<void> getSongsByGenre(String genre) async {
     print("Recopilando genero $genre...");
-    //get/song/bygenre?NombreGenero
+    print("Con usuario " + userName);
     dynamic response = await http.get(
-      "https://playstack.azurewebsites.net/get/song/bygenre?NombreGenero=$genre",
+      "https://playstack.azurewebsites.net/get/song/bygenre?NombreGenero=$genre&Usuario=$userName",
       headers: {"Content-Type": "application/json"},
     );
     print("Statuscode " + response.statusCode.toString());
     //print("Body:" + response.body.toString());
     if (response.statusCode == 200) {
       response = jsonDecode(response.body);
-      response.forEach((title, info) => print(title + info.toString()));
-      response.forEach((title, info) => addSong(title, info['Artistas'],
-          info['url'], info['Albunes'], info['ImagenesAlbum']));
+      //response.forEach((title, info) => print(title + info.toString()));
+      response.forEach((title, info) => addSong(
+          title,
+          info['Artistas'],
+          info['url'],
+          info['Albumes'],
+          info['ImagenesAlbum'],
+          info['EsFavorita']));
       setState(() {});
     } else {
       print(response.body);
@@ -71,7 +84,7 @@ class _GenresSongsState extends State<GenresSongs> {
       shrinkWrap: true,
       itemCount: songs.isEmpty ? 0 : songs.length,
       itemBuilder: (BuildContext context, int index) {
-        return new SongItem(songs[index]);
+        return new SongItem(songs[index], songs, genre);
       },
     );
   }

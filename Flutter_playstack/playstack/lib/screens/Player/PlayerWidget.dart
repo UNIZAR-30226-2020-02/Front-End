@@ -1,46 +1,38 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'dart:async';
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
-import 'package:audioplayers/audio_cache.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:playstack/models/Song.dart';
+import 'package:playstack/screens/Player/PlayingNow.dart';
+import 'package:playstack/screens/Player/UpNext.dart';
 import 'package:playstack/shared/common.dart';
-import 'package:provider/provider.dart';
-import 'package:flutter/src/foundation/constants.dart';
-import 'package:http/http.dart' as http;
-import 'Homescreen/Home.dart';
 
 enum PlayerState { stopped, playing, paused }
 enum PlayingRouteState { speakers, earpiece }
 
 class PlayerWidget extends StatefulWidget {
-  final Song song;
   final PlayerMode mode;
   final AudioPlayer advancedPlayer;
 
   PlayerWidget(
       {Key key,
-      @required this.song,
       @required this.advancedPlayer,
       this.mode = PlayerMode.MEDIA_PLAYER})
       : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
-    return _PlayerWidgetState(song, mode);
+    return _PlayerWidgetState(mode);
   }
 }
 
 class _PlayerWidgetState extends State<PlayerWidget>
     with SingleTickerProviderStateMixin {
   bool _showCover;
-  Song song;
+  Song song = currentSong;
   bool seekDone;
 
   PlayerMode mode;
@@ -58,7 +50,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
   StreamSubscription _playerErrorSubscription;
   StreamSubscription _playerStateSubscription;
 
-  _PlayerWidgetState(this.song, this.mode);
+  _PlayerWidgetState(this.mode);
 
   AnimationController _animationController;
   Animation<Color> _animateColor;
@@ -78,7 +70,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
     _showCover = false;
     initAnim();
     _initAudioPlayer();
-    togglePlayPause();
+    if (_playerState != PlayerState.playing) {
+      togglePlayPause();
+    }
   }
 
   void _onComplete() {
@@ -201,11 +195,36 @@ class _PlayerWidgetState extends State<PlayerWidget>
     super.dispose();
   }
 
+  void skipPrevious() {
+    if (songsPlayed.isNotEmpty) {
+      songsNextUp.add(currentSong);
+      currentSong = songsPlayed.last;
+      songsPlayed.removeAt(0);
+      currentSong.markAsListened();
+
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (BuildContext context) => PlayingNowScreen()));
+    }
+  }
+
+  void skipSong() {
+    print("Skipping...");
+    if (songsNextUp.isNotEmpty) {
+      if (!songsPlayed.contains(currentSong)) songsPlayed.add(currentSong);
+
+      currentSong = songsNextUp.first;
+      songsNextUp.removeAt(0);
+      currentSong.markAsListened();
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (BuildContext context) => PlayingNowScreen()));
+    }
+  }
+
   dynamic getImage(Song song) {
-    if (song.albumCoverUrl == null) return null;
+    if (song.albumCoverUrls == null) return null;
     return song == null
         ? null
-        : new File.fromUri(Uri.parse(song.albumCoverUrl));
+        : new File.fromUri(Uri.parse(song.albumCoverUrls.elementAt(0)));
   }
 
   initAnim() {
@@ -248,13 +267,14 @@ class _PlayerWidgetState extends State<PlayerWidget>
       children: <Widget>[
         Container(
             height: MediaQuery.of(context).size.height,
-            child: song.albumCoverUrl == null
+            child: song.albumCoverUrls == null
                 ? Image.asset(
                     'assets/images/defaultCover.png',
                     fit: BoxFit.fitWidth,
                     width: MediaQuery.of(context).size.width,
                   )
-                : Image.network(song.albumCoverUrl, fit: BoxFit.fitHeight)),
+                : Image.network(song.albumCoverUrls.elementAt(0),
+                    fit: BoxFit.fitHeight)),
         Positioned(
           top: width,
           child: Container(
@@ -272,129 +292,117 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 new BoxDecoration(color: Colors.black54.withOpacity(0.5)),
           ),
         ),
-        Align(
-            alignment: Alignment.topCenter,
-            child: Padding(
-              padding: EdgeInsets.only(top: width * 0.06 * 2),
-              child: Container(
-                width: width - 2 * width * 0.06,
-                height: width - width * 0.06,
-                child: new AspectRatio(
-                    aspectRatio: 15 / 15,
-                    child: Hero(
-                      tag: song.id,
-                      child: song.albumCoverUrl != null
-                          ? Material(
-                              color: Colors.transparent,
-                              elevation: 22,
-                              child: InkWell(
-                                onDoubleTap: () {
-                                  setState(() {
-                                    _showCover = !_showCover;
-                                  });
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                      color: Colors.transparent,
-                                      borderRadius:
-                                          BorderRadius.circular(cutRadius),
-                                      image: DecorationImage(
-                                          image:
-                                              NetworkImage(song.albumCoverUrl),
-                                          fit: BoxFit.cover)),
-                                  child: Stack(
-                                    children: <Widget>[
-                                      _showCover
-                                          ? Container(
-                                              width: width - 2 * width * 0.06,
-                                              height: width - width * 0.06,
-                                              child: Text("GetArtist details"))
-                                          : Container(),
-                                      Positioned(
-                                        bottom: -width * 0.15,
-                                        right: -width * 0.15,
-                                        child: Container(
-                                          decoration: ShapeDecoration(
-                                              color: Colors.white,
-                                              shape: BeveledRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.only(
-                                                          topLeft:
-                                                              Radius.circular(
-                                                                  width *
-                                                                      0.15)))),
-                                          height: width * 0.15 * 2,
-                                          width: width * 0.15 * 2,
-                                        ),
-                                      ),
-                                      Positioned(
-                                        bottom: 0.0,
-                                        right: 0.0,
-                                        child: Padding(
-                                          padding: EdgeInsets.only(
-                                              right: 4.0, bottom: 6.0),
-                                          child: Text(
-                                            _durationText,
-                                            style: TextStyle(
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 18.0,
+        Padding(
+          padding: const EdgeInsets.only(top: 35),
+          child: Align(
+              alignment: Alignment.topCenter,
+              child: Padding(
+                padding: EdgeInsets.only(top: width * 0.06 * 2),
+                child: Container(
+                  width: width - 2 * width * 0.06,
+                  height: width - width * 0.06,
+                  child: new AspectRatio(
+                      aspectRatio: 15 / 15,
+                      child: Hero(
+                        tag: song.title,
+                        child: song.albumCoverUrls.elementAt(0) != null
+                            ? Material(
+                                color: Colors.transparent,
+                                elevation: 22,
+                                child: InkWell(
+                                  onDoubleTap: () {
+                                    setState(() {
+                                      _showCover = !_showCover;
+                                    });
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                        color: Colors.transparent,
+                                        borderRadius:
+                                            BorderRadius.circular(cutRadius),
+                                        image: DecorationImage(
+                                            image: NetworkImage(song
+                                                .albumCoverUrls
+                                                .elementAt(0)),
+                                            fit: BoxFit.cover)),
+                                    child: Stack(
+                                      children: <Widget>[
+                                        _showCover
+                                            ? Container(
+                                                width: width - 2 * width * 0.06,
+                                                height: width - width * 0.06,
+                                                child:
+                                                    Text("GetArtist details"))
+                                            : Container(),
+                                        Positioned(
+                                          bottom: 0.0,
+                                          right: 0.0,
+                                          child: Padding(
+                                            padding: EdgeInsets.only(
+                                                right: 4.0, bottom: 6.0),
+                                            child: Text(
+                                              _durationText,
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 18.0,
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            )
-                          : Material(
-                              shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(cutRadius)),
-                              clipBehavior: Clip.antiAlias,
-                              child: Stack(
-                                fit: StackFit.expand,
-                                children: <Widget>[
-                                  Image.asset(
-                                    "assets/images/defaultCover.png",
-                                    fit: BoxFit.cover,
-                                  ),
-                                  Positioned(
-                                    bottom: -width * 0.15,
-                                    right: -width * 0.15,
-                                    child: Container(
-                                      decoration: ShapeDecoration(
-                                          color: Colors.white,
-                                          shape: BeveledRectangleBorder(
-                                              borderRadius: BorderRadius.only(
-                                                  topLeft: Radius.circular(
-                                                      width * 0.15)))),
-                                      height: width * 0.15 * 2,
-                                      width: width * 0.15 * 2,
+                                      ],
                                     ),
                                   ),
-                                  Positioned(
-                                    bottom: 0.0,
-                                    right: 0.0,
-                                    child: Padding(
-                                      padding: EdgeInsets.only(
-                                          right: 4.0, bottom: 6.0),
-                                      child: Text(
-                                        _durationText,
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 16.0,
+                                ),
+                              )
+                            : Material(
+                                shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(cutRadius)),
+                                clipBehavior: Clip.antiAlias,
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: <Widget>[
+                                    Image.asset(
+                                      "assets/images/defaultCover.png",
+                                      fit: BoxFit.cover,
+                                    ),
+                                    Positioned(
+                                      bottom: -width * 0.15,
+                                      right: -width * 0.15,
+                                      child: Container(
+                                        decoration: ShapeDecoration(
+                                            color: Colors.white,
+                                            shape: BeveledRectangleBorder(
+                                                borderRadius: BorderRadius.only(
+                                                    topLeft: Radius.circular(
+                                                        width * 0.15)))),
+                                        height: width * 0.15 * 2,
+                                        width: width * 0.15 * 2,
+                                      ),
+                                    ),
+                                    Positioned(
+                                      bottom: 0.0,
+                                      right: 0.0,
+                                      child: Padding(
+                                        padding: EdgeInsets.only(
+                                            right: 4.0, bottom: 6.0),
+                                        child: Text(
+                                          _durationText,
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 16.0,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                    )),
-              ),
-            )),
+                      )),
+                ),
+              )),
+        ),
         Align(
           alignment: Alignment.topCenter,
           child: Padding(
@@ -488,7 +496,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                             _positionText,
                             style: TextStyle(
                                 fontSize: 15.0,
-                                color: Colors.white,
+                                color: Colors.white.withOpacity(0.6),
                                 fontWeight: FontWeight.w600,
                                 letterSpacing: 1.0),
                           ),
@@ -503,7 +511,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                       child: Container(
                         color: Colors.transparent,
                         child: Padding(
-                          padding: const EdgeInsets.only(bottom: 15.0),
+                          padding: const EdgeInsets.only(bottom: 10.0),
                           child: new Row(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -521,7 +529,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                                   size: 50.0,
                                 ),
                                 //TODO: boton de anterior cancion
-                                onPressed: null,
+                                onPressed: () => skipPrevious(),
                               ),
                               Padding(
                                 padding:
@@ -549,7 +557,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                                   color: Colors.white.withOpacity(0.8),
                                   size: 50.0,
                                 ),
-                                onPressed: null,
+                                onPressed: () => skipSong(),
                               ),
                               Padding(
                                   padding:
@@ -566,9 +574,14 @@ class _PlayerWidgetState extends State<PlayerWidget>
                                           color: Colors.red,
                                           size: 35.0,
                                         ),
-                                  onPressed: () {
-                                    song.setAsFav();
-                                    setState(() {});
+                                  onPressed: () async {
+                                    if (song.isFav) {
+                                      await song.removeFromFavs();
+                                      setState(() {});
+                                    } else {
+                                      await song.setAsFav();
+                                      setState(() {});
+                                    }
                                   })
                             ],
                           ),
@@ -576,27 +589,48 @@ class _PlayerWidgetState extends State<PlayerWidget>
                       ),
                     ),
                   ),
-                  Container(
-                    width: width,
-                    color: Colors.transparent,
-                    child: FlatButton(
-                      onPressed: null,
-                      highlightColor: Colors.blueGrey[200].withOpacity(0.1),
-                      child: Text(
-                        "UP NEXT",
-                        style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
-                            letterSpacing: 2.0,
-                            fontWeight: FontWeight.bold),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10.0),
+                    child: Container(
+                      width: width,
+                      color: Colors.transparent,
+                      child: FlatButton(
+                        onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (BuildContext context) => UpNext())),
+                        highlightColor: Colors.blueGrey[200].withOpacity(0.1),
+                        child: Text(
+                          "UP NEXT",
+                          style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              letterSpacing: 2.0,
+                              fontWeight: FontWeight.bold),
+                        ),
+                        splashColor: Colors.blueGrey[200].withOpacity(0.1),
                       ),
-                      splashColor: Colors.blueGrey[200].withOpacity(0.1),
                     ),
                   )
                 ],
               ),
             ),
           ),
-        )
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 40),
+          child: Material(
+            color: Colors.transparent,
+            child: Row(
+              children: <Widget>[
+                IconButton(
+                    icon: Icon(
+                      CupertinoIcons.clear,
+                      size: 35,
+                    ),
+                    onPressed: () => Navigator.of(context).pop())
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }

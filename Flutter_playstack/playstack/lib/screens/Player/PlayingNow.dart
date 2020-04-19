@@ -1,19 +1,11 @@
-import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
-
 import 'package:audioplayers/audio_cache.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:playstack/models/Song.dart';
-import 'package:playstack/screens/AdvancedPlayer.dart';
-import 'package:playstack/screens/PlayerWidget.dart';
+import 'package:playstack/screens/Player/PlayerWidget.dart';
 import 'package:playstack/shared/common.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/src/foundation/constants.dart';
-import 'package:http/http.dart' as http;
 
 class PlayingNowScreen extends StatefulWidget {
   PlayingNowScreen();
@@ -22,7 +14,6 @@ class PlayingNowScreen extends StatefulWidget {
 }
 
 class _PlayingNowScreenState extends State<PlayingNowScreen> {
-  Song song = currentSong;
   // Para canciones de assets
   AudioCache audioCache = AudioCache();
   //Para canciones online SOLO HTTPS no HTTP
@@ -46,6 +37,6 @@ class _PlayingNowScreenState extends State<PlayingNowScreen> {
       StreamProvider<Duration>.value(
           initialData: Duration(),
           value: advancedPlayer.onAudioPositionChanged),
-    ], child: PlayerWidget(song: song, advancedPlayer: advancedPlayer));
+    ], child: PlayerWidget(advancedPlayer: advancedPlayer));
   }
 }
