@@ -32,7 +32,6 @@ class MyApp extends StatelessWidget {
           'Register': (_) => RegisterScreen(),
           'Settings': (_) => Settings(),
           'ProfileSettings': (_) => ProfileSettings(),
-          'YourPublicProfile': (_) => YourPublicProfile(),
         },
       ),
     );

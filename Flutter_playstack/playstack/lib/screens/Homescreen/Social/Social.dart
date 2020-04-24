@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:playstack/screens/Homescreen/Social/SearchPeople.dart';
 
 class Social extends StatelessWidget {
   @override
@@ -10,6 +11,12 @@ class Social extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           bottomOpacity: 1.0,
+          actions: <Widget>[
+            IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (BuildContext context) => SearchPeople())))
+          ],
           bottom: TabBar(
             indicatorColor: Colors.orange[800],
             tabs: [

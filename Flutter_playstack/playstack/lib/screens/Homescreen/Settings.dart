@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:bot_toast/bot_toast.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:playstack/screens/Homescreen/PublicProfile.dart';
 import 'package:playstack/screens/authentication/AccessScreen.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -32,7 +33,8 @@ class _SettingsState extends State<Settings> {
       height: 35.0,
       width: MediaQuery.of(context).size.width / 3,
       child: RaisedButton(
-        onPressed: () => Navigator.of(context).pushNamed('YourPublicProfile'),
+        onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (BuildContext context) => YourPublicProfile(true))),
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(80.0)),
         padding: EdgeInsets.all(0.0),

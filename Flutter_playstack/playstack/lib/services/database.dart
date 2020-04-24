@@ -5,6 +5,81 @@ import 'package:image_picker/image_picker.dart';
 import 'package:playstack/models/Song.dart';
 import 'package:playstack/shared/common.dart';
 
+Future<bool> follow(String newFriend) async {
+  dynamic data = {'Usuario': userName, 'Seguidor': newFriend};
+
+  data = jsonEncode(data);
+  dynamic response = await http.post(
+      "https://playstack.azurewebsites.net/user/follow",
+      headers: {"Content-Type": "application/json"},
+      body: data);
+
+  print("Statuscode follow: " + response.statusCode.toString());
+
+  if (response.statusCode == 200) {
+    print("Marcada como escuchada");
+    return true;
+  } else {
+    print("Status code not 200, body: " + response.body.toString());
+    return false;
+  }
+}
+
+Future<String> getForeignPicture(String username) async {
+  dynamic response = await http.get(
+      'https://playstack.azurewebsites.net/user/get/profilephoto?Usuario=$username');
+
+  print("Codigo recuperando foto de amigo: " + response.statusCode.toString());
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("Response " + response.toString());
+    return response['FotoDePerfil'];
+  } else {
+    print('Error cogiendo foto de perfil ');
+
+    return null;
+  }
+}
+
+Future<bool> checkIfFollowing(String otherPerson) async {
+  dynamic response = await http.get(
+      'https://playstack.azurewebsites.net/user/get/followers?Usuario=$otherPerson');
+
+  print("Codigo recuperando followers de amigo: " +
+      response.statusCode.toString());
+  print("Response " + response.body.toString());
+
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    //Tiene algun follower
+    if (response.length > 0) {
+      for (var user in response['Usuarios']) {
+        if (user == userName) return true;
+      }
+    }
+    return false;
+  } else {
+    print('Error buscando usuarios');
+
+    return null;
+  }
+}
+
+Future<List> getUsers(String keyword) async {
+  print("Searching for " + keyword);
+  dynamic response = await http
+      .get('https://playstack.azurewebsites.net/user/search?KeyWord=$keyword');
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("Response " + response.toString());
+    return response['Usuarios'];
+  } else {
+    print('Error buscando usuarios');
+
+    return null;
+  }
+}
+
 void setLastSongAsCurrent() async {
   dynamic response = await http.get(
       "https://playstack.azurewebsites.net/user/get/lastsong?Usuario=$userName");
