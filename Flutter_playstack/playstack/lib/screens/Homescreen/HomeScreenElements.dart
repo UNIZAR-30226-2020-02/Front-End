@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:playstack/screens/GenresSongs.dart';
+import 'package:playstack/shared/common.dart';
+
+import 'Home.dart';
 
 var blueColor = Color(0xFF090e42);
 var pinkColor = Color(0xFFff6b80);
@@ -13,12 +17,12 @@ Widget genres() {
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16.0),
     child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         SizedBox(height: 15.0),
         Text(
           'Géneros',
-          style: TextStyle(
-              color: Colors.white, fontFamily: 'Circular', fontSize: 30.0),
+          style: TextStyle(fontFamily: 'Circular', fontSize: 22.0),
         ),
         SizedBox(height: 16.0),
         Row(
@@ -45,95 +49,9 @@ Widget genres() {
         SizedBox(
           height: 32.0,
         ),
-        Text(
-          'Recommend',
-          style: TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 38.0),
-        ),
-        SizedBox(
-          height: 16.0,
-        ),
-        SongItem('In the Name of Love', 'Martin Garrix', martinGarrix),
-        SongItem('Never Be Like You', 'Flume', flume),
-        SongItem('Worry Bout Us', 'Rosie Lowe', rosieLowe),
-        SongItem('In the Name of Love', 'Martin Garrix', martinGarrix),
-        SongItem('In the Name of Love', 'Martin Garrix', martinGarrix),
       ],
     ),
   );
-}
-
-class SongItem extends StatelessWidget {
-  final title;
-  final artist;
-  final image;
-  SongItem(this.title, this.artist, this.image);
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => DetailedScreen(title, artist, image)));
-      },
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 26.0),
-        child: Row(
-          children: <Widget>[
-            Stack(
-              children: <Widget>[
-                Container(
-                  height: 80.0,
-                  width: 80.0,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: Image.network(
-                      image,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                Container(
-                    height: 80.0,
-                    width: 80.0,
-                    child: Icon(
-                      Icons.play_circle_filled,
-                      color: Colors.white.withOpacity(0.7),
-                      size: 42.0,
-                    ))
-              ],
-            ),
-            SizedBox(width: 16.0),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  title,
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 24.0),
-                ),
-                SizedBox(height: 8.0),
-                Text(
-                  artist,
-                  style: TextStyle(
-                      color: Colors.white.withOpacity(0.5), fontSize: 18.0),
-                ),
-              ],
-            ),
-            Spacer(),
-            Icon(
-              Icons.more_horiz,
-              color: Colors.white.withOpacity(0.6),
-              size: 32.0,
-            )
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class ItemCard extends StatelessWidget {
@@ -164,7 +82,10 @@ class ItemCard extends StatelessWidget {
                   width: double.infinity,
                   child: FlatButton(
                     color: Colors.transparent,
-                    onPressed: () => print('hi'),
+                    onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (BuildContext context) =>
+                                GenresSongs(genre: title, image: image))),
                     child: null,
                   ),
                 ),
@@ -344,4 +265,59 @@ class DetailedScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget lists() {
+  Column(
+    children: <Widget>[
+      Container(
+        height: 250.0,
+        child: Column(
+          children: <Widget>[
+            Text(
+              'Recommendation',
+              style: TextStyle(
+                color: Colors.white.withOpacity(1.0),
+                fontSize: 23.0,
+                fontFamily: 'Circular',
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(10.0),
+            ),
+            Container(
+              height: 165.0,
+              child: ListView.builder(
+                itemCount: imageurl.length,
+                scrollDirection: Axis.horizontal,
+                itemBuilder: (BuildContext context, int index) {
+                  return Column(
+                    children: <Widget>[
+                      SizedBox(
+                        height: 130.0,
+                        width: 140.0,
+                        child: Image.asset(
+                          imageurl[index],
+                          fit: BoxFit.fitHeight,
+                        ),
+                      ),
+                      Padding(padding: EdgeInsets.all(5.0)),
+                      Text(
+                        artists[index],
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(1.0),
+                          fontFamily: 'Circular',
+                          fontSize: 10.0,
+                        ),
+                      )
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      )
+    ],
+  );
 }

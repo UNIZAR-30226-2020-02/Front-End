@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:playstack/services/database.dart';
+import 'package:playstack/shared/common.dart';
 
 class SearchProcess extends StatefulWidget {
   @override
@@ -31,7 +33,7 @@ class _SearchProcessState extends State<SearchProcess> {
 
   @override
   void initState() {
-    //this._getNames();
+    this._getSongs();
     super.initState();
   }
 
@@ -95,22 +97,17 @@ class _SearchProcessState extends State<SearchProcess> {
       shrinkWrap: true,
       itemCount: names == null ? 0 : filteredNames.length,
       itemBuilder: (BuildContext context, int index) {
-        return new ListTile(
-          title: Text(filteredNames[index]['name']),
-          onTap: () => print(filteredNames[index]['name']),
-        );
+        return new SongItem(
+            filteredNames[index], new List(), filteredNames[index].title);
       },
     );
   }
 
-  void _getNames() async {
-    final response = await dio.get('https://swapi.co/api/people');
-    List tempList = new List();
-    for (int i = 0; i < response.data['results'].length; i++) {
-      tempList.add(response.data['results'][i]);
-    }
+  void _getSongs() async {
+    List allsongs = await getAllSongs();
+
     setState(() {
-      names = tempList;
+      names = allsongs;
       names.shuffle();
       filteredNames = names;
     });

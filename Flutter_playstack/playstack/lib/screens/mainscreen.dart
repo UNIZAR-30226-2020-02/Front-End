@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:playstack/screens/Homescreen/Home.dart';
-import 'package:playstack/screens/Library.dart';
-import 'package:playstack/screens/PlayingNow.dart';
-import 'package:playstack/screens/Search/SearchScreen.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:playstack/screens/Player/PlayingNow.dart';
 import 'package:playstack/screens/authentication/AccessScreen.dart';
+import 'package:playstack/shared/common.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 //import 'package:playstack/services/auth.dart';
 
@@ -14,8 +12,6 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
-
   SharedPreferences sharedPreferences;
 
   @override
@@ -36,17 +32,22 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: show(_currentIndex),
+      body: show(currentIndex),
       bottomNavigationBar: SizedBox(
-        height: 90,
+        height: MediaQuery.of(context).size.height / 9,
         child: BottomNavigationBar(
             fixedColor: Colors.red[600],
-            currentIndex: _currentIndex,
+            currentIndex: currentIndex,
             onTap: (int index) {
-              setState(() {
-                _currentIndex = index;
-                show(index);
-              });
+              if (index == 3) {
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (BuildContext context) => PlayingNowScreen()));
+              } else {
+                setState(() {
+                  currentIndex = index;
+                  show(index);
+                });
+              }
             },
             type: BottomNavigationBarType.shifting,
             items: [
@@ -77,22 +78,5 @@ class _MainScreenState extends State<MainScreen> {
             ]),
       ),
     );
-  }
-}
-
-Widget show(int index) {
-  switch (index) {
-    case 0:
-      return HomeScreen();
-      break;
-    case 1:
-      return SearchScreen();
-      break;
-    case 2:
-      return Library();
-      break;
-    case 3:
-      return PlayingNowScreen();
-      break;
   }
 }

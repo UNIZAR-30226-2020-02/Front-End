@@ -1,8 +1,18 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:playstack/screens/Homescreen/HomeScreenElements.dart';
-import 'package:playstack/screens/authentication/AccessScreen.dart';
+import 'package:playstack/screens/Homescreen/Social/Social.dart';
+import 'package:playstack/services/database.dart';
+import 'package:playstack/shared/common.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+List<String> imageurl = [
+  'assets/images/Artists/Macklemore.jpg',
+  'assets/images/Artists/Eminem.jpg',
+  'assets/images/Artists/datweekaz.jpg',
+  'assets/images/Artists/timmytrumpet.jpg'
+];
+List<String> artists = ['Macklemore', 'Eminem', 'Da Tweekaz', 'Timmy Trumpet'];
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -11,6 +21,42 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   SharedPreferences sharedPreferences;
+  @override
+  void initState() {
+    super.initState();
+    if (imagePath == null) {
+      getProfilePhoto();
+    }
+    if (currentSong == null) {
+      print("Va a setear la ultima cancion");
+      setLastSongAsCurrent();
+    }
+  }
+
+  Widget recommendedPlaylists() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.fromLTRB(10, 0, 0, 10),
+          child: Text(
+            "Artistas",
+            style: TextStyle(fontFamily: 'Circular', fontSize: 22),
+          ),
+        ),
+        Container(
+          height: 165.0,
+          child: ListView.builder(
+            itemCount: imageurl.length,
+            scrollDirection: Axis.horizontal,
+            itemBuilder: (BuildContext context, int index) {
+              return ArtistItem(artists[index], imageurl[index]);
+            },
+          ),
+        )
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +72,11 @@ class _HomeScreenState extends State<HomeScreen> {
               automaticallyImplyLeading: false,
               backgroundColor: Colors.transparent,
               centerTitle: true,
+              leading: IconButton(
+                icon: Icon(CupertinoIcons.group_solid),
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (BuildContext context) => Social())),
+              ),
               title: Container(
                   height: 40,
                   width: 40,
@@ -47,109 +98,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   scrollDirection: Axis.vertical,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      genres(),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(10, 10, 0, 10),
-                        child: Text(
-                          "Made for you",
-                          style:
-                              TextStyle(fontFamily: 'Circular', fontSize: 20),
-                        ),
-                      ),
-                      Container(
-                        height: 165.0,
-                        child: ListView.builder(
-                          itemCount: 10,
-                          scrollDirection: Axis.horizontal,
-                          itemBuilder: (BuildContext context, int index) {
-                            return Column(
-                              children: <Widget>[
-                                SizedBox(
-                                  height: 130.0,
-                                  width: 140.0,
-                                  child: Image.asset(
-                                    'lib/assets/Photos/pic1.png',
-                                    fit: BoxFit.fitHeight,
-                                  ),
-                                ),
-                                Padding(padding: EdgeInsets.all(5.0)),
-                                Text(
-                                  'Curtain Call',
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(1.0),
-                                    fontFamily: 'Circular',
-                                    fontSize: 10.0,
-                                  ),
-                                )
-                              ],
-                            );
-                          },
-                        ),
-                      ),
-                      Container(
-                        height: 250.0,
-                        child: Column(
-                          children: <Widget>[
-                            Text(
-                              'Recommendation',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(1.0),
-                                fontSize: 23.0,
-                                fontFamily: 'Circular',
-                              ),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.all(10.0),
-                            ),
-                            Container(
-                              height: 165.0,
-                              child: ListView.builder(
-                                itemCount: imageurl.length,
-                                scrollDirection: Axis.horizontal,
-                                itemBuilder: (BuildContext context, int index) {
-                                  return Column(
-                                    children: <Widget>[
-                                      SizedBox(
-                                        height: 130.0,
-                                        width: 140.0,
-                                        child: Image.asset(
-                                          imageurl[index],
-                                          fit: BoxFit.fitHeight,
-                                        ),
-                                      ),
-                                      Padding(padding: EdgeInsets.all(5.0)),
-                                      Text(
-                                        txt[index],
-                                        style: TextStyle(
-                                          color: Colors.white.withOpacity(1.0),
-                                          fontFamily: 'Circular',
-                                          fontSize: 10.0,
-                                        ),
-                                      )
-                                    ],
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    ],
+                    children: <Widget>[genres(), recommendedPlaylists()],
                   ),
                 )
               ],
             )));
   }
 }
-
-List<String> imageurl = [
-  'lib/assets/Photos/pic1.png',
-  'lib/assets/Photos/i2.jpeg',
-  'lib/assets/Photos/i3.jpeg',
-];
-List<String> txt = [
-  'Curtain Call',
-  "The Eminem show",
-  'Greatest Hits',
-];

@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:playstack/screens/mainscreen.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:playstack/shared/common.dart';
 
 class Register extends StatefulWidget {
   @override
@@ -14,13 +15,13 @@ class Register extends StatefulWidget {
 class _RegisterState extends State<Register> {
   SharedPreferences sharedPreferences;
   //Register function
-  _register(String username, String email, String password) async {
+  _register(String username, String mail, String password) async {
     // Se las pasa al servidor
     sharedPreferences = await SharedPreferences.getInstance();
     dynamic data = {
       'NombreUsuario': username,
       'Contrasenya': password,
-      'Correo': email
+      'Correo': mail
     };
 
     data = jsonEncode(data);
@@ -35,7 +36,8 @@ class _RegisterState extends State<Register> {
       // Se guardan los campos para poder ser modificados posteriormente
       List<String> credentials = new List();
       credentials.add(username);
-      credentials.add(email);
+      credentials.add(mail);
+
       sharedPreferences.setStringList('Credentials', credentials);
       sharedPreferences.setString("LoggedIn", "ok");
       //print("Token es " + jsonResponse[0]['userId'].toString());
