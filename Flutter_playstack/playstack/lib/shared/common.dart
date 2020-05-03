@@ -16,6 +16,54 @@ var dio = Dio();
 var defaultImagePath =
     'https://i7.pngguru.com/preview/753/432/885/user-profile-2018-in-sight-user-conference-expo-business-default-business.jpg';
 var imagePath;
+
+var tempImage;
+
+void uploadImage(SharedPreferences sharedPreferences) async {
+  sharedPreferences = await SharedPreferences.getInstance();
+
+  tempImage = await ImagePicker.pickImage(source: ImageSource.gallery);
+  
+}
+
+void clearImage(){
+  tempImage = null;
+}
+
+Future sendPictureToServer() async {
+  if (tempImage != null) {
+    // Abre un stream de bytes
+    var stream = http.ByteStream(DelegatingStream.typed(image.openRead()));
+    //Longitud de la imagen
+    var length = await image.length();
+    // Uri del servidor
+    var uri = Uri.parse("https://playstack.azurewebsites.net/");
+    // Crear peticion multiparte
+    var request = new http.MultipartRequest("POST", uri);
+    // multipart that takes file
+    var multipartFile = new http.MultipartFile('NuevaFoto', stream, length,
+        filename: basename(image.path));
+    // add file to multipart
+    request.files.add(multipartFile);
+    // send
+    var response = await request.send();
+    print("Status code devuelto " + response.statusCode.toString());
+
+    // listen for response
+    response.stream.transform(utf8.decoder).listen((value) {
+      print(value);
+    });
+
+    /*
+      setState(() {
+        imagePath = ...
+      });
+      */
+  }
+}
+
+class ProfilePicture extends StatelessWidget{
+
 var backgroundColor = Color(0xFF191414);
 
 String userName;
@@ -63,6 +111,7 @@ class ProfilePicture extends StatelessWidget {
         radius: 60,
         backgroundImage: (imagePath != null)
             ? NetworkImage(imagePath)
+            : (tempImage != null)? FileImage(tempImage)
             : NetworkImage(defaultImagePath));
   }
 }
