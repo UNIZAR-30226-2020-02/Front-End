@@ -85,7 +85,7 @@ class ItemCard extends StatelessWidget {
                     onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute(
                             builder: (BuildContext context) =>
-                                GenresSongs(genre: title))),
+                                GenresSongs(genre: title, image: image))),
                     child: null,
                   ),
                 ),

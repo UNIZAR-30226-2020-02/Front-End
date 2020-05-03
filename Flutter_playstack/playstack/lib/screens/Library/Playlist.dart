@@ -43,6 +43,10 @@ class _PlaylistState extends State<Playlist> {
         ),
         child: Scaffold(
           appBar: AppBar(
+            title: Text(
+              name,
+              style: TextStyle(fontSize: 25, fontFamily: 'Circular'),
+            ),
             backgroundColor: Colors.transparent,
             leading: IconButton(
                 icon: Icon(CupertinoIcons.back),
@@ -52,13 +56,16 @@ class _PlaylistState extends State<Playlist> {
           body: ListView(
             children: <Widget>[
               // Lista el nombre de la playlist
-              Center(
-                child: Text(
-                  name,
-                  style: TextStyle(fontSize: 25, fontFamily: 'Circular'),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(0, 15, 0, 5),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    shuffleButton(name, songs, context),
+                  ],
                 ),
               ),
-
+              playlistsDivider(),
               ListView.builder(
                 scrollDirection: Axis.vertical,
                 shrinkWrap: true,

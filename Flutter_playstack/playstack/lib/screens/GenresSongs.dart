@@ -2,9 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:playstack/models/Song.dart';
-import 'package:playstack/screens/Homescreen/Home.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'dart:convert';
+import 'dart:ui' as ui;
 
 import 'package:playstack/shared/common.dart';
 
@@ -13,21 +13,21 @@ var martinGarrix =
 
 class GenresSongs extends StatefulWidget {
   final genre;
-
-  GenresSongs({
-    Key key,
-    @required this.genre,
-  }) : super(key: key);
+  final image;
+  GenresSongs({Key key, @required this.genre, @required this.image})
+      : super(key: key);
   @override
-  _GenresSongsState createState() => _GenresSongsState(genre);
+  _GenresSongsState createState() => _GenresSongsState(genre, image);
 }
 
 class _GenresSongsState extends State<GenresSongs> {
   String genre;
+  var image;
+  bool _loading = true;
 
   List<Song> songs = new List();
 
-  _GenresSongsState(this.genre);
+  _GenresSongsState(this.genre, this.image);
 
   @override
   void initState() {
@@ -71,7 +71,9 @@ class _GenresSongsState extends State<GenresSongs> {
           info['Albumes'],
           info['ImagenesAlbum'],
           info['EsFavorita']));
-      setState(() {});
+      setState(() {
+        _loading = false;
+      });
     } else {
       print(response.body);
     }
@@ -91,55 +93,91 @@ class _GenresSongsState extends State<GenresSongs> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title:
-            Text(genre, style: TextStyle(fontFamily: 'Circular', fontSize: 25)),
-      ),
-      backgroundColor: backgroundColor,
-      body: ListView(
-        children: <Widget>[_buildList()],
-      ),
-      bottomNavigationBar: SizedBox(
-        height: MediaQuery.of(context).size.height / 9,
-        child: BottomNavigationBar(
-            fixedColor: Colors.red[600],
-            currentIndex: currentIndex,
-            onTap: (int index) {
-              currentIndex = index;
-              Navigator.pop(context);
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (BuildContext context) => mainScreens[index]));
-            },
-            type: BottomNavigationBarType.shifting,
-            items: [
-              BottomNavigationBarItem(
-                  icon: new Icon(
-                    CupertinoIcons.home,
-                    size: 25,
+    return _loading
+        ? Loading()
+        : Scaffold(
+            appBar: AppBar(
+              centerTitle: true,
+              title: Text(genre,
+                  style: TextStyle(fontFamily: 'Circular', fontSize: 25)),
+            ),
+            backgroundColor: backgroundColor,
+            body: ListView(
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: <Widget>[
+                      Image.asset(image),
+                      BackdropFilter(
+                        filter: ui.ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                        child: Container(
+                          height: MediaQuery.of(context).size.height / 3,
+                          width: MediaQuery.of(context).size.width,
+                          decoration: new BoxDecoration(
+                              color: backgroundColor.withOpacity(0.3)),
+                        ),
+                      ),
+                      SizedBox(
+                          height: MediaQuery.of(context).size.height / 4,
+                          child: Image.asset(image)),
+                    ],
                   ),
-                  title: new Text(
-                    "Home",
-                    style: TextStyle(fontSize: 10),
-                  )),
-              BottomNavigationBarItem(
-                  icon: new Icon(CupertinoIcons.search, size: 25),
-                  title: new Text(
-                    "Search",
-                    style: TextStyle(fontSize: 10),
-                  )),
-              BottomNavigationBarItem(
-                  icon: new Icon(CupertinoIcons.collections, size: 25),
-                  title: new Text(
-                    "Library",
-                    style: TextStyle(fontSize: 10),
-                  )),
-              BottomNavigationBarItem(
-                  icon: new Icon(CupertinoIcons.music_note),
-                  title: new Text("Play", style: TextStyle(fontSize: 10))),
-            ]),
-      ),
-    );
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      shuffleButton(genre, songs, context),
+                    ],
+                  ),
+                ),
+                playlistsDivider(),
+                _buildList()
+              ],
+            ),
+            bottomNavigationBar: SizedBox(
+              height: MediaQuery.of(context).size.height / 9,
+              child: BottomNavigationBar(
+                  fixedColor: Colors.red[600],
+                  currentIndex: currentIndex,
+                  onTap: (int index) {
+                    currentIndex = index;
+                    Navigator.pop(context);
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (BuildContext context) => mainScreens[index]));
+                  },
+                  type: BottomNavigationBarType.shifting,
+                  items: [
+                    BottomNavigationBarItem(
+                        icon: new Icon(
+                          CupertinoIcons.home,
+                          size: 25,
+                        ),
+                        title: new Text(
+                          "Home",
+                          style: TextStyle(fontSize: 10),
+                        )),
+                    BottomNavigationBarItem(
+                        icon: new Icon(CupertinoIcons.search, size: 25),
+                        title: new Text(
+                          "Search",
+                          style: TextStyle(fontSize: 10),
+                        )),
+                    BottomNavigationBarItem(
+                        icon: new Icon(CupertinoIcons.collections, size: 25),
+                        title: new Text(
+                          "Library",
+                          style: TextStyle(fontSize: 10),
+                        )),
+                    BottomNavigationBarItem(
+                        icon: new Icon(CupertinoIcons.music_note),
+                        title:
+                            new Text("Play", style: TextStyle(fontSize: 10))),
+                  ]),
+            ),
+          );
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:dio/dio.dart';
 import 'package:playstack/models/Song.dart';
 import 'package:playstack/screens/Homescreen/Home.dart';
@@ -21,6 +22,8 @@ String userName;
 String userEmail;
 int currentIndex = 0;
 Song currentSong;
+String kindOfAccount = 'No premium';
+var rng = new Random();
 
 String songsNextUpName;
 List songsNextUp = new List();
@@ -64,6 +67,60 @@ class ProfilePicture extends StatelessWidget {
   }
 }
 
+void setShuffleQueue(String songsListName, List songsList, Song firstSong) {
+  List tmpList = new List();
+  tmpList.addAll(songsList);
+  tmpList.remove(firstSong);
+  songsNextUpName = songsListName;
+  currentSong = firstSong;
+  songsNextUp = tmpList;
+  firstSong.markAsListened();
+}
+
+Widget playlistsDivider() {
+  return Divider(
+    color: Colors.white70,
+    indent: 20,
+    endIndent: 20,
+  );
+}
+
+Widget shuffleButton(
+    String songsListName, List songslist, BuildContext context) {
+  Song song = songslist.elementAt(rng.nextInt(songslist.length));
+  return Container(
+    height: 45.0,
+    width: MediaQuery.of(context).size.width / 3,
+    child: RaisedButton(
+      onPressed: () {
+        setShuffleQueue(songsListName, songslist, song);
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (BuildContext context) => PlayingNowScreen()));
+      },
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(80.0)),
+      padding: EdgeInsets.all(0.0),
+      child: Ink(
+        decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.red[900], Colors.red[400], Colors.red[900]],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(30.0)),
+        child: Container(
+          constraints: BoxConstraints(maxWidth: 300.0, minHeight: 50.0),
+          alignment: Alignment.center,
+          child: Text(
+            "Aleatorio",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white, fontSize: 15),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 // Check if its a digit
 bool isDigit(String s) => "0".compareTo(s[0]) <= 0 && "9".compareTo(s[0]) >= 0;
 
@@ -97,6 +154,7 @@ class SongItem extends StatelessWidget {
   final String songsListName;
   final List songsList;
   final Song song;
+
   SongItem(this.song, this.songsList, this.songsListName);
 
   void setQueue(List songsList) {
@@ -168,17 +226,67 @@ class SongItem extends StatelessWidget {
                 ],
               ),
               Spacer(),
-              Icon(
-                Icons.more_horiz,
-                color: Colors.white.withOpacity(0.6),
-                size: 32.0,
-              )
+              PopupMenuButton<String>(
+                  icon: Icon(Icons.more_horiz),
+                  color: Colors.grey[800],
+                  onSelected: (val) async {
+                    switch (val) {
+                      case "Fav":
+                        if (song.isFav) {
+                          song.removeFromFavs();
+                        } else {
+                          song.setAsFav();
+                        }
+                        break;
+                      default:
+                        showSharableLink(context, song.url);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                        PopupMenuItem(
+                            value: "Fav",
+                            child: ListTile(
+                              leading: Icon(
+                                song.isFav
+                                    ? CupertinoIcons.heart_solid
+                                    : CupertinoIcons.heart,
+                                color: Colors.red,
+                              ),
+                              title: Text(song.isFav
+                                  ? "Quitar de favoritos"
+                                  : "Añadir a favoritos"),
+                            )),
+                        PopupMenuItem(
+                            value: "Share",
+                            child: ListTile(
+                              leading: Icon(CupertinoIcons.share),
+                              title: Text('Compartir'),
+                            ))
+                      ])
             ],
           ),
         ),
       ),
     );
   }
+}
+
+Future<void> showSharableLink(BuildContext context, String url) {
+  return showDialog(
+    barrierDismissible: true,
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text("Compartir enlace"),
+        content: Text(url),
+        elevation: 100.0,
+        actions: <Widget>[
+          FlatButton(
+              onPressed: () => Navigator.pop(context), child: Text("Listo"))
+        ],
+      );
+    },
+  );
 }
 
 class ArtistItem extends StatelessWidget {

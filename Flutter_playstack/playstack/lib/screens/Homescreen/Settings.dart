@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:bot_toast/bot_toast.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:playstack/screens/Homescreen/Account.dart';
 import 'package:playstack/screens/Homescreen/PublicProfile.dart';
 import 'package:playstack/screens/authentication/AccessScreen.dart';
 import 'package:playstack/shared/Loading.dart';
@@ -127,7 +128,10 @@ class _SettingsState extends State<Settings> {
               onPressed: () =>
                   Navigator.of(context).pushNamed('ProfileSettings'),
               child: Text('Perfil de usuario')),
-          FlatButton(onPressed: null, child: Text('Cuenta')),
+          FlatButton(
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (BuildContext context) => Account())),
+              child: Text('Cuenta')),
           FlatButton(onPressed: null, child: Text('Configuración'))
         ],
       ),

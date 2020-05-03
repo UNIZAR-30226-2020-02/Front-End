@@ -30,11 +30,13 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
   List mostListenedTo;
   List likedGenres;
   List lastListenedTo;
+  List publicPlaylists;
 
   _YourPublicProfileState(this.own, this.friendUserName) {
     mostListenedTo = new List();
     likedGenres = new List();
     lastListenedTo = new List();
+    publicPlaylists = new List();
   }
   @override
   void initState() {
@@ -48,6 +50,7 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
     }
     //TODO: descomentar
     /* getListsData('mostListenedTo');
+    getListsData('publicPlaylists');
     getListsData('likedGenres');
     getListsData('lastListenedTo'); */
   }
@@ -68,6 +71,10 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
       case 'likedGenres':
         likedGenres.add(item);
         break;
+
+      case 'publicPlaylists':
+        publicPlaylists.add(item);
+        break;
       default:
         lastListenedTo.add(item);
     }
@@ -87,6 +94,12 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
         break;
       case 'likedGenres':
         print("Recopilando generos favoritos...");
+        response = await http.get(
+          "https://playstack.azurewebsites.net/get/song/bygenre?user=$userName",
+          headers: {"Content-Type": "application/json"},
+        );
+        break;
+      case 'publicPlaylists':
         response = await http.get(
           "https://playstack.azurewebsites.net/get/song/bygenre?user=$userName",
           headers: {"Content-Type": "application/json"},
@@ -136,6 +149,17 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
           itemCount: likedGenres.isEmpty ? 0 : likedGenres.length,
           itemBuilder: (BuildContext context, int index) {
             return new ListTile(title: likedGenres[index]);
+          },
+        );
+        break;
+
+      case 'publicPlaylists':
+        return ListView.builder(
+          scrollDirection: Axis.vertical,
+          shrinkWrap: true,
+          itemCount: publicPlaylists.isEmpty ? 0 : publicPlaylists.length,
+          itemBuilder: (BuildContext context, int index) {
+            return new ListTile(title: publicPlaylists[index]);
           },
         );
         break;
@@ -246,6 +270,11 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
                         style: TextStyle(fontSize: 20),
                       ),
                       listItems('likedGenres'),
+                      Text(
+                        "Listas de reproducción públicas",
+                        style: TextStyle(fontSize: 20),
+                      ),
+                      listItems('lastListenedTo'),
                       Text(
                         "Últimas canciones y podcast escuchados",
                         style: TextStyle(fontSize: 20),

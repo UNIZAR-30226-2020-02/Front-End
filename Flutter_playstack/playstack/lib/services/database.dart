@@ -5,6 +5,60 @@ import 'package:image_picker/image_picker.dart';
 import 'package:playstack/models/Song.dart';
 import 'package:playstack/shared/common.dart';
 
+Future<List> getPlaylists() async {
+  List allSongs = new List();
+  dynamic response = await http.get(
+      'https://playstack.azurewebsites.net/get/playlists?NombreUsuario=$userName');
+
+  print("Codigo recuperando playlists: " + response.statusCode.toString());
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("REspuesta:" + response.toString());
+  } else {
+    print('Error buscando usuarios');
+  }
+  return allSongs;
+}
+
+Future<List> getAllSongs() async {
+  List allSongs = new List();
+  dynamic response =
+      await http.get('https://playstack.azurewebsites.net/get/allsongs');
+
+  print("Codigo recuperando canciones: " + response.statusCode.toString());
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("REspuesta:");
+    response.forEach((title, info) => print(title + info.toString()));
+    response.forEach((title, info) => addSongToList(
+        allSongs,
+        title,
+        info['Artistas'],
+        info['Albumes'],
+        info['ImagenesAlbums'],
+        info['url']));
+  } else {
+    print('Error buscando usuarios');
+  }
+  return allSongs;
+}
+
+Future<List> getFollowersDB() async {
+  dynamic response = await http.get(
+      'https://playstack.azurewebsites.net/user/get/profilephoto?Usuario=$userName');
+
+  print("Codigo recuperando followers: " + response.statusCode.toString());
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("Response " + response.toString());
+    return response['Usuarios'];
+  } else {
+    print('Error buscando usuarios');
+
+    return null;
+  }
+}
+
 Future<bool> follow(String newFriend) async {
   dynamic data = {'Usuario': userName, 'Seguidor': newFriend};
 

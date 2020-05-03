@@ -1,7 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:playstack/services/database.dart';
 import 'package:playstack/screens/Homescreen/Social/SearchPeople.dart';
 
-class Social extends StatelessWidget {
+class Social extends StatefulWidget {
+  @override
+  _SocialState createState() => _SocialState();
+}
+
+class _SocialState extends State<Social> {
+  List following = new List();
+  List followers = new List();
+
+  @override
+  void initState() {
+    super.initState();
+    getFollowers();
+  }
+
+  void getFollowers() async {
+    followers = await getFollowersDB();
+    setState(() {});
+  }
+
+  Widget showFollowers() {}
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
