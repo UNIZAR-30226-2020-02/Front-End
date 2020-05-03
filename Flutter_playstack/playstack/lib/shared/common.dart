@@ -10,12 +10,21 @@ import 'dart:convert';
 
 var defaultImagePath = 'https://i7.pngguru.com/preview/753/432/885/user-profile-2018-in-sight-user-conference-expo-business-default-business.jpg';
 var imagePath;
+var tempImage;
 
-Future uploadImage(SharedPreferences sharedPreferences) async {
+void uploadImage(SharedPreferences sharedPreferences) async {
   sharedPreferences = await SharedPreferences.getInstance();
 
-  var image = await ImagePicker.pickImage(source: ImageSource.gallery);
-  if (image != null) {
+  tempImage = await ImagePicker.pickImage(source: ImageSource.gallery);
+  
+}
+
+void clearImage(){
+  tempImage = null;
+}
+
+Future sendPictureToServer() async {
+  if (tempImage != null) {
     // Abre un stream de bytes
     var stream = http.ByteStream(DelegatingStream.typed(image.openRead()));
     //Longitud de la imagen
@@ -46,7 +55,6 @@ Future uploadImage(SharedPreferences sharedPreferences) async {
   }
 }
 
-
 class ProfilePicture extends StatelessWidget{
   @override
   Widget build(BuildContext context) {
@@ -55,6 +63,7 @@ class ProfilePicture extends StatelessWidget{
         radius: 60,
         backgroundImage: (imagePath != null)
             ? NetworkImage(imagePath)
+            : (tempImage != null)? FileImage(tempImage)
             : NetworkImage(defaultImagePath));
   }
 }

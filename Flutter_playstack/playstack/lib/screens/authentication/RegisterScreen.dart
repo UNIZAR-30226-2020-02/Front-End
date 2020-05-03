@@ -12,6 +12,7 @@ import 'package:playstack/shared/Loading.dart';
 import 'package:toast/toast.dart';
 import 'package:playstack/shared/common.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:image_picker/image_picker.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -338,7 +339,8 @@ class RegisterState extends State<RegisterScreen> {
                         width: 128.0,
                         height: 128.0,
                         child: GestureDetector(
-                          onTap: () => uploadImage(sharedPreferences),
+                          onTap: () { var image = await ImagePicker.pickImage(source: ImageSource.gallery);
+                          }
                           child: ProfilePicture(),
                         ),
                       ),
