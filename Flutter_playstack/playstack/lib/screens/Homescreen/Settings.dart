@@ -42,11 +42,7 @@ class _SettingsState extends State<Settings> {
         child: Ink(
           decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  Colors.orange[900],
-                  Colors.orange[600],
-                  Colors.orange[900]
-                ],
+                colors: [Colors.red[900], Colors.red[500], Colors.red[900]],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
@@ -57,7 +53,7 @@ class _SettingsState extends State<Settings> {
             child: Text(
               "Ver perfil",
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white, fontSize: 14),
+              style: TextStyle(color: Colors.white, fontSize: 15),
             ),
           ),
         ),

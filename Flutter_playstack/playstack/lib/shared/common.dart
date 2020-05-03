@@ -87,7 +87,11 @@ Widget playlistsDivider() {
 
 Widget shuffleButton(
     String songsListName, List songslist, BuildContext context) {
-  Song song = songslist.elementAt(rng.nextInt(songslist.length));
+  Song song;
+
+  if (songslist.isNotEmpty) {
+    song = songslist.elementAt(rng.nextInt(songslist.length));
+  }
   return Container(
     height: 45.0,
     width: MediaQuery.of(context).size.width / 3,
@@ -388,17 +392,34 @@ class GenericSongItem extends StatelessWidget {
   }
 }
 
-class PlaylistElement {
-  String name;
-  List albumcovers = new List();
-  PlaylistElement({this.name, this.albumcovers});
+Widget playListCover(List insideCoverUrls) {
+  switch (insideCoverUrls.length) {
+    case 0:
+      return Image.asset(
+        'assets/images/defaultCover.png',
+        fit: BoxFit.cover,
+      );
+      break;
+    case 1:
+      return Image.network(insideCoverUrls.elementAt(0));
+      break;
+    case 2:
+      return Row(
+        children: <Widget>[
+          Expanded(flex: 1, child: Image.network(insideCoverUrls.elementAt(0))),
+          Expanded(flex: 1, child: Image.network(insideCoverUrls.elementAt(1))),
+        ],
+      );
+      break;
+
+    default:
+  }
 }
 
 //TODO: poner las fotos de las canciones de dentro
 class PlaylistItem extends StatelessWidget {
-  final String name;
-  final List coverUrls;
-  PlaylistItem(this.name, this.coverUrls);
+  final playlist;
+  PlaylistItem(this.playlist);
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -420,10 +441,7 @@ class PlaylistItem extends StatelessWidget {
                     width: MediaQuery.of(context).size.width / 5.8,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8.0),
-                      child: Image.asset(
-                        'assets/images/defaultCover.png',
-                        fit: BoxFit.cover,
-                      ),
+                      child: playListCover(playlist.coverUrls),
                     ),
                   ),
                 ],
@@ -433,7 +451,7 @@ class PlaylistItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    name,
+                    playlist.name,
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,

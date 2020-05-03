@@ -2,15 +2,18 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:playstack/models/PlaylistType.dart';
 import 'package:playstack/models/Song.dart';
+import 'package:playstack/screens/Library/Playlist.dart';
 import 'package:playstack/shared/common.dart';
 
-Future<List> getPlaylists() async {
+Future<List> getPublicPlaylists(String user) async {
   List allSongs = new List();
   dynamic response = await http.get(
-      'https://playstack.azurewebsites.net/get/playlists?NombreUsuario=$userName');
+      'https://playstack.azurewebsites.net/get/publicplaylists?NombreUsuario=$user');
 
-  print("Codigo recuperando playlists: " + response.statusCode.toString());
+  print("Codigo recuperando playlists de $user: " +
+      response.statusCode.toString());
   if (response.statusCode == 200) {
     response = jsonDecode(response.body);
     print("REspuesta:" + response.toString());
@@ -18,6 +21,26 @@ Future<List> getPlaylists() async {
     print('Error buscando usuarios');
   }
   return allSongs;
+}
+
+Future<bool> createFolderDB(String folderName) async {
+  dynamic data = {'Usuario': userName, 'Carpeta': folderName};
+
+  data = jsonEncode(data);
+  dynamic response = await http.post(
+      "https://playstack.azurewebsites.net/create/folder",
+      headers: {"Content-Type": "application/json"},
+      body: data);
+
+  print("Statuscode follow: " + response.statusCode.toString());
+
+  if (response.statusCode == 200) {
+    print("Marcada como escuchada");
+    return true;
+  } else {
+    print("Status code not 200, body: " + response.body.toString());
+    return false;
+  }
 }
 
 Future<List> getAllSongs() async {
@@ -157,34 +180,62 @@ void setLastSongAsCurrent() async {
   }
 }
 
-addPlaylistToList(List playlists, String name, dynamic covers) {
+Future<bool> createPlaylistDB(String playlistname, bool isPrivate) async {
+  print("Creando playlist " +
+      playlistname +
+      " del usuario " +
+      userName +
+      " es privada " +
+      isPrivate.toString());
+
+  dynamic data = {
+    'NombreUsuario': userName,
+    'NombrePlayList': playlistname,
+    'EsPrivado': isPrivate.toString()
+  };
+
+  data = jsonEncode(data);
+  dynamic response = await http.post(
+      "https://playstack.azurewebsites.net/create/playlist",
+      headers: {"Content-Type": "application/json"},
+      body: data);
+
+  print("Statuscode crear playlist: " + response.statusCode.toString());
+
+  if (response.statusCode == 200) {
+    print("Playlist " + playlistname + " creada");
+    return true;
+  } else {
+    print("Status code not 200, body: " + response.body.toString());
+    return false;
+  }
+}
+
+addPlaylistToList(List playlists, String name, dynamic covers, bool isPrivate) {
   if (covers == null) {
     covers = new List();
   } else if (covers is String) {
     covers = covers.toList();
   }
-
-  PlaylistElement newPlaylist =
-      new PlaylistElement(name: name, albumcovers: covers);
-
+  PlaylistType newPlaylist =
+      PlaylistType(name: name, coverUrls: covers, isPrivate: isPrivate);
   playlists.add(newPlaylist);
 }
 
-Future<List<PlaylistElement>> getUserPlaylists() async {
+Future<List> getUserPlaylists() async {
   List playlists = new List();
 
   print("Recuperando playlists de " + userName);
   dynamic response = await http.get(
-      "https://playstack.azurewebsites.net/user/get/playlists?Usuario=$userName");
+      "https://playstack.azurewebsites.net/user/get/playlists?NombreUsuario=$userName");
 
   print("Statuscode playlists: " + response.statusCode.toString());
 
   if (response.statusCode == 200) {
     response = json.decode(response.body);
     response.forEach((name, covers) => print(name + covers.toString()));
-    /* response
-        .forEach((name, covers) => addPlaylistToList(playlists, name, covers)); */
-
+    response.forEach((name, info) =>
+        addPlaylistToList(playlists, name, info['Fotos'], info['Privado']));
   } else {
     print("Status code not 200, body: " + response.body);
   }
