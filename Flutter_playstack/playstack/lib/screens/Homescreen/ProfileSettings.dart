@@ -57,7 +57,8 @@ class _ProfileSettingsState extends State<ProfileSettings> {
       child: RaisedButton(
         onPressed: () async {
           Scaffold.of(context).showSnackBar(snackBarUpdatingPhoto);
-          await uploadImage();
+          var image = await ImagePicker.pickImage(source: ImageSource.gallery);
+          await uploadImage(image);
           await getProfilePhoto();
           Scaffold.of(context).showSnackBar(snackBarPhotoUpdated);
 

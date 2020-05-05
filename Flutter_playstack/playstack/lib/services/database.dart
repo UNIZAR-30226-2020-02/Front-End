@@ -5,6 +5,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:playstack/models/Song.dart';
 import 'package:playstack/shared/common.dart';
 
+
+
+
 Future<List> getPlaylists() async {
   List allSongs = new List();
   dynamic response = await http.get(
@@ -308,9 +311,8 @@ Future updateUsername(String newUserName) async {
 }
 
 // Para subir fotos
-Future uploadImage() async {
+Future uploadImage(var image) async {
   print("Subiendo foto de " + userName);
-  var image = await ImagePicker.pickImage(source: ImageSource.gallery);
   FormData formData = new FormData.fromMap({
     "NombreUsuario": userName,
     "NuevaFoto": await MultipartFile.fromFile(image.path)

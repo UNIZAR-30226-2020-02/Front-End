@@ -66,13 +66,13 @@ class _AccessScreenState extends State<AccessScreen> {
       if (response.statusCode == 404) {
         setState(() {
           _loading = false;
-          Toast.show("User is not registered", context,
+          Toast.show(languageStrings['userNotRegistered'], context,
               duration: Toast.LENGTH_LONG, gravity: Toast.CENTER);
         });
       } else {
         setState(() {
           _loading = false;
-          Toast.show("Incorrect password", context,
+          Toast.show(languageStrings['incorrectPass'], context,
               duration: Toast.LENGTH_LONG, gravity: Toast.CENTER);
         });
       }
@@ -94,14 +94,14 @@ class _AccessScreenState extends State<AccessScreen> {
       child: TextFormField(
         controller: passwordController,
         decoration: InputDecoration(
-            hintText: 'Password',
+            hintText: languageStrings['pass'],
             icon: Icon(Icons.lock),
-            labelText: 'Password'),
+            labelText: languageStrings['pass']),
         validator: (val) {
           if (passwordIsSafe(val)) {
             return null;
           } else {
-            return "Please enter a valid password with at least one \n upper case letter and 8 characters";
+            return languageStrings['passErr1'];
           }
         },
         obscureText: _obscureText,
@@ -117,11 +117,11 @@ class _AccessScreenState extends State<AccessScreen> {
         enableSuggestions: true,
         decoration: InputDecoration(
             icon: Icon(Icons.mail),
-            hintText: 'Email or username',
-            labelText: 'Email or username'),
+            hintText: languageStrings['emailOrUser'],
+            labelText: languageStrings['emailOrUser']),
         validator: (String value) {
           if (value.length < 1) {
-            return 'Please enter a valid email or username';
+            return languageStrings['usernameErr1'];
           } else {
             return null;
           }
@@ -174,7 +174,7 @@ class _AccessScreenState extends State<AccessScreen> {
                 constraints: BoxConstraints(maxWidth: 350.0, minHeight: 50.0),
                 alignment: Alignment.center,
                 child: Text(
-                  'Log in',
+                  languageStrings['login'],
                   style: TextStyle(color: Colors.white, fontSize: 15),
                 ),
               ),
@@ -191,7 +191,7 @@ class _AccessScreenState extends State<AccessScreen> {
           height: 60,
           child: RaisedButton(
             onPressed: () {
-              Navigator.of(context).pushNamed("Register");
+              Navigator.of(context).pushNamed('Register');
             },
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(80.0)),
@@ -208,7 +208,7 @@ class _AccessScreenState extends State<AccessScreen> {
                   constraints: BoxConstraints(maxWidth: 350.0, minHeight: 50.0),
                   alignment: Alignment.center,
                   child: Text(
-                    'Register',
+                    languageStrings['register'],
                     style: TextStyle(color: Colors.white, fontSize: 15),
                   )),
             ),
@@ -218,6 +218,7 @@ class _AccessScreenState extends State<AccessScreen> {
 
   @override
   Widget build(BuildContext context) {
+    loadLanguagesString();
     return Container(
       decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -241,7 +242,7 @@ class _AccessScreenState extends State<AccessScreen> {
                         passwordFormField(),
                         FlatButton(
                             onPressed: _toggle,
-                            child: new Text(_obscureText ? "Show" : "Hide")),
+                            child: new Text(_obscureText ? languageStrings['show'] : languageStrings['hide'])),
                         loginButton(),
                         Row(children: <Widget>[
                           Expanded(
@@ -250,7 +251,7 @@ class _AccessScreenState extends State<AccessScreen> {
                             endIndent: 15,
                             indent: 15,
                           )),
-                          Text("OR"),
+                          Text(languageStrings['or']),
                           Expanded(
                               child: Divider(
                             color: Colors.grey,
