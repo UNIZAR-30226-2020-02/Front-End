@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
@@ -52,7 +53,8 @@ class _ProfileSettingsState extends State<ProfileSettings> {
       child: RaisedButton(
         onPressed: () async {
           Scaffold.of(context).showSnackBar(snackBarUpdatingPhoto);
-          await uploadImage();
+          var image = await ImagePicker.pickImage(source: ImageSource.gallery);
+          await uploadImage(image);
           await getProfilePhoto();
           Scaffold.of(context).showSnackBar(snackBarPhotoUpdated);
 

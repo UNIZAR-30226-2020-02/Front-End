@@ -54,8 +54,12 @@ Future<List> getPublicPlaylists(String user) async {
   return allSongs;
 }
 
-Future<bool> createFolderDB(String folderName) async {
-  dynamic data = {'Usuario': userName, 'Carpeta': folderName};
+Future<bool> createFolderDB(String folderName, String playlistName) async {
+  dynamic data = {
+    'NombreUsuario': userName,
+    'NombreCarpeta': folderName,
+    'NombrePlayList': playlistName
+  };
 
   data = jsonEncode(data);
   dynamic response = await http.post(
@@ -419,9 +423,8 @@ Future updateUsername(String newUserName) async {
 }
 
 // Para subir fotos
-Future uploadImage() async {
+Future uploadImage(var image) async {
   print("Subiendo foto de " + userName);
-  var image = await ImagePicker.pickImage(source: ImageSource.gallery);
   FormData formData = new FormData.fromMap({
     "NombreUsuario": userName,
     "NuevaFoto": await MultipartFile.fromFile(image.path)

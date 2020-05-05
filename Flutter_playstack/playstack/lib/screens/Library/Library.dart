@@ -117,7 +117,8 @@ class _LibraryState extends State<Library> {
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.grey[700]));
-    var result = await createFolderDB(newFolderController.text);
+    //TODO:cambiar la cadena vacia por el dropdownmenuitem elegido
+    var result = await createFolderDB(newFolderController.text, '');
 
     if (result) {
       Scaffold.of(context).showSnackBar(SnackBar(

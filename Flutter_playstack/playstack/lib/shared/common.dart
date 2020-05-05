@@ -1,5 +1,6 @@
 import 'dart:math';
-import 'package:http/http.dart' as http;
+import 'dart:io';
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:playstack/models/Song.dart';
@@ -10,7 +11,7 @@ import 'package:playstack/screens/Player/PlayingNow.dart';
 import 'package:playstack/screens/Search/SearchScreen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/services.dart';
 
 //////////////////////////////////////////////////////////////////////////////////
 /////                   SHARED VARIABLES DO NOT TOUCH                       //////
@@ -21,51 +22,6 @@ var defaultImagePath =
     'https://i7.pngguru.com/preview/753/432/885/user-profile-2018-in-sight-user-conference-expo-business-default-business.jpg';
 var imagePath;
 
-var tempImage;
-/* 
-void uploadImage(SharedPreferences sharedPreferences) async {
-  sharedPreferences = await SharedPreferences.getInstance();
-
-  tempImage = await ImagePicker.pickImage(source: ImageSource.gallery);
-}
- */
-void clearImage() {
-  tempImage = null;
-}
-
-/*
-Future sendPictureToServer() async {
-  if (tempImage != null) {
-    // Abre un stream de bytes
-    var stream = http.ByteStream(DelegatingStream.typed(image.openRead()));
-    //Longitud de la imagen
-    var length = await image.length();
-    // Uri del servidor
-    var uri = Uri.parse("https://playstack.azurewebsites.net/");
-    // Crear peticion multiparte
-    var request = new http.MultipartRequest("POST", uri);
-    // multipart that takes file
-    var multipartFile = new http.MultipartFile('NuevaFoto', stream, length,
-        filename: basename(image.path));
-    // add file to multipart
-    request.files.add(multipartFile);
-    // send
-    var response = await request.send();
-    print("Status code devuelto " + response.statusCode.toString());
-
-    // listen for response
-    response.stream.transform(utf8.decoder).listen((value) {
-      print(value);
-    });
-
-    /*
-      setState(() {
-        imagePath = ...
-      });
-      */
-  }
-}
- */
 var backgroundColor = Color(0xFF191414);
 
 String userName;
@@ -74,6 +30,8 @@ int currentIndex = 0;
 Song currentSong;
 String kindOfAccount = 'No premium';
 var rng = new Random();
+
+Map<String, dynamic> languageStrings = new Map<String, dynamic>();
 
 String songsNextUpName;
 List songsNextUp = new List();
@@ -87,6 +45,12 @@ List<Widget> mainScreens = [
 ];
 
 /////////////////////////////////////////////////////////////////////////////////////
+
+Future<String> loadLanguagesString() {
+  Future<String> jsonString =
+      rootBundle.loadString('assets/languages/spanish.json');
+  return jsonString;
+}
 
 Widget show(int index) {
   switch (index) {
@@ -105,17 +69,32 @@ Widget show(int index) {
   }
 }
 
-class ProfilePicture extends StatelessWidget {
+class ProfilePicture extends StatefulWidget {
+  @override
+  ProfilePictureState createState() => ProfilePictureState();
+}
+
+class ProfilePictureState extends State<ProfilePicture> {
+  static ValueNotifier<File> tempImage = ValueNotifier<File>(null);
+  static void setTempImage(var newImage) {
+    tempImage.value = newImage;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return CircleAvatar(
+    return Center(
+        child: ValueListenableBuilder(
+            builder: (BuildContext context, File value, Widget child) {
+              return CircleAvatar(
 //backgroundColor: Color(0xFF191414),
-        radius: 60,
-        backgroundImage: (imagePath != null)
-            ? NetworkImage(imagePath)
-            : (tempImage != null)
-                ? FileImage(tempImage)
-                : NetworkImage(defaultImagePath));
+                  radius: 60,
+                  backgroundImage: (imagePath != null)
+                      ? NetworkImage(imagePath)
+                      : (tempImage.value != null)
+                          ? FileImage(tempImage.value)
+                          : NetworkImage(defaultImagePath));
+            },
+            valueListenable: tempImage));
   }
 }
 

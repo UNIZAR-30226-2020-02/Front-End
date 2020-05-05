@@ -1,14 +1,15 @@
+import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:playstack/screens/mainscreen.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
-import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:playstack/shared/common.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:toast/toast.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -22,14 +23,19 @@ class RegisterState extends State<RegisterScreen> {
   bool _loading = false;
   int _step = 0;
   PageController _pageController = new PageController();
+  var image;
+
 
   final TextEditingController _usernameController = new TextEditingController();
   final TextEditingController _passwordController = new TextEditingController();
   final TextEditingController _emailController = new TextEditingController();
+  final TextEditingController _confirmController = new TextEditingController();
+  bool checked = false;
+  bool taken = false;
 
   SharedPreferences sharedPreferences;
 
-  _register(String username, String mail, String password) async {
+  Future<int> _register(String username, String mail, String password) async {
     // Se las pasa al servidor
     sharedPreferences = await SharedPreferences.getInstance();
     dynamic data = {
@@ -54,13 +60,13 @@ class RegisterState extends State<RegisterScreen> {
       userEmail = mail;
       sharedPreferences.setString("LoggedIn", "ok");
       //print("Token es " + jsonResponse[0]['userId'].toString());
-
     } else {
       setState(() {
         _loading = false;
       });
     }
     print("Statuscode " + response.statusCode.toString());
+    return response.statusCode;
   }
 
   _launchPremiumURL() async {
@@ -79,8 +85,13 @@ class RegisterState extends State<RegisterScreen> {
     });
   }
 
-  bool usernameNotTaken(String username) {
-    return true;
+  void usernameNotTaken(String username) async {
+    List matches = await getUsers(username);
+    if(matches!=null){
+      taken = matches.contains(username);
+    }
+    
+    checked = true;
   }
 
   bool emailNotTaken(String username) {
@@ -134,6 +145,7 @@ class RegisterState extends State<RegisterScreen> {
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeInOut,
     );
+    
   }
 
   Widget registerButtons() {
@@ -153,7 +165,7 @@ class RegisterState extends State<RegisterScreen> {
                             color: Colors.red[400],
                             onPressed: goBack,
                             child: Text(
-                              'Back',
+                              languageStrings['back'],
                               style:
                                   TextStyle(color: Colors.white, fontSize: 15),
                             )),
@@ -164,11 +176,52 @@ class RegisterState extends State<RegisterScreen> {
                                 borderRadius: new BorderRadius.circular(15.0),
                                 side: BorderSide(color: Colors.black)),
                             color: Colors.red[400],
-                            onPressed: () {
-                              goNext();
-                            },
+                            onPressed: () async {
+                                if(_step == 2){
+                                  setState((){
+                                    _loading = true;
+                                  });
+                                  int statusCode = await _register(_usernameController.text, _emailController.text, _passwordController.text);
+                                  switch(statusCode) {
+                                    case 201: {
+                                    uploadImage(image);
+                                    Navigator.of(context).pushAndRemoveUntil(
+                                        MaterialPageRoute(
+                                            builder: (BuildContext context) =>
+                                                MainScreen()),
+                                        (Route<dynamic> route) => false);
+                                    }
+                                    break;
+                                    case 400: {
+                                      _formKey.currentState.validate();
+                                      Toast.show(languageStrings['invalidCredentials'], context,
+                              duration: Toast.LENGTH_LONG,
+                              gravity: Toast.BOTTOM);
+                              _step = 0;
+                                    }
+                                    break;
+                                    case 406: {
+                                      Toast.show(languageStrings['invalidRequest'], context,
+                              duration: Toast.LENGTH_LONG,
+                              gravity: Toast.BOTTOM);
+                              _step = 0;
+                                    }
+                                    break;
+                                    case 500: {
+                                      Toast.show(languageStrings['internalError'], context,
+                              duration: Toast.LENGTH_LONG,
+                              gravity: Toast.BOTTOM);
+                              _step = 0;
+                                    }
+                                    break;
+                                  }
+
+                                }
+                                else
+                                  goNext();
+                              },
                             child: Text(
-                              'Next',
+                              languageStrings['next'],
                               style:
                                   TextStyle(color: Colors.white, fontSize: 15),
                             )),
@@ -181,29 +234,19 @@ class RegisterState extends State<RegisterScreen> {
                         side: BorderSide(color: Colors.black)),
                     color: Colors.red[400],
                     onPressed: () {
-                      goNext();
-                      _register(_usernameController.text, _emailController.text,
-                          _passwordController.text);
-
                       // devolverá true si el formulario es válido, o falso si
                       // el formulario no es válido.
-                      /*      if (_formKey.currentState.validate()) {
-                  Toast.show("Loading...", context,
-                      duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
-                if (_formKey.currentState.validate()) {
-                  // Si el formulario es válido, queremos mostrar un Snackbar
-                  setState(() {
-                    _loading = true;
-                  });
-                  _register(_usernameController.text, _emailController.text,
-                      _passwordController.text);
-                } else {
-                  Toast.show("Invalid credentials", context,
-                      duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
-                }*/
+                      if (_formKey.currentState.validate()) {
+                          // Si el formulario es válido, queremos mostrar un Snackbar
+                          goNext();
+                        } else {
+                          Toast.show(languageStrings['invalidCredentials'], context,
+                              duration: Toast.LENGTH_LONG,
+                              gravity: Toast.BOTTOM);
+                        }
                     },
                     child: Text(
-                      'Next',
+                      languageStrings['next'],
                       style: TextStyle(color: Colors.white, fontSize: 15),
                     ))));
   }
@@ -214,14 +257,19 @@ class RegisterState extends State<RegisterScreen> {
       child: TextFormField(
           controller: _usernameController,
           decoration: InputDecoration(
-              labelText: 'Username', icon: Icon(Icons.alternate_email)),
+              labelText: languageStrings['username'], icon: Icon(Icons.alternate_email),
+              errorMaxLines: 3),
           validator: (String value) {
+            
             if (value.length < 1)
-              return '''Must provide a username''';
-            else if (!usernameNotTaken(value))
-              return '''The username you provided is already being used, please choose a new one and try again''';
-            else
-              return null;
+              return languageStrings['usernameErr1'];
+            else{
+              usernameNotTaken(value);
+              if (checked && taken)
+                return languageStrings['usernameErr2'];
+              else
+                return null;
+            } 
           }),
     );
   }
@@ -232,13 +280,15 @@ class RegisterState extends State<RegisterScreen> {
       child: TextFormField(
         controller: _emailController,
         decoration: InputDecoration(
-            labelText: 'Email',
-            hintText: 'example@gmail.com',
-            icon: Icon(Icons.email)),
+            labelText: languageStrings['email'],
+            hintText: languageStrings['emailHint'],
+            icon: Icon(Icons.email),
+            errorMaxLines: 3),
         validator: (String value) {
           if (!value.contains('@') || !value.contains('.')) {
-            return 'Please enter a valid email';
+            return languageStrings['emailErr1'];
           } else {
+            emailNotTaken(value);
             return null;
           }
         },
@@ -252,13 +302,15 @@ class RegisterState extends State<RegisterScreen> {
       child: TextFormField(
         controller: _passwordController,
         decoration:
-            InputDecoration(labelText: 'Password', icon: Icon(Icons.lock)),
+            InputDecoration(labelText: languageStrings['pass'], icon: Icon(Icons.lock),
+            errorMaxLines: 3),
         obscureText: _obscureText,
+        
         validator: (val) {
           if (passwordIsSafe(val)) {
             return null;
           } else {
-            return '''Please enter a valid password with at least one upper case letter and 8 characters''';
+            return languageStrings['passErr1'];
           }
         },
       ),
@@ -269,14 +321,15 @@ class RegisterState extends State<RegisterScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
       child: TextFormField(
+        controller: _confirmController,
           decoration: InputDecoration(
-              labelText: 'Confirm password', icon: Icon(Icons.check_circle)),
+              labelText: languageStrings['confirm'], icon: Icon(Icons.check_circle)),
           obscureText: _obscureText,
           validator: (val) {
             if (_passwordController.text == val) {
               return null;
             } else {
-              return '''Passwords don't match''';
+              return languageStrings['confirmErr1'];
             }
           }),
     );
@@ -293,7 +346,7 @@ class RegisterState extends State<RegisterScreen> {
             children: <Widget>[
               Center(
                   child: Text(
-                'Register',
+                languageStrings['register'],
                 style: TextStyle(fontFamily: 'Circular', fontSize: 30),
               )),
               usernameField(),
@@ -302,7 +355,7 @@ class RegisterState extends State<RegisterScreen> {
               confirmField(),
               FlatButton(
                   onPressed: _toggle,
-                  child: new Text(_obscureText ? "Show" : "Hide")),
+                  child: new Text(_obscureText ? languageStrings['show'] : languageStrings['hide'])),
             ],
           )),
         ),
@@ -321,17 +374,19 @@ class RegisterState extends State<RegisterScreen> {
                     child: Column(children: <Widget>[
                       Center(
                           child: Text(
-                        'Say Cheese!',
+                        languageStrings['sayCheese'],
                         style: TextStyle(fontFamily: 'Circular', fontSize: 30),
                       )),
                       Padding(
                           padding: const EdgeInsets.fromLTRB(0, 15, 0, 10),
                           child: Center(
                               child: Text(
-                                  '''Add a profile picture.\nDon\'t worry, you can change it later!''',
+                                  languageStrings['imageRegDesc'],
                                   style: TextStyle(
                                       fontFamily: 'Circular', fontSize: 15),
-                                  textAlign: TextAlign.center))),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.fade))),
                       Padding(
                           padding: const EdgeInsets.fromLTRB(0, 30, 0, 0),
                           child: Center(
@@ -340,12 +395,8 @@ class RegisterState extends State<RegisterScreen> {
                               height: 128.0,
                               child: GestureDetector(
                                 onTap: () async {
-                                  await uploadImage();
-                                  Navigator.of(context).pushAndRemoveUntil(
-                                      MaterialPageRoute(
-                                          builder: (BuildContext context) =>
-                                              MainScreen()),
-                                      (Route<dynamic> route) => false);
+                                  image = await ImagePicker.pickImage(source: ImageSource.gallery);
+                                  ProfilePictureState.setTempImage(image);
                                 },
                                 child: ProfilePicture(),
                               ),
@@ -365,7 +416,9 @@ class RegisterState extends State<RegisterScreen> {
                 flex: 10,
                 child: Text(message,
                     style: TextStyle(fontFamily: 'Circular', fontSize: 15),
-                    textAlign: TextAlign.center))
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.fade))
           ]))
     ]);
   }
@@ -376,30 +429,33 @@ class RegisterState extends State<RegisterScreen> {
         body: ListView(children: <Widget>[
           Center(
               child: Text(
-            'One more step',
-            style: TextStyle(fontFamily: 'Circular', fontSize: 30),
+            languageStrings['premiumDesc1'],
+            style: TextStyle(fontFamily: 'Circular', fontSize: 30
+            ),
           )),
           Padding(
               padding: const EdgeInsets.fromLTRB(0, 15, 0, 10),
               child: Center(
                   child: Text(
-                      '''Get Playstack Premium now and enjoy these features''',
+                      languageStrings['premiumDesc2'],
                       style: TextStyle(fontFamily: 'Circular', fontSize: 20),
+                      maxLines: 2,
+                      overflow: TextOverflow.fade,
                       textAlign: TextAlign.center))),
           Padding(
               padding: const EdgeInsets.fromLTRB(10, 20, 30, 0),
               child: Center(
                   child: Table(children: <TableRow>[
                 premiumAdvantagesCell(Icon(Icons.music_note),
-                    '''Play any song you want, anytime you want!'''),
+                    languageStrings['premiumDesc3']),
                 premiumAdvantagesCell(Icon(Icons.queue_music),
-                    '''You control what plays next!'''),
+                    languageStrings['premiumDesc4']),
                 premiumAdvantagesCell(Icon(Icons.signal_wifi_off),
-                    '''Listen to your favourite songs, even offline!'''),
+                    languageStrings['premiumDesc5']),
                 premiumAdvantagesCell(Icon(Icons.library_music),
-                    '''Combine the songs in your device with our songs in the same playlist!'''),
+                    languageStrings['premiumDesc6']),
                 premiumAdvantagesCell(Icon(Icons.skip_next),
-                    '''Unlimited skips, forwards and backwards!'''),
+                    languageStrings['premiumDesc7']),
               ]))),
           Padding(
               padding: const EdgeInsets.fromLTRB(70, 10, 70, 10),
@@ -409,10 +465,37 @@ class RegisterState extends State<RegisterScreen> {
                       side: BorderSide(color: Colors.black)),
                   color: Colors.red[400],
                   onPressed: _launchPremiumURL,
-                  child: Text('''Get Premium''',
+                  child: Text(languageStrings['premiumButton'],
                       style: TextStyle(fontFamily: 'Circular', fontSize: 20),
                       textAlign: TextAlign.center)))
         ]));
+  }
+
+Widget fourthPage() {
+    return Center(
+            child: Scaffold(
+                backgroundColor: Colors.transparent,
+                body: Column(children: <Widget>[
+                      Center(
+                          child: Text(
+                        languageStrings['welcomeMessage1'],
+                        style: TextStyle(fontFamily: 'Circular', fontSize: 30),
+                      )),
+                      Padding(
+              padding: const EdgeInsets.fromLTRB(0, 15, 0, 10),
+              child: Center(
+                  child: Text(
+                      languageStrings['welcomeMessage2'],
+                      style: TextStyle(fontFamily: 'Circular', fontSize: 20),
+                      maxLines: 2,
+                      overflow: TextOverflow.fade,
+                      textAlign: TextAlign.center)
+                      )
+                      )
+                      ]
+                      )
+                      )
+    );
   }
 
   @override
@@ -438,6 +521,7 @@ class RegisterState extends State<RegisterScreen> {
                   onWillPop: _onBackPressed,
                   child: Expanded(
                       child: PageView(
+                          
                           physics: new NeverScrollableScrollPhysics(),
                           controller: _pageController,
                           children: <Widget>[
