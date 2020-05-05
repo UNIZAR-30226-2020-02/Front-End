@@ -29,7 +29,7 @@ Song currentSong;
 String kindOfAccount = 'No premium';
 var rng = new Random();
 
-Map<String,dynamic> languageStrings;
+Map<String,dynamic> languageStrings = new Map<String,dynamic>();
 
 String songsNextUpName;
 List songsNextUp = new List();
@@ -44,10 +44,11 @@ List<Widget> mainScreens = [
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-void loadLanguagesString() async{
-  String jsonString = await rootBundle.loadString('assets/languages/spanish.json');
-  languageStrings = jsonDecode(jsonString);
-  print("Loaded ${languageStrings['language']}");
+
+
+Future<String> loadLanguagesString(){
+  Future<String> jsonString = rootBundle.loadString('assets/languages/spanish.json');
+  return jsonString;
 }
 
 Widget show(int index) {

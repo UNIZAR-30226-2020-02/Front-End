@@ -217,8 +217,19 @@ class _AccessScreenState extends State<AccessScreen> {
   }
 
   @override
+  void initState(){
+    super.initState();
+  setState(()=> _loading = true);
+    Future<String> futureString = loadLanguagesString();
+    futureString.then((value){
+      languageStrings = jsonDecode(value);
+      print("Loaded ${languageStrings['language']}");
+      setState(() => _loading = false);
+  });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    loadLanguagesString();
     return Container(
       decoration: BoxDecoration(
           gradient: LinearGradient(
