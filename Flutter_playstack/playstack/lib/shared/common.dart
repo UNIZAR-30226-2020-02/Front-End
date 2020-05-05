@@ -45,7 +45,7 @@ List<Widget> mainScreens = [
 /////////////////////////////////////////////////////////////////////////////////////
 
 void loadLanguagesString() async{
-  String jsonString = await rootBundle.loadString('assets/languages/english.json');
+  String jsonString = await rootBundle.loadString('assets/languages/spanish.json');
   languageStrings = jsonDecode(jsonString);
   print("Loaded ${languageStrings['language']}");
 }
