@@ -1,8 +1,10 @@
 import 'package:bot_toast/bot_toast.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:playstack/models/PlaylistType.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
 import 'package:playstack/services/database.dart';
+import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
 import 'package:toast/toast.dart';
 
@@ -16,16 +18,25 @@ class _LibraryState extends State<Library> {
       new TextEditingController();
   final TextEditingController newFolderController = new TextEditingController();
   List playlists = new List();
+  List folders = new List();
+  bool _loading = true;
 
   @override
   void initState() {
     super.initState();
+    //getFolders();
     getPlaylists();
+  }
+
+  void getFolders() async {
+    folders = await getUserFolders();
   }
 
   void getPlaylists() async {
     playlists = await getUserPlaylists();
-    setState(() {});
+    setState(() {
+      _loading = false;
+    });
   }
 
   Widget musicTab() {
@@ -95,7 +106,8 @@ class _LibraryState extends State<Library> {
           ),
           backgroundColor: Colors.grey[700]));
     }
-    setState(() {});
+    newPLaylistController.clear();
+    getPlaylists();
   }
 
   void createFolder() async {
@@ -125,9 +137,19 @@ class _LibraryState extends State<Library> {
     setState(() {});
   }
 
+  List<DropdownMenuItem> listPlaylistNames() {
+    List<DropdownMenuItem> items = new List();
+    for (var pl in playlists) {
+      DropdownMenuItem newItem =
+          new DropdownMenuItem<String>(value: pl.name, child: Text(pl.name));
+      items.add(newItem);
+    }
+    return items;
+  }
+
   Future<void> showCreatingFolderDialog(BuildContext context) {
-    String dropdownValue;
     bool _validate = false;
+    String _dropdownItem = playlists.elementAt(0).name;
     return showDialog(
       barrierDismissible: true,
       context: context,
@@ -147,6 +169,26 @@ class _LibraryState extends State<Library> {
                         errorText:
                             _validate ? 'Introduzca un nombre válido' : null),
                   )),
+              Container(
+                width: MediaQuery.of(context).size.width,
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      flex: 1,
+                      child: DropdownButton(
+                        isExpanded: true,
+                        value: _dropdownItem,
+                        items: listPlaylistNames(),
+                        onChanged: (val) {
+                          setState(() {
+                            _dropdownItem = val;
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               Container(
                 width: MediaQuery.of(context).size.width,
                 child: Row(
@@ -257,46 +299,87 @@ class _LibraryState extends State<Library> {
       physics: BouncingScrollPhysics(),
       children: <Widget>[
         ListTile(
-          leading: Icon(CupertinoIcons.add_circled),
+          leading: Container(
+            height: MediaQuery.of(context).size.height / 13,
+            width: MediaQuery.of(context).size.width / 6.5,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8.0),
+              child: Icon(CupertinoIcons.add_circled, size: 30),
+            ),
+          ),
           title: Text(
             'Nueva carpeta',
-            style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w500),
+            style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w500),
           ),
           onTap: () {
-            showCreatingFolderDialog(context);
+            playlists.length > 0
+                ? showCreatingFolderDialog(context)
+                : Toast.show(
+                    "Necesitas tener alguna playlist para poder crear carpetas",
+                    context,
+                    gravity: Toast.CENTER);
           },
         ),
         ListTile(
-          leading: Icon(CupertinoIcons.add),
+          leading: Container(
+            height: MediaQuery.of(context).size.height / 13,
+            width: MediaQuery.of(context).size.width / 6.5,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8.0),
+              child: Icon(CupertinoIcons.add, size: 30),
+            ),
+          ),
           title: Text(
             'Nueva lista de reproducción',
-            style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w500),
+            style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w500),
           ),
           onTap: () => showCreatingPlaylistDialog(context),
         ),
         ListTile(
-          leading: Icon(CupertinoIcons.heart_solid, color: Colors.red),
-          title: Text('Favoritas'),
-          subtitle: Text('Canciones favoritas'),
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(
-              builder: (BuildContext context) => Playlist('Favoritas'))),
-        ),
-        ListTile(
-          leading: Icon(
-            Icons.archive,
+          leading: Container(
+            height: MediaQuery.of(context).size.height / 13,
+            width: MediaQuery.of(context).size.width / 6.5,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8.0),
+              child: Icon(
+                Icons.archive,
+              ),
+            ),
           ),
-          title: Text('Música del dispositivo'),
+          title: Text('Música del dispositivo',
+              style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w500)),
           subtitle: Text('Música local'),
           onTap: null,
         ),
-        ListView.builder(
-          scrollDirection: Axis.vertical,
-          shrinkWrap: true,
-          itemCount: playlists.isEmpty ? 0 : playlists.length,
-          itemBuilder: (BuildContext context, int index) {
-            return new PlaylistItem(playlists[index]);
-          },
-        )
+        ListTile(
+          leading: Container(
+            height: MediaQuery.of(context).size.height / 13,
+            width: MediaQuery.of(context).size.width / 6.5,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8.0),
+              child: Image.asset(
+                'assets/images/Favs_cover.jpg',
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          title: Text('Favoritas',
+              style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w500)),
+          subtitle: Text('Canciones favoritas'),
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (BuildContext context) =>
+                  Playlist(new PlaylistType(name: "Favoritas")))),
+        ),
+        _loading
+            ? LoadingSongs()
+            : ListView.builder(
+                scrollDirection: Axis.vertical,
+                shrinkWrap: true,
+                itemCount: playlists.isEmpty ? 0 : playlists.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return new PlaylistItem(playlists[index]);
+                },
+              )
       ],
     );
   }

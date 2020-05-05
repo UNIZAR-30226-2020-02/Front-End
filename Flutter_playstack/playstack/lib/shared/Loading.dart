@@ -15,3 +15,20 @@ class Loading extends StatelessWidget {
     );
   }
 }
+
+class LoadingSongs extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height / 3,
+      width: MediaQuery.of(context).size.width / 2,
+      color: Colors.transparent,
+      child: Center(
+        child: SpinKitFadingFour(
+          color: Colors.red[600],
+          size: 50.0,
+        ),
+      ),
+    );
+  }
+}

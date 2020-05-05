@@ -1,12 +1,16 @@
 import 'dart:math';
+import 'package:http/http.dart' as http;
 import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:playstack/models/Song.dart';
 import 'package:playstack/screens/Homescreen/Home.dart';
 import 'package:playstack/screens/Library/Library.dart';
+import 'package:playstack/screens/Library/Playlist.dart';
 import 'package:playstack/screens/Player/PlayingNow.dart';
 import 'package:playstack/screens/Search/SearchScreen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 //////////////////////////////////////////////////////////////////////////////////
 /////                   SHARED VARIABLES DO NOT TOUCH                       //////
@@ -18,18 +22,18 @@ var defaultImagePath =
 var imagePath;
 
 var tempImage;
-
+/* 
 void uploadImage(SharedPreferences sharedPreferences) async {
   sharedPreferences = await SharedPreferences.getInstance();
 
   tempImage = await ImagePicker.pickImage(source: ImageSource.gallery);
-  
 }
-
-void clearImage(){
+ */
+void clearImage() {
   tempImage = null;
 }
 
+/*
 Future sendPictureToServer() async {
   if (tempImage != null) {
     // Abre un stream de bytes
@@ -61,9 +65,7 @@ Future sendPictureToServer() async {
       */
   }
 }
-
-class ProfilePicture extends StatelessWidget{
-
+ */
 var backgroundColor = Color(0xFF191414);
 
 String userName;
@@ -111,8 +113,9 @@ class ProfilePicture extends StatelessWidget {
         radius: 60,
         backgroundImage: (imagePath != null)
             ? NetworkImage(imagePath)
-            : (tempImage != null)? FileImage(tempImage)
-            : NetworkImage(defaultImagePath));
+            : (tempImage != null)
+                ? FileImage(tempImage)
+                : NetworkImage(defaultImagePath));
   }
 }
 
@@ -462,10 +465,13 @@ Widget playListCover(List insideCoverUrls) {
       break;
 
     default:
+      return Image.asset(
+        'assets/images/defaultCover.png',
+        fit: BoxFit.cover,
+      );
   }
 }
 
-//TODO: poner las fotos de las canciones de dentro
 class PlaylistItem extends StatelessWidget {
   final playlist;
   PlaylistItem(this.playlist);
@@ -473,8 +479,8 @@ class PlaylistItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (BuildContext context) => PlayingNowScreen()));
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (BuildContext context) => Playlist(playlist)));
       },
       child: Padding(
         padding: const EdgeInsets.all(10),
@@ -504,7 +510,7 @@ class PlaylistItem extends StatelessWidget {
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 24.0),
+                        fontSize: 20.0),
                   ),
                   SizedBox(height: 5),
                 ],

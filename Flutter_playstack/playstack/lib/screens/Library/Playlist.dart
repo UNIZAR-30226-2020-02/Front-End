@@ -1,22 +1,27 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:playstack/models/PlaylistType.dart';
 import 'package:playstack/services/database.dart';
+import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
 import 'dart:ui' as ui;
 
 class Playlist extends StatefulWidget {
-  final name;
-  Playlist(this.name);
+  final PlaylistType playlist;
+  Playlist(this.playlist);
 
   @override
-  _PlaylistState createState() => _PlaylistState(name);
+  _PlaylistState createState() => _PlaylistState(playlist);
 }
 
 class _PlaylistState extends State<Playlist> {
-  final String name;
-  List songs = new List();
+  final PlaylistType playlist;
 
-  _PlaylistState(this.name);
+  List songs = new List();
+  bool _loading = true;
+
+  _PlaylistState(this.playlist);
 
   @override
   void initState() {
@@ -25,10 +30,14 @@ class _PlaylistState extends State<Playlist> {
   }
 
   void getSongs() async {
-    if (name == "Favoritas") {
+    if (playlist.name == "Favoritas") {
       songs = await getFavoriteSongs();
+    } else {
+      songs = await getPlaylistSongsDB(playlist.name);
     }
-    setState(() {});
+    setState(() {
+      _loading = false;
+    });
   }
 
   @override
@@ -45,7 +54,7 @@ class _PlaylistState extends State<Playlist> {
         child: Scaffold(
           appBar: AppBar(
             title: Text(
-              name,
+              playlist.name,
               style: TextStyle(fontSize: 25, fontFamily: 'Circular'),
             ),
             backgroundColor: Colors.transparent,
@@ -61,10 +70,9 @@ class _PlaylistState extends State<Playlist> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: <Widget>[
-                    //TODO : cambiar segunda opcion a cover de la playlist
-                    name == "Favoritas"
+                    playlist.name == "Favoritas"
                         ? Image.asset("assets/images/Favs_cover.jpg")
-                        : Image.asset("assets/images/defaultCover.png"),
+                        : playListCover(playlist.coverUrls),
                     BackdropFilter(
                       filter: ui.ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                       child: Container(
@@ -76,9 +84,9 @@ class _PlaylistState extends State<Playlist> {
                     ),
                     SizedBox(
                         height: MediaQuery.of(context).size.height / 4,
-                        child: name == "Favoritas"
+                        child: playlist.name == "Favoritas"
                             ? Image.asset("assets/images/Favs_cover.jpg")
-                            : Image.asset("assets/images/defaultCover.png")),
+                            : playListCover(playlist.coverUrls)),
                   ],
                 ),
               ),
@@ -88,19 +96,21 @@ class _PlaylistState extends State<Playlist> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    shuffleButton(name, songs, context),
+                    shuffleButton(playlist.name, songs, context),
                   ],
                 ),
               ),
               playlistsDivider(),
-              ListView.builder(
-                scrollDirection: Axis.vertical,
-                shrinkWrap: true,
-                itemCount: songs.isEmpty ? 0 : songs.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return new GenericSongItem(songs[index]);
-                },
-              )
+              _loading
+                  ? LoadingSongs()
+                  : ListView.builder(
+                      scrollDirection: Axis.vertical,
+                      shrinkWrap: true,
+                      itemCount: songs.isEmpty ? 0 : songs.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return new GenericSongItem(songs[index]);
+                      },
+                    )
             ],
           ),
         ));

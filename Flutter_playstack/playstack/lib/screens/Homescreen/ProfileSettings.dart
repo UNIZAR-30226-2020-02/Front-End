@@ -1,13 +1,8 @@
-import 'package:bot_toast/bot_toast.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
-import 'package:playstack/shared/constants.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:dio/dio.dart';
-import 'package:image_picker/image_picker.dart';
 
 class ProfileSettings extends StatefulWidget {
   @override

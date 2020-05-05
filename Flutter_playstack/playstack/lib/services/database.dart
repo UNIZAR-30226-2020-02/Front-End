@@ -7,6 +7,37 @@ import 'package:playstack/models/Song.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
 import 'package:playstack/shared/common.dart';
 
+Future<List> getPlaylistSongsDB(String playlistName) async {
+  List playlistSongs = new List();
+
+  print("Recuperando canciones de $playlistName");
+  dynamic response = await http.get(
+      "https://playstack.azurewebsites.net/get/playlist/songs?NombreUsuario=$userName&NombrePlayList=$playlistName");
+
+  print("Statuscode recoger canciones de playlist $playlistName: " +
+      response.statusCode.toString());
+
+  if (response.statusCode == 200) {
+    response = json.decode(response.body);
+
+    response.forEach((title, info) => print(title + info.toString()));
+    response.forEach((title, info) => addSongToList(
+        playlistSongs,
+        title,
+        info['Artistas'],
+        info['Albumes'],
+        info['ImagenesAlbums'],
+        info['url']));
+
+    //title, info['Artistas'],info['url'], info['Albunes'], info['ImagenesAlbum']
+  } else {
+    print("Status code not 200, body: " + response.body);
+  }
+  print(
+      "Hay " + playlistSongs.length.toString() + " canciones en $playlistName");
+  return playlistSongs;
+}
+
 Future<List> getPublicPlaylists(String user) async {
   List allSongs = new List();
   dynamic response = await http.get(
@@ -181,6 +212,8 @@ void setLastSongAsCurrent() async {
 }
 
 Future<bool> createPlaylistDB(String playlistname, bool isPrivate) async {
+  dynamic isPriv = isPrivate;
+  isPriv = isPriv.toString();
   print("Creando playlist " +
       playlistname +
       " del usuario " +
@@ -191,10 +224,11 @@ Future<bool> createPlaylistDB(String playlistname, bool isPrivate) async {
   dynamic data = {
     'NombreUsuario': userName,
     'NombrePlayList': playlistname,
-    'EsPrivado': isPrivate.toString()
+    'EsPrivado': isPrivate
   };
 
   data = jsonEncode(data);
+  print("La data es $data");
   dynamic response = await http.post(
       "https://playstack.azurewebsites.net/create/playlist",
       headers: {"Content-Type": "application/json"},
@@ -215,11 +249,37 @@ addPlaylistToList(List playlists, String name, dynamic covers, bool isPrivate) {
   if (covers == null) {
     covers = new List();
   } else if (covers is String) {
-    covers = covers.toList();
+    if (covers == '') {
+      covers = new List();
+    } else {
+      covers = covers.toList();
+    }
   }
   PlaylistType newPlaylist =
       PlaylistType(name: name, coverUrls: covers, isPrivate: isPrivate);
   playlists.add(newPlaylist);
+}
+
+//TODO:hacerla
+Future<List> getUserFolders() async {
+  List playlists = new List();
+
+  print("Recuperando carpetas de " + userName);
+  dynamic response = await http.get(
+      "https://playstack.azurewebsites.net/user/get/playlists?NombreUsuario=$userName");
+
+  print("Statuscode playlists: " + response.statusCode.toString());
+
+  if (response.statusCode == 200) {
+    response = json.decode(response.body);
+    response.forEach((name, covers) => print(name + covers.toString()));
+    response.forEach((name, info) =>
+        addPlaylistToList(playlists, name, info['Fotos'], info['Privado']));
+  } else {
+    print("Status code not 200, body: " + response.body);
+  }
+
+  return playlists;
 }
 
 Future<List> getUserPlaylists() async {
