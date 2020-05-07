@@ -475,244 +475,239 @@ class _PlayerWidgetState extends State<PlayerWidget>
           decoration: new BoxDecoration(color: Colors.black54.withOpacity(0.5)),
         ),
       ),
-      Padding(
-        padding: EdgeInsets.only(top: width / 20),
-        child: Column(
-          children: <Widget>[
-            //Equis para cerrar
-            Padding(
-                padding: EdgeInsets.only(left: width / 30),
-                child: Align(
-                    alignment: Alignment.topLeft,
+      Align(
+          alignment: Alignment.topLeft,
+          child: Padding(
+              padding: EdgeInsets.only(top: width / 20),
+              //Equis para cerrar
+
+              child: Material(
+                  color: Colors.transparent,
+                  child: IconButton(
+                      icon: Icon(
+                        CupertinoIcons.clear,
+                        size: 35,
+                      ),
+                      onPressed: () => Navigator.of(context).pop())))),
+      Center(
+          child: Container(
+              height: width * 0.9905,
+              child: PageView.builder(
+                  itemCount: allSongs.length,
+                  onPageChanged: (newpage) {
+                    if (!_usingButtons) {
+                      if (newpage - currentPage > 0) {
+                        absoluteChangeInPage += 1;
+                      } else {
+                        absoluteChangeInPage -= 1;
+                      }
+                    }
+                  },
+                  controller: _pageController,
+                  //physics: new NeverScrollableScrollPhysics(),
+                  itemBuilder: (context, int index) =>
+                      infoCancion(allSongs[index])))),
+      Align(
+          alignment: Alignment.bottomCenter,
+          child: Container(
+              height: width * 0.5,
+              child: Column(children: <Widget>[
+                Padding(
+                    //Slider
+                    padding: EdgeInsets.only(
+                        top: width * 0.05,
+                        left: width * 0.05,
+                        right: width * 0.05),
+                    child: Container(
+                        height: width / 20,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: Slider(
+                            activeColor: Colors.white.withOpacity(0.8),
+                            inactiveColor: Colors.grey.withOpacity(0.5),
+                            onChanged: (v) {
+                              final position = v * _duration.inMilliseconds;
+                              _audioPlayer.seek(
+                                  Duration(milliseconds: position.round()));
+                            },
+                            value: (_position != null &&
+                                    _duration != null &&
+                                    _position.inMilliseconds > 0 &&
+                                    _position.inMilliseconds <
+                                        _duration.inMilliseconds)
+                                ? _position.inMilliseconds /
+                                    _duration.inMilliseconds
+                                : 0.0,
+                          ),
+                        ))),
+                Padding(
+                    //Posicion actual
+                    padding: EdgeInsets.only(top: width * 0.005),
                     child: Material(
-                        color: Colors.transparent,
-                        child: IconButton(
-                            icon: Icon(
-                              CupertinoIcons.clear,
-                              size: 35,
-                            ),
-                            onPressed: () => Navigator.of(context).pop())))),
-            Align(
-                alignment: Alignment.topCenter,
-                child: Column(children: <Widget>[
-                  Container(
-                      height: width * 0.9905,
-                      child: PageView.builder(
-                          itemCount: allSongs.length,
-                          onPageChanged: (newpage) {
-                            if (!_usingButtons) {
-                              if (newpage - currentPage > 0) {
-                                absoluteChangeInPage += 1;
-                              } else {
-                                absoluteChangeInPage -= 1;
-                              }
-                            }
-                          },
-                          controller: _pageController,
-                          //physics: new NeverScrollableScrollPhysics(),
-                          itemBuilder: (context, int index) =>
-                              infoCancion(allSongs[index]))),
-                  Padding(
-                      //Slider
-                      padding: EdgeInsets.only(
-                          top: width * 0.05,
-                          left: width * 0.05,
-                          right: width * 0.05),
-                      child: Container(
-                          height: width / 20,
-                          child: Material(
-                            color: Colors.transparent,
-                            child: Slider(
-                              activeColor: Colors.white.withOpacity(0.8),
-                              inactiveColor: Colors.grey.withOpacity(0.5),
-                              onChanged: (v) {
-                                final position = v * _duration.inMilliseconds;
-                                _audioPlayer.seek(
-                                    Duration(milliseconds: position.round()));
-                              },
-                              value: (_position != null &&
-                                      _duration != null &&
-                                      _position.inMilliseconds > 0 &&
-                                      _position.inMilliseconds <
-                                          _duration.inMilliseconds)
-                                  ? _position.inMilliseconds /
-                                      _duration.inMilliseconds
-                                  : 0.0,
-                            ),
-                          ))),
-                  Padding(
-                      //Posicion actual
-                      padding: EdgeInsets.only(top: width * 0.005),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: Text(
-                          _positionText,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              fontSize: 15.0,
-                              color: Colors.white.withOpacity(0.6),
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1.0),
-                        ),
-                      )),
-                  Padding(
-                      //SECCION DE BOTONES
-                      padding: EdgeInsets.fromLTRB(
-                          width * 0.05, width * 0.05, width * 0.05, 0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Expanded(
-                              //Bucle
-                              flex: 10,
-                              child: Container(
-                                  height: width / 10,
-                                  child: Center(
-                                      child: Material(
-                                          color: Colors.transparent,
-                                          child: GestureDetector(
+                      color: Colors.transparent,
+                      child: Text(
+                        _positionText,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 15.0,
+                            color: Colors.white.withOpacity(0.6),
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1.0),
+                      ),
+                    )),
+                Padding(
+                    //SECCION DE BOTONES
+                    padding: EdgeInsets.fromLTRB(
+                        width * 0.05, width * 0.05, width * 0.05, 0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Expanded(
+                            //Bucle
+                            flex: 10,
+                            child: Container(
+                                height: width / 10,
+                                child: Center(
+                                    child: Material(
+                                        color: Colors.transparent,
+                                        child: GestureDetector(
+                                          child: Icon(
+                                            Icons.loop,
+                                            color: _loopEnabled
+                                                ? Colors.red
+                                                : Colors.white.withOpacity(0.8),
+                                            size: width / 17.62,
+                                          ),
+                                          onTap: () => setState(() =>
+                                              _loopEnabled = !_loopEnabled),
+                                        ))))),
+                        Expanded(
+                            //Atrás
+                            flex: 15,
+                            child: Container(
+                                height: width / 5,
+                                child: Center(
+                                    child: Material(
+                                        color: Colors.transparent,
+                                        child: GestureDetector(
+                                          child: Icon(
+                                            Icons.skip_previous,
+                                            color:
+                                                Colors.white.withOpacity(0.8),
+                                            size: width / 8.82,
+                                          ),
+                                          onTap: () {
+                                            _usingButtons = true;
+                                            skipPrevious(true);
+                                          },
+                                        ))))),
+                        Expanded(
+                            //Botones apilados (Play/Pause y Cola)
+                            flex: 20,
+                            child: Container(
+                                height: width / 5,
+                                child: Center(
+                                    child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: <Widget>[
+                                      Expanded(
+                                          //Play/Pause
+                                          flex: 3,
+                                          child: Material(
+                                              color: Colors.transparent,
+                                              child: FloatingActionButton(
+                                                backgroundColor: Colors.white
+                                                    .withOpacity(0.6),
+                                                child: AnimatedIcon(
+                                                    color: Colors.white,
+                                                    size: width / 9.8,
+                                                    icon: AnimatedIcons
+                                                        .pause_play,
+                                                    progress: _animateIcon),
+                                                onPressed: () =>
+                                                    togglePlayPause(),
+                                              ))),
+                                      Expanded(
+                                        //Cola
+                                        flex: 1,
+                                        child: Material(
+                                            color: Colors.transparent,
+                                            child: FlatButton(
+                                              onPressed: () =>
+                                                  Navigator.of(context).push(
+                                                      MaterialPageRoute(
+                                                          builder: (BuildContext
+                                                                  context) =>
+                                                              UpNext())),
+                                              highlightColor: Colors
+                                                  .blueGrey[200]
+                                                  .withOpacity(0.1),
+                                              child: Text(
+                                                languageStrings['upNext'],
+                                                style: TextStyle(
+                                                    color: Colors.white
+                                                        .withOpacity(0.8),
+                                                    fontSize: width / 50,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                              splashColor: Colors.blueGrey[200]
+                                                  .withOpacity(0.1),
+                                            )),
+                                      )
+                                    ])))),
+                        Expanded(
+                            //Siguiente
+                            flex: 15,
+                            child: Container(
+                                height: width / 5,
+                                child: Center(
+                                    child: Material(
+                                        color: Colors.transparent,
+                                        child: GestureDetector(
                                             child: Icon(
-                                              Icons.loop,
-                                              color: _loopEnabled
-                                                  ? Colors.red
-                                                  : Colors.white
-                                                      .withOpacity(0.8),
-                                              size: width / 17.62,
-                                            ),
-                                            onTap: () => setState(() =>
-                                                _loopEnabled = !_loopEnabled),
-                                          ))))),
-                          Expanded(
-                              //Atrás
-                              flex: 15,
-                              child: Container(
-                                  height: width / 5,
-                                  child: Center(
-                                      child: Material(
-                                          color: Colors.transparent,
-                                          child: GestureDetector(
-                                            child: Icon(
-                                              Icons.skip_previous,
+                                              Icons.skip_next,
                                               color:
                                                   Colors.white.withOpacity(0.8),
                                               size: width / 8.82,
                                             ),
                                             onTap: () {
                                               _usingButtons = true;
-                                              skipPrevious(true);
-                                            },
-                                          ))))),
-                          Expanded(
-                              //Botones apilados (Play/Pause y Cola)
-                              flex: 20,
-                              child: Container(
-                                  height: width / 5,
-                                  child: Center(
-                                      child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          children: <Widget>[
-                                        Expanded(
-                                            //Play/Pause
-                                            flex: 3,
-                                            child: Material(
-                                                color: Colors.transparent,
-                                                child: FloatingActionButton(
-                                                  backgroundColor: Colors.white
-                                                      .withOpacity(0.6),
-                                                  child: AnimatedIcon(
-                                                      color: Colors.white,
-                                                      size: width / 9.8,
-                                                      icon: AnimatedIcons
-                                                          .pause_play,
-                                                      progress: _animateIcon),
-                                                  onPressed: () =>
-                                                      togglePlayPause(),
-                                                ))),
-                                        Expanded(
-                                          //Cola
-                                          flex: 1,
-                                          child: Material(
-                                              color: Colors.transparent,
-                                              child: FlatButton(
-                                                onPressed: () => Navigator.of(
-                                                        context)
-                                                    .push(MaterialPageRoute(
-                                                        builder: (BuildContext
-                                                                context) =>
-                                                            UpNext())),
-                                                highlightColor: Colors
-                                                    .blueGrey[200]
-                                                    .withOpacity(0.1),
-                                                child: Text(
-                                                  languageStrings['upNext'],
-                                                  style: TextStyle(
-                                                      color: Colors.white
-                                                          .withOpacity(0.8),
-                                                      fontSize: width / 50,
-                                                      fontWeight:
-                                                          FontWeight.bold),
-                                                ),
-                                                splashColor: Colors
-                                                    .blueGrey[200]
-                                                    .withOpacity(0.1),
-                                              )),
-                                        )
-                                      ])))),
-                          Expanded(
-                              //Siguiente
-                              flex: 15,
-                              child: Container(
-                                  height: width / 5,
-                                  child: Center(
-                                      child: Material(
-                                          color: Colors.transparent,
-                                          child: GestureDetector(
-                                              child: Icon(
-                                                Icons.skip_next,
-                                                color: Colors.white
-                                                    .withOpacity(0.8),
-                                                size: width / 8.82,
-                                              ),
-                                              onTap: () {
-                                                _usingButtons = true;
-                                                skipSong(true);
-                                              }))))),
-                          Expanded(
-                              //Favorita
-                              flex: 10,
-                              child: Container(
-                                  height: width / 10,
-                                  child: Center(
-                                      child: Material(
-                                          color: Colors.transparent,
-                                          child: GestureDetector(
-                                              child: Icon(
-                                                currentSong.isFav
-                                                    ? Icons.favorite
-                                                    : Icons.favorite_border,
-                                                color: currentSong.isFav
-                                                    ? Colors.red
-                                                    : Colors.white
-                                                        .withOpacity(0.8),
-                                                size: width / 17.62,
-                                              ),
-                                              onTap: () async {
-                                                if (currentSong.isFav) {
-                                                  await currentSong
-                                                      .removeFromFavs();
-                                                  setState(() {});
-                                                } else {
-                                                  await currentSong.setAsFav();
-                                                  setState(() {});
-                                                }
-                                              })))))
-                        ],
-                      ))
-                ]))
-          ],
-        ),
-      )
+                                              skipSong(true);
+                                            }))))),
+                        Expanded(
+                            //Favorita
+                            flex: 10,
+                            child: Container(
+                                height: width / 10,
+                                child: Center(
+                                    child: Material(
+                                        color: Colors.transparent,
+                                        child: GestureDetector(
+                                            child: Icon(
+                                              currentSong.isFav
+                                                  ? Icons.favorite
+                                                  : Icons.favorite_border,
+                                              color: currentSong.isFav
+                                                  ? Colors.red
+                                                  : Colors.white
+                                                      .withOpacity(0.8),
+                                              size: width / 17.62,
+                                            ),
+                                            onTap: () async {
+                                              if (currentSong.isFav) {
+                                                await currentSong
+                                                    .removeFromFavs();
+                                                setState(() {});
+                                              } else {
+                                                await currentSong.setAsFav();
+                                                setState(() {});
+                                              }
+                                            })))))
+                      ],
+                    ))
+              ])))
     ]);
 
     /*
