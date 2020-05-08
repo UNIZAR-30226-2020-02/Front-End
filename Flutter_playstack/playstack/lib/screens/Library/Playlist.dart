@@ -72,7 +72,10 @@ class _PlaylistState extends State<Playlist> {
                   children: <Widget>[
                     playlist.name == "Favoritas"
                         ? Image.asset("assets/images/Favs_cover.jpg")
-                        : playListCover(playlist.coverUrls),
+                        : SizedBox(
+                            height: MediaQuery.of(context).size.height / 3,
+                            width: MediaQuery.of(context).size.width / 2,
+                            child: playListCover(playlist.coverUrls)),
                     BackdropFilter(
                       filter: ui.ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                       child: Container(
@@ -83,7 +86,8 @@ class _PlaylistState extends State<Playlist> {
                       ),
                     ),
                     SizedBox(
-                        height: MediaQuery.of(context).size.height / 4,
+                        height: MediaQuery.of(context).size.height / 3,
+                        width: MediaQuery.of(context).size.width / 2,
                         child: playlist.name == "Favoritas"
                             ? Image.asset("assets/images/Favs_cover.jpg")
                             : playListCover(playlist.coverUrls)),

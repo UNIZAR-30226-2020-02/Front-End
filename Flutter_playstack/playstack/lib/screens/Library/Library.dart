@@ -20,16 +20,19 @@ class _LibraryState extends State<Library> {
   List playlists = new List();
   List folders = new List();
   bool _loading = true;
-
+  String dropdownItem;
   @override
   void initState() {
     super.initState();
-    //getFolders();
+    getFolders();
     getPlaylists();
   }
 
   void getFolders() async {
     folders = await getUserFolders();
+    setState(() {
+      _loading = false;
+    });
   }
 
   void getPlaylists() async {
@@ -117,8 +120,7 @@ class _LibraryState extends State<Library> {
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.grey[700]));
-    //TODO:cambiar la cadena vacia por el dropdownmenuitem elegido
-    var result = await createFolderDB(newFolderController.text, '');
+    var result = await createFolderDB(newFolderController.text, dropdownItem);
 
     if (result) {
       Scaffold.of(context).showSnackBar(SnackBar(
@@ -135,7 +137,8 @@ class _LibraryState extends State<Library> {
           ),
           backgroundColor: Colors.grey[700]));
     }
-    setState(() {});
+    newFolderController.clear();
+    getFolders();
   }
 
   List<DropdownMenuItem> listPlaylistNames() {
@@ -150,7 +153,7 @@ class _LibraryState extends State<Library> {
 
   Future<void> showCreatingFolderDialog(BuildContext context) {
     bool _validate = false;
-    String _dropdownItem = playlists.elementAt(0).name;
+    dropdownItem = playlists.elementAt(0).name;
     return showDialog(
       barrierDismissible: true,
       context: context,
@@ -178,11 +181,11 @@ class _LibraryState extends State<Library> {
                       flex: 1,
                       child: DropdownButton(
                         isExpanded: true,
-                        value: _dropdownItem,
+                        value: dropdownItem,
                         items: listPlaylistNames(),
                         onChanged: (val) {
                           setState(() {
-                            _dropdownItem = val;
+                            dropdownItem = val;
                           });
                         },
                       ),
@@ -376,9 +379,15 @@ class _LibraryState extends State<Library> {
             : ListView.builder(
                 scrollDirection: Axis.vertical,
                 shrinkWrap: true,
-                itemCount: playlists.isEmpty ? 0 : playlists.length,
+                itemCount: (playlists.length + folders.length) < 1
+                    ? 0
+                    : (playlists.length + folders.length),
                 itemBuilder: (BuildContext context, int index) {
-                  return new PlaylistItem(playlists[index]);
+                  if (index < folders.length) {
+                    return new FolderItem(folders[index]);
+                  } else {
+                    return new PlaylistItem(playlists[index - folders.length]);
+                  }
                 },
               )
       ],
