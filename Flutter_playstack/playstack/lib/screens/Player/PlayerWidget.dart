@@ -155,17 +155,19 @@ class _PlayerWidgetState extends State<PlayerWidget>
     // Listener para cuando acabe
     _playerCompleteSubscription =
         _audioPlayer.onPlayerCompletion.listen((event) {
-      _onComplete();
-      setState(() {
-        _position = _duration;
-      });
+      if (_position >= _duration) {
+        //_onComplete();
+        //setState(() {
+        //  _position = _duration;
+        //});
+        skipSong(true);
+      }
     });
 
     _playerErrorSubscription = _audioPlayer.onPlayerError.listen((msg) {
       print('audioPlayer error : $msg');
       setState(() {
         _playerState = PlayerState.stopped;
-        _duration = Duration(seconds: 0);
         _position = Duration(seconds: 0);
       });
     });
@@ -265,7 +267,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
       currentPage -= 1;
       currentSong.markAsListened();
       _position = Duration(seconds: 0);
-      _duration = Duration(seconds: 0);
       Future.delayed(Duration(milliseconds: mustScroll ? 900 : 500), () {
         if (!_isPlaying) togglePlayPause();
       });
@@ -312,7 +313,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
       currentPage += 1;
       currentSong.markAsListened();
       _position = Duration(seconds: 0);
-      _duration = Duration(seconds: 0);
       Future.delayed(Duration(milliseconds: mustScroll ? 900 : 500), () {
         if (!_isPlaying) togglePlayPause();
       });
@@ -385,54 +385,56 @@ class _PlayerWidgetState extends State<PlayerWidget>
   }
 
   Widget infoCancion(Song song) {
-    return Column(children: <Widget>[
-      Padding(
-        //Carátula
-        padding: EdgeInsets.only(top: width / 50),
-        child: Container(
-          height: width * 0.8,
-          width: width * 0.8,
-          decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(8.0),
-              image: DecorationImage(
-                  image: song.albumCoverUrls.elementAt(0) != null
-                      ? NetworkImage(song.albumCoverUrls.elementAt(0))
-                      : Image.asset("assets/images/defaultCover.png").image,
-                  fit: BoxFit.cover)),
-        ),
-      ),
-      Padding(
-          //Título
-          padding: EdgeInsets.only(top: width / 50),
-          child: Container(
-              height: width / 10,
-              child: Material(
+    return Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          Padding(
+            //Carátula
+            padding: EdgeInsets.only(top: width / 50),
+            child: Container(
+              height: width * 0.8,
+              width: width * 0.8,
+              decoration: BoxDecoration(
                   color: Colors.transparent,
-                  child: Center(
+                  borderRadius: BorderRadius.circular(8.0),
+                  image: DecorationImage(
+                      image: song.albumCoverUrls.elementAt(0) != null
+                          ? NetworkImage(song.albumCoverUrls.elementAt(0))
+                          : Image.asset("assets/images/defaultCover.png").image,
+                      fit: BoxFit.cover)),
+            ),
+          ),
+          Padding(
+              //Título
+              padding: EdgeInsets.only(top: width / 50),
+              child: Container(
+                  height: width / 10,
+                  child: Material(
+                      color: Colors.transparent,
+                      child: Center(
+                          child: slidingText(
+                              texto: '${song.title}',
+                              condicion: song.title.length * 18.40 > width,
+                              estilo: new TextStyle(
+                                  color: Colors.white,
+                                  fontSize: width / 18.40,
+                                  fontWeight: FontWeight.w600)))))),
+          Padding(
+              //Artistas
+              padding: EdgeInsets.only(top: width * 0.0005),
+              child: Container(
+                  height: width / 20,
+                  child: Material(
+                      color: Colors.transparent,
                       child: slidingText(
-                          texto: '${song.title}',
-                          condicion: song.title.length * 18.40 > width,
+                          texto: getSongArtists(song.artists),
+                          condicion: song.artists.length * 24.50 > width,
                           estilo: new TextStyle(
-                              color: Colors.white,
-                              fontSize: width / 18.40,
-                              fontWeight: FontWeight.w600)))))),
-      Padding(
-          //Artistas
-          padding: EdgeInsets.only(top: width * 0.0005),
-          child: Container(
-              height: width / 20,
-              child: Material(
-                  color: Colors.transparent,
-                  child: slidingText(
-                      texto: getSongArtists(song.artists),
-                      condicion: song.artists.length * 24.50 > width,
-                      estilo: new TextStyle(
-                          color: Colors.white.withOpacity(0.6),
-                          fontSize: width / 24.50,
-                          letterSpacing: width / 245,
-                          height: width / 294))))),
-    ]);
+                              color: Colors.white.withOpacity(0.6),
+                              fontSize: width / 24.50,
+                              letterSpacing: width / 245,
+                              height: width / 294))))),
+        ]);
   }
 
   Widget fondo(Song song) {
@@ -489,24 +491,27 @@ class _PlayerWidgetState extends State<PlayerWidget>
                         size: 35,
                       ),
                       onPressed: () => Navigator.of(context).pop())))),
-      Center(
-          child: Container(
-              height: width * 0.9905,
-              child: PageView.builder(
-                  itemCount: allSongs.length,
-                  onPageChanged: (newpage) {
-                    if (!_usingButtons) {
-                      if (newpage - currentPage > 0) {
-                        absoluteChangeInPage += 1;
-                      } else {
-                        absoluteChangeInPage -= 1;
-                      }
-                    }
-                  },
-                  controller: _pageController,
-                  //physics: new NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, int index) =>
-                      infoCancion(allSongs[index])))),
+      Container(
+          height: MediaQuery.of(context).size.height - width * 0.5,
+          color: Colors.transparent,
+          child: Center(
+              child: Container(
+                  height: width * 0.9905,
+                  child: PageView.builder(
+                      itemCount: allSongs.length,
+                      onPageChanged: (newpage) {
+                        if (!_usingButtons) {
+                          if (newpage - currentPage > 0) {
+                            absoluteChangeInPage += 1;
+                          } else {
+                            absoluteChangeInPage -= 1;
+                          }
+                        }
+                      },
+                      controller: _pageController,
+                      //physics: new NeverScrollableScrollPhysics(),
+                      itemBuilder: (context, int index) =>
+                          infoCancion(allSongs[index]))))),
       Align(
           alignment: Alignment.bottomCenter,
           child: Container(
@@ -525,10 +530,14 @@ class _PlayerWidgetState extends State<PlayerWidget>
                           child: Slider(
                             activeColor: Colors.white.withOpacity(0.8),
                             inactiveColor: Colors.grey.withOpacity(0.5),
-                            onChanged: (v) {
+                            onChanged: (v) async {
                               final position = v * _duration.inMilliseconds;
-                              _audioPlayer.seek(
-                                  Duration(milliseconds: position.round()));
+                              var temp = await _audioPlayer.getDuration();
+                              if (temp > position) {
+                                print(temp.toString());
+                                _audioPlayer.seek(
+                                    Duration(milliseconds: position.round()));
+                              }
                             },
                             value: (_position != null &&
                                     _duration != null &&
@@ -549,7 +558,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                         _positionText,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                            fontSize: 15.0,
+                            fontSize: width / 20,
                             color: Colors.white.withOpacity(0.6),
                             fontWeight: FontWeight.w600,
                             letterSpacing: 1.0),

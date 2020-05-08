@@ -39,7 +39,7 @@ class _UpNextState extends State<UpNext> {
             GenericSongItem(currentSong),
             Padding(
               padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
-              child: Text("A continuación de: $songsNextUpName",
+              child: Text("A continuación en $songsNextUpName",
                   style: TextStyle(fontSize: 20, fontFamily: 'Circular')),
             ),
             ListView.builder(

@@ -32,51 +32,6 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: show(currentIndex),
-      bottomNavigationBar: SizedBox(
-        height: MediaQuery.of(context).size.height / 9,
-        child: BottomNavigationBar(
-            fixedColor: Colors.red[600],
-            currentIndex: currentIndex,
-            onTap: (int index) {
-              if (index == 3) {
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (BuildContext context) => PlayingNowScreen()));
-              } else {
-                setState(() {
-                  currentIndex = index;
-                  show(index);
-                });
-              }
-            },
-            type: BottomNavigationBarType.shifting,
-            items: [
-              BottomNavigationBarItem(
-                  icon: new Icon(
-                    CupertinoIcons.home,
-                    size: 25,
-                  ),
-                  title: new Text(
-                    "Home",
-                    style: TextStyle(fontSize: 10),
-                  )),
-              BottomNavigationBarItem(
-                  icon: new Icon(CupertinoIcons.search, size: 25),
-                  title: new Text(
-                    "Search",
-                    style: TextStyle(fontSize: 10),
-                  )),
-              BottomNavigationBarItem(
-                  icon: new Icon(CupertinoIcons.collections, size: 25),
-                  title: new Text(
-                    "Library",
-                    style: TextStyle(fontSize: 10),
-                  )),
-              BottomNavigationBarItem(
-                  icon: new Icon(CupertinoIcons.music_note),
-                  title: new Text("Play", style: TextStyle(fontSize: 10))),
-            ]),
-      ),
-    );
+        body: show(currentIndex), bottomNavigationBar: bottomBar(context));
   }
 }
