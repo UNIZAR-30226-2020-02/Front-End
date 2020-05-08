@@ -96,8 +96,10 @@ class _GenresSongsState extends State<GenresSongs> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title:
-            Text(genre, style: TextStyle(fontFamily: 'Circular', fontSize: 25)),
+        title: Text(genre,
+            style: TextStyle(
+                fontFamily: 'Circular',
+                fontSize: MediaQuery.of(context).size.width / 100)),
       ),
       backgroundColor: backgroundColor,
       body: ListView(
@@ -136,45 +138,7 @@ class _GenresSongsState extends State<GenresSongs> {
           _loading ? LoadingSongs() : _buildList()
         ],
       ),
-      bottomNavigationBar: SizedBox(
-        height: MediaQuery.of(context).size.height / 9,
-        child: BottomNavigationBar(
-            fixedColor: Colors.red[600],
-            currentIndex: currentIndex,
-            onTap: (int index) {
-              currentIndex = index;
-              Navigator.pop(context);
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (BuildContext context) => mainScreens[index]));
-            },
-            type: BottomNavigationBarType.shifting,
-            items: [
-              BottomNavigationBarItem(
-                  icon: new Icon(
-                    CupertinoIcons.home,
-                    size: 25,
-                  ),
-                  title: new Text(
-                    "Home",
-                    style: TextStyle(fontSize: 10),
-                  )),
-              BottomNavigationBarItem(
-                  icon: new Icon(CupertinoIcons.search, size: 25),
-                  title: new Text(
-                    "Search",
-                    style: TextStyle(fontSize: 10),
-                  )),
-              BottomNavigationBarItem(
-                  icon: new Icon(CupertinoIcons.collections, size: 25),
-                  title: new Text(
-                    "Library",
-                    style: TextStyle(fontSize: 10),
-                  )),
-              BottomNavigationBarItem(
-                  icon: new Icon(CupertinoIcons.music_note),
-                  title: new Text("Play", style: TextStyle(fontSize: 10))),
-            ]),
-      ),
+      bottomNavigationBar: bottomBar(context),
     );
   }
 }

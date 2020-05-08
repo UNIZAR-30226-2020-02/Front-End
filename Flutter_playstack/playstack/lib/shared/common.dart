@@ -52,6 +52,51 @@ Future<String> loadLanguagesString() {
   return jsonString;
 }
 
+Widget bottomBar(context) {
+  double height = MediaQuery.of(context).size.height * 0.1 > 60
+      ? 60
+      : MediaQuery.of(context).size.height * 0.1;
+  return SizedBox(
+      height: height,
+      child: BottomNavigationBar(
+          fixedColor: Colors.red[600],
+          currentIndex: currentIndex,
+          onTap: (int index) {
+            currentIndex = index;
+            Navigator.pop(context);
+            Navigator.of(context).push(MaterialPageRoute(
+                builder: (BuildContext context) => mainScreens[index]));
+          },
+          type: BottomNavigationBarType.shifting,
+          items: [
+            BottomNavigationBarItem(
+                icon: new Icon(
+                  CupertinoIcons.home,
+                  size: height / 2.5,
+                ),
+                title: new Text(
+                  "Home",
+                  style: TextStyle(fontSize: height / 5),
+                )),
+            BottomNavigationBarItem(
+                icon: new Icon(CupertinoIcons.search, size: height / 2.5),
+                title: new Text(
+                  "Search",
+                  style: TextStyle(fontSize: height / 5),
+                )),
+            BottomNavigationBarItem(
+                icon: new Icon(CupertinoIcons.collections, size: height / 2.5),
+                title: new Text(
+                  "Library",
+                  style: TextStyle(fontSize: height / 5),
+                )),
+            BottomNavigationBarItem(
+                icon: new Icon(CupertinoIcons.music_note, size: height / 2.5),
+                title:
+                    new Text("Play", style: TextStyle(fontSize: height / 5))),
+          ]));
+}
+
 Widget show(int index) {
   switch (index) {
     case 0:
@@ -250,13 +295,14 @@ class SongItem extends StatelessWidget {
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 24.0),
+                        fontSize: MediaQuery.of(context).size.height / 40),
                   ),
                   SizedBox(height: 5),
                   Text(
                     getSongArtists(song.artists),
                     style: TextStyle(
-                        color: Colors.white.withOpacity(0.5), fontSize: 18.0),
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: MediaQuery.of(context).size.height / 50),
                   ),
                 ],
               ),
@@ -359,6 +405,8 @@ class GenericSongItem extends StatelessWidget {
   GenericSongItem(this.song);
   @override
   Widget build(BuildContext context) {
+    double height = MediaQuery.of(context).size.height;
+    double width = MediaQuery.of(context).size.width;
     return GestureDetector(
       onTap: () {
         currentSong = song;
@@ -371,15 +419,15 @@ class GenericSongItem extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(10),
         child: Container(
-          height: MediaQuery.of(context).size.height / 13,
-          width: MediaQuery.of(context).size.width,
+          height: height / 13,
+          width: width,
           child: Row(
             children: <Widget>[
               Stack(
                 children: <Widget>[
                   Container(
-                    height: MediaQuery.of(context).size.height / 13,
-                    width: MediaQuery.of(context).size.width / 5.8,
+                    height: height / 13,
+                    width: width / 5.8,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8.0),
                       child: Image.network(
@@ -390,7 +438,7 @@ class GenericSongItem extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(width: 16.0),
+              SizedBox(width: width / 25),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
@@ -399,13 +447,14 @@ class GenericSongItem extends StatelessWidget {
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 24.0),
+                        fontSize: height / 40),
                   ),
                   SizedBox(height: 5),
                   Text(
                     getSongArtists(song.artists),
                     style: TextStyle(
-                        color: Colors.white.withOpacity(0.5), fontSize: 18.0),
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: height / 50),
                   ),
                 ],
               ),
