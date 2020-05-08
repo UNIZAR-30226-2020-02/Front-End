@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:playstack/models/FolderType.dart';
+import 'package:playstack/models/PlaylistType.dart';
 import 'package:playstack/models/Song.dart';
 import 'package:playstack/screens/Homescreen/Home.dart';
 import 'package:playstack/screens/Library/Library.dart';
@@ -15,6 +16,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:playstack/services/database.dart';
+import 'package:toast/toast.dart';
 
 //////////////////////////////////////////////////////////////////////////////////
 /////                   SHARED VARIABLES DO NOT TOUCH                       //////
@@ -39,6 +41,9 @@ Map<String, dynamic> languageStrings = new Map<String, dynamic>();
 String songsNextUpName;
 List songsNextUp = new List();
 List songsPlayed = new List();
+
+List playlists = new List();
+final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
 List<Widget> mainScreens = [
   HomeScreen(),
@@ -188,12 +193,103 @@ String getSongArtists(List artists) {
   return res;
 }
 
+List<DropdownMenuItem> listPlaylistNames() {
+  List<DropdownMenuItem> items = new List();
+  for (var pl in playlists) {
+    DropdownMenuItem newItem =
+        new DropdownMenuItem<String>(value: pl.name, child: Text(pl.name));
+    items.add(newItem);
+  }
+  return items;
+}
+
+void addingSongToPlaylist(
+    String playlistName, String songName, BuildContext context) async {
+  var result = await addSongToPlaylistDB(playlistName, songName);
+  try {
+    if (result) {
+      Toast.show('Canción añadida!', context,
+          gravity: Toast.CENTER, backgroundColor: Colors.green);
+    } else {
+      Toast.show('No se pudo añadir la canción', context,
+          gravity: Toast.CENTER, backgroundColor: Colors.red);
+    }
+  } catch (e) {
+    print("Exception " + e.toString());
+  }
+  Navigator.of(context).pop();
+}
+
+Future<void> showAddingSongToPlaylistDialog(
+    String songName, BuildContext context) async {
+  var dropdownItem = playlists.elementAt(0).name;
+  return showDialog(
+    barrierDismissible: true,
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(builder: (context, setState) {
+        return AlertDialog(
+          title: Text("Añadir a playlist"),
+          elevation: 100.0,
+          backgroundColor: Colors.grey[900],
+          actions: <Widget>[
+            Container(
+              width: MediaQuery.of(context).size.width,
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    flex: 1,
+                    child: DropdownButton(
+                      isExpanded: true,
+                      value: dropdownItem,
+                      items: listPlaylistNames(),
+                      onChanged: (val) {
+                        setState(() {
+                          dropdownItem = val;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Builder(
+              builder: (context) => Container(
+                width: MediaQuery.of(context).size.width,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Expanded(
+                        flex: 1,
+                        child: FlatButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text("Cancelar"))),
+                    Expanded(
+                        flex: 1,
+                        child: FlatButton(
+                            onPressed: () {
+                              addingSongToPlaylist(
+                                  dropdownItem, songName, context);
+                            },
+                            child: Text("Añadir")))
+                  ],
+                ),
+              ),
+            )
+          ],
+        );
+      });
+    },
+  );
+}
+
 class SongItem extends StatelessWidget {
   final String songsListName;
   final List songsList;
   final Song song;
+  final PlaylistType playlist;
 
-  SongItem(this.song, this.songsList, this.songsListName);
+  SongItem(this.song, this.songsList, this.songsListName, {this.playlist});
 
   void setQueue(List songsList) {
     List tmpList = new List();
@@ -276,6 +372,18 @@ class SongItem extends StatelessWidget {
                           song.setAsFav();
                         }
                         break;
+                      case "AddToPlaylist":
+                        playlists = await getUserPlaylists();
+                        showAddingSongToPlaylistDialog(song.title, context);
+                        break;
+                      case "removeFromPlaylist":
+                        await removeSongFromPlaylistDB(
+                            song.title, playlist.name);
+                        await playlist.updateCovers();
+                        Navigator.of(context).pushReplacement(MaterialPageRoute(
+                            builder: (BuildContext context) =>
+                                Playlist(playlist)));
+                        break;
                       default:
                         showSharableLink(context, song.url);
                     }
@@ -294,6 +402,20 @@ class SongItem extends StatelessWidget {
                                   ? "Quitar de favoritos"
                                   : "Añadir a favoritos"),
                             )),
+                        PopupMenuItem(
+                            value: "AddToPlaylist",
+                            child: ListTile(
+                              leading: Icon(CupertinoIcons.add),
+                              title: Text("Añadir canción a playlist"),
+                            )),
+                        playlist != null
+                            ? PopupMenuItem(
+                                value: "removeFromPlaylist",
+                                child: ListTile(
+                                  leading: Icon(CupertinoIcons.delete),
+                                  title: Text("Eliminar canción de lista"),
+                                ))
+                            : null,
                         PopupMenuItem(
                             value: "Share",
                             child: ListTile(
@@ -496,9 +618,10 @@ class FolderItem extends StatelessWidget {
   FolderItem(this.folder);
   @override
   Widget build(BuildContext context) {
-    String playlists = folder.containedPlaylists.elementAt(0);
+    String playlistsInFolder = folder.containedPlaylists.elementAt(0);
     for (var i = 1; i < folder.containedPlaylists.length; i++) {
-      playlists = playlists + ", " + folder.containedPlaylists.elementAt(i);
+      playlistsInFolder =
+          playlistsInFolder + ", " + folder.containedPlaylists.elementAt(i);
     }
     return ListTile(
         leading: Container(
@@ -511,7 +634,51 @@ class FolderItem extends StatelessWidget {
         ),
         title: Text(folder.name,
             style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w500)),
-        subtitle: Text(playlists),
+        subtitle: Text(playlistsInFolder),
+        trailing: PopupMenuButton<String>(
+            icon: Icon(Icons.more_horiz),
+            color: Colors.grey[800],
+            onSelected: (val) async {
+              switch (val) {
+                case "Delete":
+                  Scaffold.of(context).showSnackBar(SnackBar(
+                      content: Text(
+                        'Borrando carpeta...',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      backgroundColor: Colors.grey[700]));
+                  bool deleted = await deleteFolderDB(folder.name);
+                  if (deleted) {
+                    Scaffold.of(context).showSnackBar(SnackBar(
+                        content: Text(
+                          'Carpeta borrada!',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        backgroundColor: Colors.grey[700]));
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (BuildContext context) => MainScreen()));
+                  } else {
+                    Scaffold.of(context).showSnackBar(SnackBar(
+                        content: Text(
+                          'No se pudo borrar la carpeta',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        backgroundColor: Colors.grey[700]));
+                  }
+
+                  break;
+                default:
+                  null;
+              }
+            },
+            itemBuilder: (context) => [
+                  PopupMenuItem(
+                      value: "Delete",
+                      child: ListTile(
+                        leading: Icon(CupertinoIcons.delete),
+                        title: Text("Eliminar carpeta"),
+                      )),
+                ]),
         onTap: () =>
             null /* Navigator.of(context).push(MaterialPageRoute(
           builder: (BuildContext context) =>
@@ -590,7 +757,7 @@ class PlaylistItem extends StatelessWidget {
                         } else {
                           Scaffold.of(context).showSnackBar(SnackBar(
                               content: Text(
-                                'Lista de reproducción borrada!',
+                                'No se pudo borrar la lista de reproducción',
                                 style: TextStyle(color: Colors.white),
                               ),
                               backgroundColor: Colors.grey[700]));

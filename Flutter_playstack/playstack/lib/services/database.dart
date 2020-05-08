@@ -7,6 +7,108 @@ import 'package:playstack/models/PlaylistType.dart';
 import 'package:playstack/models/Song.dart';
 import 'package:playstack/shared/common.dart';
 
+Future<bool> removeSongFromPlaylistDB(
+    String songName, String playlistName) async {
+  print("Quitando cancion $songName de playlist $playlistName");
+  dynamic data = {
+    'NombreUsuario': userName,
+    'NombrePlayList': playlistName,
+    'NombreCancion': songName,
+  };
+
+  data = jsonEncode(data);
+  dynamic response = await http.post(
+      "https://playstack.azurewebsites.net/user/remove/song/fromplaylist",
+      headers: {"Content-Type": "application/json"},
+      body: data);
+
+  print("Statuscode quitar cancion de playlist: " +
+      response.statusCode.toString());
+
+  if (response.statusCode == 200) {
+    print("Cancion quitada");
+    return true;
+  } else {
+    print("Cancion no quitada: " + response.body.toString());
+    return false;
+  }
+}
+
+Future<bool> addSongToPlaylistDB(String playlistName, String songName) async {
+  print("Añadiendo cancion $songName a playlist $playlistName");
+  dynamic data = {
+    'NombreUsuario': userName,
+    'NombrePlayList': playlistName,
+    'NombreCancion': songName,
+  };
+
+  data = jsonEncode(data);
+  dynamic response = await http.post(
+      "https://playstack.azurewebsites.net/user/add/song/toplaylist",
+      headers: {"Content-Type": "application/json"},
+      body: data);
+
+  print("Statuscode agnadir cancion a playlist: " +
+      response.statusCode.toString());
+
+  if (response.statusCode == 200) {
+    print("Cancion agnadida");
+    return true;
+  } else {
+    print("Cancion no agnadida: " + response.body.toString());
+    return false;
+  }
+}
+
+Future<bool> updatePlaylistDB(
+    String playlistName, String newPLaylistName, bool isPrivate) async {
+  print(
+      "Actualizando playlist $playlistName a $newPLaylistName es privada $isPrivate");
+  dynamic data = {
+    'NombreUsuario': userName,
+    'NombrePlayList': playlistName,
+    'NuevoNombre': newPLaylistName,
+    'NuevoPrivado': isPrivate
+  };
+
+  data = jsonEncode(data);
+  dynamic response = await http.post(
+      "https://playstack.azurewebsites.net/user/update/playlist",
+      headers: {"Content-Type": "application/json"},
+      body: data);
+
+  print("Statuscode actualizar playlist: " + response.statusCode.toString());
+
+  if (response.statusCode == 200) {
+    print("playlist actualizada");
+    return true;
+  } else {
+    print("Playlist no actualizada " + response.body.toString());
+    return false;
+  }
+}
+
+Future<bool> deleteFolderDB(String folderName) async {
+  print("Borrando carpeta $folderName");
+  dynamic data = {'NombreUsuario': userName, 'NombreCarpeta': folderName};
+
+  data = jsonEncode(data);
+  dynamic response = await http.post(
+      "https://playstack.azurewebsites.net/user/remove/folder/",
+      headers: {"Content-Type": "application/json"},
+      body: data);
+
+  print("Statuscode borrar carpeta: " + response.statusCode.toString());
+
+  if (response.statusCode == 200) {
+    print("Carpeta borrada");
+    return true;
+  } else {
+    print("Carpeta no ha sido borrada: " + response.body.toString());
+    return false;
+  }
+}
+
 Future<bool> deletePlaylistDB(String playlistName) async {
   print("Borrando playlist $playlistName");
   dynamic data = {'NombreUsuario': userName, 'NombrePlayList': playlistName};
@@ -26,6 +128,28 @@ Future<bool> deletePlaylistDB(String playlistName) async {
     print("Playlist no ha sido borrada: " + response.body.toString());
     return false;
   }
+}
+
+Future<List> updatePlaylistCoversDB(String playlistName) async {
+  List coverUrls = new List();
+
+  print("Recuperando covers de $playlistName");
+  dynamic response = await http.get(
+      "https://playstack.azurewebsites.net/get/playlist/songs?NombreUsuario=$userName&NombrePlayList=$playlistName");
+
+  if (response.statusCode == 200) {
+    response = json.decode(response.body);
+
+    response.forEach((title, info) => print(title + info.toString()));
+    response.forEach(
+        (title, info) => coverUrls.add(info['ImagenesAlbums'].elementAt(0)));
+
+    //title, info['Artistas'],info['url'], info['Albunes'], info['ImagenesAlbum']
+  } else {
+    print("Status code not 200, body: " + response.body);
+  }
+  print("Hay " + coverUrls.length.toString() + " covers en $playlistName");
+  return coverUrls;
 }
 
 Future<List> getPlaylistSongsDB(String playlistName) async {
@@ -140,6 +264,7 @@ Future<List> getFollowersDB() async {
 }
 
 Future<bool> follow(String newFriend) async {
+  print("Siguiendo a $newFriend...");
   dynamic data = {'Usuario': userName, 'Seguidor': newFriend};
 
   data = jsonEncode(data);
@@ -354,9 +479,10 @@ Future<List> getFavoriteSongs() async {
   print("Statuscode favoritas: " + response.statusCode.toString());
 
   if (response.statusCode == 200) {
+    print("Favoritas recuperadas");
     response = json.decode(response.body);
 
-    response.forEach((title, info) => print(title + info.toString()));
+    //response.forEach((title, info) => print(title + info.toString()));
     response.forEach((title, info) => addSongToList(
         favSongs,
         title,
@@ -369,7 +495,7 @@ Future<List> getFavoriteSongs() async {
   } else {
     print("Status code not 200, body: " + response.body);
   }
-
+  print("Hay " + favSongs.length.toString() + " favoritas");
   return favSongs;
 }
 

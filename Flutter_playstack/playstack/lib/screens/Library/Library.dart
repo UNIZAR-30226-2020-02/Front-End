@@ -17,7 +17,6 @@ class _LibraryState extends State<Library> {
   final TextEditingController newPLaylistController =
       new TextEditingController();
   final TextEditingController newFolderController = new TextEditingController();
-  List playlists = new List();
   List folders = new List();
   bool _loading = true;
   String dropdownItem;
@@ -141,16 +140,6 @@ class _LibraryState extends State<Library> {
     getFolders();
   }
 
-  List<DropdownMenuItem> listPlaylistNames() {
-    List<DropdownMenuItem> items = new List();
-    for (var pl in playlists) {
-      DropdownMenuItem newItem =
-          new DropdownMenuItem<String>(value: pl.name, child: Text(pl.name));
-      items.add(newItem);
-    }
-    return items;
-  }
-
   Future<void> showCreatingFolderDialog(BuildContext context) {
     bool _validate = false;
     dropdownItem = playlists.elementAt(0).name;
@@ -235,65 +224,63 @@ class _LibraryState extends State<Library> {
       barrierDismissible: true,
       context: context,
       builder: (context) {
-        return StatefulBuilder(builder: (context, setState) {
-          return AlertDialog(
-            title: Text("Crear lista de reproducción"),
-            elevation: 100.0,
-            backgroundColor: Colors.grey[900],
-            actions: <Widget>[
-              SizedBox(
-                  width: MediaQuery.of(context).size.width,
-                  child: TextField(
-                    controller: newPLaylistController,
-                    decoration: InputDecoration(
-                        hintText: "Nombre lista",
-                        errorText:
-                            _validate ? 'Introduzca un nombre válido' : null),
-                  )),
-              Container(
+        return AlertDialog(
+          title: Text("Crear lista de reproducción"),
+          elevation: 100.0,
+          backgroundColor: Colors.grey[900],
+          actions: <Widget>[
+            SizedBox(
                 width: MediaQuery.of(context).size.width,
-                child: CheckboxListTile(
-                  activeColor: Colors.amber,
-                  value: _isPrivate,
-                  onChanged: (newVal) {
-                    setState(() {
-                      _isPrivate = !_isPrivate;
-                    });
-                  },
-                  title: Text("¿Hacer playlist privada?"),
-                ),
+                child: TextField(
+                  controller: newPLaylistController,
+                  decoration: InputDecoration(
+                      hintText: "Nombre lista",
+                      errorText:
+                          _validate ? 'Introduzca un nombre válido' : null),
+                )),
+            Container(
+              width: MediaQuery.of(context).size.width,
+              child: CheckboxListTile(
+                activeColor: Colors.amber,
+                value: _isPrivate,
+                onChanged: (newVal) {
+                  setState(() {
+                    _isPrivate = !_isPrivate;
+                  });
+                },
+                title: Text("¿Hacer playlist privada?"),
               ),
-              Container(
-                width: MediaQuery.of(context).size.width,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Expanded(
-                        flex: 1,
-                        child: FlatButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: Text("Cancelar"))),
-                    Expanded(
-                        flex: 1,
-                        child: FlatButton(
-                            onPressed: () {
-                              setState(() {
-                                if (newPLaylistController.text.isEmpty) {
-                                  _validate = true;
-                                } else {
-                                  _validate = false;
-                                  Navigator.pop(context);
-                                  createPlaylist(_isPrivate);
-                                }
-                              });
-                            },
-                            child: Text("Crear")))
-                  ],
-                ),
-              )
-            ],
-          );
-        });
+            ),
+            Container(
+              width: MediaQuery.of(context).size.width,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Expanded(
+                      flex: 1,
+                      child: FlatButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text("Cancelar"))),
+                  Expanded(
+                      flex: 1,
+                      child: FlatButton(
+                          onPressed: () {
+                            setState(() {
+                              if (newPLaylistController.text.isEmpty) {
+                                _validate = true;
+                              } else {
+                                _validate = false;
+                                Navigator.pop(context);
+                                createPlaylist(_isPrivate);
+                              }
+                            });
+                          },
+                          child: Text("Crear")))
+                ],
+              ),
+            )
+          ],
+        );
       },
     );
   }
