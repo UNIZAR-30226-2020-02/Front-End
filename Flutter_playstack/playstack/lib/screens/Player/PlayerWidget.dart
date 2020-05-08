@@ -9,6 +9,7 @@ import 'package:playstack/models/Song.dart';
 import 'package:playstack/screens/Player/PlayingNow.dart';
 import 'package:playstack/screens/Player/UpNext.dart';
 import 'package:playstack/shared/common.dart';
+import 'package:marquee/marquee.dart';
 
 enum PlayerState { stopped, playing, paused }
 enum PlayingRouteState { speakers, earpiece }
@@ -32,8 +33,14 @@ class PlayerWidget extends StatefulWidget {
 class _PlayerWidgetState extends State<PlayerWidget>
     with SingleTickerProviderStateMixin {
   bool _showCover;
-  Song song = currentSong;
   bool seekDone;
+  bool _loopEnabled;
+  bool _shuffleEnabled;
+
+  PageController _pageController = new PageController(initialPage: 0);
+  PageController _backController = new PageController(initialPage: 0);
+
+  double width;
 
   PlayerMode mode;
 
@@ -41,6 +48,12 @@ class _PlayerWidgetState extends State<PlayerWidget>
   AudioPlayerState _audioPlayerState;
   Duration _duration;
   Duration _position;
+
+  List<Song> allSongs = [];
+  int currentPage = 0;
+  bool _usingButtons = false;
+  int absoluteChangeInPage = 0;
+  bool _pressing = false;
 
   PlayerState _playerState = PlayerState.stopped;
   PlayingRouteState _playingRouteState = PlayingRouteState.speakers;
@@ -63,11 +76,27 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
   @override
   void initState() {
-    print("Url de la cancion: " + song.url);
+    print("Url de la cancion: " + currentSong.url);
     widget.advancedPlayer.seekCompleteHandler =
         (finished) => setState(() => seekDone = finished);
     super.initState();
     _showCover = false;
+    _loopEnabled = false;
+    _shuffleEnabled = true;
+
+    _pageController.addListener(() {
+      _backController.jumpTo(_pageController.offset);
+      print(absoluteChangeInPage);
+      if ((_pageController.page - currentPage).abs() > 0.9) {
+        if (absoluteChangeInPage > 0) {
+          skipSong(false);
+        } else if (absoluteChangeInPage < 0) {
+          skipPrevious(false);
+        }
+        absoluteChangeInPage = 0;
+      }
+    });
+
     initAnim();
     _initAudioPlayer();
     if (_playerState != PlayerState.playing) {
@@ -77,6 +106,20 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
   void _onComplete() {
     setState(() => _playerState = PlayerState.stopped);
+  }
+
+  void buildPageLists(bool onlyNext) {
+    if (!onlyNext) {
+      songsPlayed.forEach((value) {
+        allSongs.add(value);
+      });
+
+      allSongs.add(currentSong);
+    }
+
+    songsNextUp.forEach((value) {
+      allSongs.add(value);
+    });
   }
 
   void _initAudioPlayer() {
@@ -166,7 +209,8 @@ class _PlayerWidgetState extends State<PlayerWidget>
             _position.inMilliseconds < _duration.inMilliseconds)
         ? _position
         : null;
-    final result = await _audioPlayer.play(song.url, position: playPosition);
+    final result =
+        await _audioPlayer.play(currentSong.url, position: playPosition);
     if (result == 1) setState(() => _playerState = PlayerState.playing);
 
     // default playback rate is 1.0
@@ -195,28 +239,87 @@ class _PlayerWidgetState extends State<PlayerWidget>
     super.dispose();
   }
 
-  void skipPrevious() {
+  void skipPrevious(bool mustScroll) {
     if (songsPlayed.isNotEmpty) {
-      songsNextUp.add(currentSong);
-      currentSong = songsPlayed.last;
-      songsPlayed.removeAt(0);
-      currentSong.markAsListened();
+      if (_isPlaying) {
+        togglePlayPause();
+      }
 
-      Navigator.of(context).pushReplacement(MaterialPageRoute(
-          builder: (BuildContext context) => PlayingNowScreen()));
+      setState(() {
+        songsNextUp.insert(0, currentSong);
+        currentSong = songsPlayed.last;
+        songsPlayed.removeAt(songsPlayed.length - 1);
+      });
+      if (mustScroll) {
+        _pageController.previousPage(
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+        _backController.previousPage(
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+        Future.delayed(
+            Duration(milliseconds: 400), () => _usingButtons = false);
+      }
+      currentPage -= 1;
+      currentSong.markAsListened();
+      _position = Duration(seconds: 0);
+      _duration = Duration(seconds: 0);
+      Future.delayed(Duration(milliseconds: mustScroll ? 900 : 500), () {
+        if (!_isPlaying) togglePlayPause();
+      });
+
+      //Navigator.of(context).pushReplacement(MaterialPageRoute(
+      //    builder: (BuildContext context) => PlayingNowScreen()));
+
     }
   }
 
-  void skipSong() {
+  void skipSong(bool mustScroll) {
     print("Skipping...");
-    if (songsNextUp.isNotEmpty) {
-      if (!songsPlayed.contains(currentSong)) songsPlayed.add(currentSong);
 
-      currentSong = songsNextUp.first;
-      songsNextUp.removeAt(0);
+    if (songsNextUp.isNotEmpty || _loopEnabled) {
+      if (_isPlaying) {
+        togglePlayPause();
+      }
+      if (songsNextUp.isNotEmpty) {
+        setState(() {
+          songsPlayed.add(currentSong);
+          currentSong = songsNextUp.first;
+          songsNextUp.removeAt(0);
+        });
+      } else {
+        songsNextUp = allSongs;
+        if (_shuffleEnabled) {
+          setShuffleQueue(songsNextUpName, songsNextUp,
+              songsNextUp.elementAt(rng.nextInt(songsPlayed.length)));
+        }
+        buildPageLists(true);
+      }
+      if (mustScroll) {
+        _pageController.nextPage(
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+        _backController.nextPage(
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+        Future.delayed(
+            Duration(milliseconds: 400), () => _usingButtons = false);
+      }
+      currentPage += 1;
       currentSong.markAsListened();
-      Navigator.of(context).pushReplacement(MaterialPageRoute(
-          builder: (BuildContext context) => PlayingNowScreen()));
+      _position = Duration(seconds: 0);
+      _duration = Duration(seconds: 0);
+      Future.delayed(Duration(milliseconds: mustScroll ? 900 : 500), () {
+        if (!_isPlaying) togglePlayPause();
+      });
+
+      //Navigator.of(context).pushReplacement(MaterialPageRoute(
+      //    builder: (BuildContext context) => PlayingNowScreen()));
+
     }
   }
 
@@ -258,49 +361,361 @@ class _PlayerWidgetState extends State<PlayerWidget>
     }
   }
 
-  Widget player() {
-    double width = MediaQuery.of(context).size.width;
-    final double cutRadius = 8.0;
+  Widget slidingText({String texto, bool condicion, TextStyle estilo}) {
+    return condicion
+        ? Marquee(
+            text: texto,
+            style: estilo,
+            scrollAxis: Axis.horizontal,
+            blankSpace: width / 2,
+            velocity: 100.0,
+            pauseAfterRound: Duration(seconds: 5),
+            startPadding: 10.0,
+            accelerationDuration: Duration(seconds: 1),
+            accelerationCurve: Curves.linear,
+            decelerationDuration: Duration(seconds: 1),
+            decelerationCurve: Curves.easeOut,
+          )
+        : Text(
+            texto,
+            style: estilo,
+            maxLines: 1,
+            textAlign: TextAlign.center,
+          );
+  }
+
+  Widget infoCancion(Song song) {
+    return Column(children: <Widget>[
+      Padding(
+        //Carátula
+        padding: EdgeInsets.only(top: width / 50),
+        child: Container(
+          height: width * 0.8,
+          width: width * 0.8,
+          decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(8.0),
+              image: DecorationImage(
+                  image: song.albumCoverUrls.elementAt(0) != null
+                      ? NetworkImage(song.albumCoverUrls.elementAt(0))
+                      : Image.asset("assets/images/defaultCover.png").image,
+                  fit: BoxFit.cover)),
+        ),
+      ),
+      Padding(
+          //Título
+          padding: EdgeInsets.only(top: width / 50),
+          child: Container(
+              height: width / 10,
+              child: Material(
+                  color: Colors.transparent,
+                  child: Center(
+                      child: slidingText(
+                          texto: '${song.title}',
+                          condicion: song.title.length * 18.40 > width,
+                          estilo: new TextStyle(
+                              color: Colors.white,
+                              fontSize: width / 18.40,
+                              fontWeight: FontWeight.w600)))))),
+      Padding(
+          //Artistas
+          padding: EdgeInsets.only(top: width * 0.0005),
+          child: Container(
+              height: width / 20,
+              child: Material(
+                  color: Colors.transparent,
+                  child: slidingText(
+                      texto: getSongArtists(song.artists),
+                      condicion: song.artists.length * 24.50 > width,
+                      estilo: new TextStyle(
+                          color: Colors.white.withOpacity(0.6),
+                          fontSize: width / 24.50,
+                          letterSpacing: width / 245,
+                          height: width / 294))))),
+    ]);
+  }
+
+  Widget fondo(Song song) {
+    return Container(
+        //Fondo
+        height: MediaQuery.of(context).size.height,
+        child: song.albumCoverUrls == null
+            ? Image.asset(
+                'assets/images/defaultCover.png',
+                fit: BoxFit.fitWidth,
+                width: MediaQuery.of(context).size.width,
+              )
+            : Image.network(song.albumCoverUrls.elementAt(0),
+                fit: BoxFit.fitHeight));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    width = MediaQuery.of(context).size.width;
+    allSongs.clear();
+    buildPageLists(false);
     final double statusBarHeight = MediaQuery.of(context).padding.top;
     final double ccPadding = MediaQuery.of(context).size.width / 12;
-    return Stack(
-      children: <Widget>[
-        Container(
-            height: MediaQuery.of(context).size.height,
-            child: song.albumCoverUrls == null
-                ? Image.asset(
-                    'assets/images/defaultCover.png',
-                    fit: BoxFit.fitWidth,
-                    width: MediaQuery.of(context).size.width,
-                  )
-                : Image.network(song.albumCoverUrls.elementAt(0),
-                    fit: BoxFit.fitHeight)),
-        Positioned(
-          top: width,
-          child: Container(
-            color: Colors.transparent,
-            height: MediaQuery.of(context).size.height - width,
-            width: width,
-          ),
+    return Stack(children: <Widget>[
+      Container(
+        height: MediaQuery.of(context).size.height,
+        child: PageView.builder(
+            itemCount: allSongs.length,
+            controller: _backController,
+            pageSnapping: false,
+            physics: new NeverScrollableScrollPhysics(),
+            itemBuilder: (context, int index) => fondo(allSongs[index])),
+      ),
+      BackdropFilter(
+        //Difuminado
+        filter: ui.ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+        child: Container(
+          height: MediaQuery.of(context).size.height,
+          width: MediaQuery.of(context).size.width,
+          decoration: new BoxDecoration(color: Colors.black54.withOpacity(0.5)),
         ),
-        BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+      ),
+      Align(
+          alignment: Alignment.topLeft,
+          child: Padding(
+              padding: EdgeInsets.only(top: width / 20),
+              //Equis para cerrar
+
+              child: Material(
+                  color: Colors.transparent,
+                  child: IconButton(
+                      icon: Icon(
+                        CupertinoIcons.clear,
+                        size: 35,
+                      ),
+                      onPressed: () => Navigator.of(context).pop())))),
+      Center(
           child: Container(
-            height: MediaQuery.of(context).size.height,
-            width: MediaQuery.of(context).size.width,
-            decoration:
-                new BoxDecoration(color: Colors.black54.withOpacity(0.5)),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 35),
-          child: Align(
-              alignment: Alignment.topCenter,
+              height: width * 0.9905,
+              child: PageView.builder(
+                  itemCount: allSongs.length,
+                  onPageChanged: (newpage) {
+                    if (!_usingButtons) {
+                      if (newpage - currentPage > 0) {
+                        absoluteChangeInPage += 1;
+                      } else {
+                        absoluteChangeInPage -= 1;
+                      }
+                    }
+                  },
+                  controller: _pageController,
+                  //physics: new NeverScrollableScrollPhysics(),
+                  itemBuilder: (context, int index) =>
+                      infoCancion(allSongs[index])))),
+      Align(
+          alignment: Alignment.bottomCenter,
+          child: Container(
+              height: width * 0.5,
+              child: Column(children: <Widget>[
+                Padding(
+                    //Slider
+                    padding: EdgeInsets.only(
+                        top: width * 0.05,
+                        left: width * 0.05,
+                        right: width * 0.05),
+                    child: Container(
+                        height: width / 20,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: Slider(
+                            activeColor: Colors.white.withOpacity(0.8),
+                            inactiveColor: Colors.grey.withOpacity(0.5),
+                            onChanged: (v) {
+                              final position = v * _duration.inMilliseconds;
+                              _audioPlayer.seek(
+                                  Duration(milliseconds: position.round()));
+                            },
+                            value: (_position != null &&
+                                    _duration != null &&
+                                    _position.inMilliseconds > 0 &&
+                                    _position.inMilliseconds <
+                                        _duration.inMilliseconds)
+                                ? _position.inMilliseconds /
+                                    _duration.inMilliseconds
+                                : 0.0,
+                          ),
+                        ))),
+                Padding(
+                    //Posicion actual
+                    padding: EdgeInsets.only(top: width * 0.005),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Text(
+                        _positionText,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 15.0,
+                            color: Colors.white.withOpacity(0.6),
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1.0),
+                      ),
+                    )),
+                Padding(
+                    //SECCION DE BOTONES
+                    padding: EdgeInsets.fromLTRB(
+                        width * 0.05, width * 0.05, width * 0.05, 0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Expanded(
+                            //Bucle
+                            flex: 10,
+                            child: Container(
+                                height: width / 10,
+                                child: Center(
+                                    child: Material(
+                                        color: Colors.transparent,
+                                        child: GestureDetector(
+                                          child: Icon(
+                                            Icons.loop,
+                                            color: _loopEnabled
+                                                ? Colors.red
+                                                : Colors.white.withOpacity(0.8),
+                                            size: width / 17.62,
+                                          ),
+                                          onTap: () => setState(() =>
+                                              _loopEnabled = !_loopEnabled),
+                                        ))))),
+                        Expanded(
+                            //Atrás
+                            flex: 15,
+                            child: Container(
+                                height: width / 5,
+                                child: Center(
+                                    child: Material(
+                                        color: Colors.transparent,
+                                        child: GestureDetector(
+                                          child: Icon(
+                                            Icons.skip_previous,
+                                            color:
+                                                Colors.white.withOpacity(0.8),
+                                            size: width / 8.82,
+                                          ),
+                                          onTap: () {
+                                            _usingButtons = true;
+                                            skipPrevious(true);
+                                          },
+                                        ))))),
+                        Expanded(
+                            //Botones apilados (Play/Pause y Cola)
+                            flex: 20,
+                            child: Container(
+                                height: width / 5,
+                                child: Center(
+                                    child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: <Widget>[
+                                      Expanded(
+                                          //Play/Pause
+                                          flex: 3,
+                                          child: Material(
+                                              color: Colors.transparent,
+                                              child: FloatingActionButton(
+                                                backgroundColor: Colors.white
+                                                    .withOpacity(0.6),
+                                                child: AnimatedIcon(
+                                                    color: Colors.white,
+                                                    size: width / 9.8,
+                                                    icon: AnimatedIcons
+                                                        .pause_play,
+                                                    progress: _animateIcon),
+                                                onPressed: () =>
+                                                    togglePlayPause(),
+                                              ))),
+                                      Expanded(
+                                        //Cola
+                                        flex: 1,
+                                        child: Material(
+                                            color: Colors.transparent,
+                                            child: FlatButton(
+                                              onPressed: () =>
+                                                  Navigator.of(context).push(
+                                                      MaterialPageRoute(
+                                                          builder: (BuildContext
+                                                                  context) =>
+                                                              UpNext())),
+                                              highlightColor: Colors
+                                                  .blueGrey[200]
+                                                  .withOpacity(0.1),
+                                              child: Text(
+                                                languageStrings['upNext'],
+                                                style: TextStyle(
+                                                    color: Colors.white
+                                                        .withOpacity(0.8),
+                                                    fontSize: width / 50,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                              splashColor: Colors.blueGrey[200]
+                                                  .withOpacity(0.1),
+                                            )),
+                                      )
+                                    ])))),
+                        Expanded(
+                            //Siguiente
+                            flex: 15,
+                            child: Container(
+                                height: width / 5,
+                                child: Center(
+                                    child: Material(
+                                        color: Colors.transparent,
+                                        child: GestureDetector(
+                                            child: Icon(
+                                              Icons.skip_next,
+                                              color:
+                                                  Colors.white.withOpacity(0.8),
+                                              size: width / 8.82,
+                                            ),
+                                            onTap: () {
+                                              _usingButtons = true;
+                                              skipSong(true);
+                                            }))))),
+                        Expanded(
+                            //Favorita
+                            flex: 10,
+                            child: Container(
+                                height: width / 10,
+                                child: Center(
+                                    child: Material(
+                                        color: Colors.transparent,
+                                        child: GestureDetector(
+                                            child: Icon(
+                                              currentSong.isFav
+                                                  ? Icons.favorite
+                                                  : Icons.favorite_border,
+                                              color: currentSong.isFav
+                                                  ? Colors.red
+                                                  : Colors.white
+                                                      .withOpacity(0.8),
+                                              size: width / 17.62,
+                                            ),
+                                            onTap: () async {
+                                              if (currentSong.isFav) {
+                                                await currentSong
+                                                    .removeFromFavs();
+                                                setState(() {});
+                                              } else {
+                                                await currentSong.setAsFav();
+                                                setState(() {});
+                                              }
+                                            })))))
+                      ],
+                    ))
+              ])))
+    ]);
+
+    /*
               child: Padding(
-                padding: EdgeInsets.only(top: width * 0.06 * 2),
+                padding: EdgeInsets.only(top: width * 0.06 * 10),
                 child: Container(
-                  width: width - 2 * width * 0.06,
-                  height: width - width * 0.06,
+                  width: width * 0.8,
+                  height: width * 0.8,
                   child: new AspectRatio(
                       aspectRatio: 15 / 15,
                       child: Hero(
@@ -414,7 +829,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  SizedBox(height: 100),
+                  SizedBox(height: MediaQuery.of(context).size.height / 50),
                   Expanded(
                     flex: 1,
                     child: Center(
@@ -615,22 +1030,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
             ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.only(top: 40),
-          child: Material(
-            color: Colors.transparent,
-            child: Row(
-              children: <Widget>[
-                IconButton(
-                    icon: Icon(
-                      CupertinoIcons.clear,
-                      size: 35,
-                    ),
-                    onPressed: () => Navigator.of(context).pop())
-              ],
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -707,11 +1106,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
           Text('State: $_audioPlayerState')
         ],
       ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return player();
+    );*/
   }
 }

@@ -217,15 +217,15 @@ class _AccessScreenState extends State<AccessScreen> {
   }
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
-  setState(()=> _loading = true);
+    setState(() => _loading = true);
     Future<String> futureString = loadLanguagesString();
-    futureString.then((value){
+    futureString.then((value) {
       languageStrings = jsonDecode(value);
       print("Loaded ${languageStrings['language']}");
       setState(() => _loading = false);
-  });
+    });
   }
 
   @override
@@ -253,7 +253,9 @@ class _AccessScreenState extends State<AccessScreen> {
                         passwordFormField(),
                         FlatButton(
                             onPressed: _toggle,
-                            child: new Text(_obscureText ? languageStrings['show'] : languageStrings['hide'])),
+                            child: new Text(_obscureText
+                                ? languageStrings['show']
+                                : languageStrings['hide'])),
                         loginButton(),
                         Row(children: <Widget>[
                           Expanded(
