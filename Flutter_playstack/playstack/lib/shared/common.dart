@@ -1,8 +1,13 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:io';
 import 'dart:convert';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:playstack/screens/Player/PlayerWidget.dart';
+import 'package:playstack/screens/mainscreen.dart';
 import 'package:playstack/models/Song.dart';
 import 'package:playstack/screens/Homescreen/Home.dart';
 import 'package:playstack/screens/Library/Library.dart';
@@ -12,10 +17,18 @@ import 'package:playstack/screens/Search/SearchScreen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:audioplayers/audio_cache.dart';
 
 //////////////////////////////////////////////////////////////////////////////////
 /////                   SHARED VARIABLES DO NOT TOUCH                       //////
 //////////////////////////////////////////////////////////////////////////////////
+
+enum PlayerState { stopped, playing, paused }
+
+final ValueNotifier<int> homeIndex = ValueNotifier<int>(0);
+
+var currentGenre;
+var currentGenreImage;
 
 var dio = Dio();
 var defaultImagePath =
@@ -44,6 +57,36 @@ List<Widget> mainScreens = [
   PlayingNowScreen()
 ];
 
+// Para canciones de assets
+AudioCache audioCache = AudioCache();
+//Para canciones online SOLO HTTPS no HTTP
+AudioPlayer advancedPlayer = AudioPlayer();
+
+AudioPlayerState audioPlayerState;
+Duration duration;
+Duration position;
+bool playerActive = false;
+
+List<Song> allSongs = [];
+bool onPlayerScreen = false;
+
+PlayerState playerState = PlayerState.stopped;
+PlayingRouteState playingRouteState = PlayingRouteState.SPEAKERS;
+StreamSubscription durationSubscription;
+StreamSubscription positionSubscription;
+StreamSubscription playerCompleteSubscription;
+StreamSubscription playerErrorSubscription;
+StreamSubscription playerStateSubscription;
+
+get isPlaying => playerState == PlayerState.playing;
+get isPaused => playerState == PlayerState.paused;
+get durationText => duration?.toString()?.split('.')?.first ?? '';
+get positionText => position?.toString()?.split('.')?.first ?? '';
+
+PlayerMode mode = PlayerMode.MEDIA_PLAYER;
+
+Widget player;
+
 /////////////////////////////////////////////////////////////////////////////////////
 
 Future<String> loadLanguagesString() {
@@ -52,10 +95,22 @@ Future<String> loadLanguagesString() {
   return jsonString;
 }
 
+Widget extendedBottomBarWith(context, Widget widget) {
+  var height = MediaQuery.of(context).size.height;
+  return (onPlayerScreen || currentSong == null || player == null)
+      ? widget
+      : Container(
+          height: height,
+          child: Column(
+            children: <Widget>[
+              Expanded(child: widget),
+              SizedBox(height: height * 0.15, child: player),
+            ],
+          ));
+}
+
 Widget bottomBar(context) {
-  double height = MediaQuery.of(context).size.height * 0.1 > 60
-      ? 60
-      : MediaQuery.of(context).size.height * 0.1;
+  double height = MediaQuery.of(context).size.height * 0.1;
   return SizedBox(
       height: height,
       child: BottomNavigationBar(
@@ -63,6 +118,7 @@ Widget bottomBar(context) {
           currentIndex: currentIndex,
           onTap: (int index) {
             currentIndex = index;
+            if (currentIndex == 3) onPlayerScreen = true;
             Navigator.pop(context);
             Navigator.of(context).push(MaterialPageRoute(
                 builder: (BuildContext context) => mainScreens[index]));
@@ -109,7 +165,9 @@ Widget show(int index) {
       return Library();
       break;
     case 3:
-      return PlayingNowScreen();
+      onPlayerScreen = true;
+      if (player == null) player = PlayerWidget();
+      return player;
       break;
   }
 }
@@ -173,7 +231,9 @@ Widget shuffleButton(
     width: MediaQuery.of(context).size.width / 3,
     child: RaisedButton(
       onPressed: () {
+        onPlayerScreen = true;
         setShuffleQueue(songsListName, songslist, song);
+        if (player == null) player = PlayerWidget();
         Navigator.of(context).push(MaterialPageRoute(
             builder: (BuildContext context) => PlayingNowScreen()));
       },
@@ -253,6 +313,8 @@ class SongItem extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         setQueue(songsList);
+        onPlayerScreen = true;
+        if (player == null) player = PlayerWidget();
         Navigator.of(context).push(MaterialPageRoute(
             builder: (BuildContext context) => PlayingNowScreen()));
       },
@@ -413,6 +475,8 @@ class GenericSongItem extends StatelessWidget {
         songsNextUp.remove(currentSong);
         // Se notifica que la canción se escucha
         currentSong.markAsListened();
+        onPlayerScreen = true;
+        if (player == null) player = PlayerWidget();
         Navigator.of(context).pushReplacement(MaterialPageRoute(
             builder: (BuildContext context) => PlayingNowScreen()));
       },

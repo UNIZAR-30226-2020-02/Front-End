@@ -82,10 +82,11 @@ class ItemCard extends StatelessWidget {
                   width: double.infinity,
                   child: FlatButton(
                     color: Colors.transparent,
-                    onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (BuildContext context) =>
-                                GenresSongs(genre: title, image: image))),
+                    onPressed: () {
+                      homeIndex.value = 3;
+                      currentGenre = title;
+                      currentGenreImage = image;
+                    },
                     child: null,
                   ),
                 ),

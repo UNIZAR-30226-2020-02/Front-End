@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:playstack/screens/GenresSongs.dart';
 import 'package:playstack/screens/Homescreen/HomeScreenElements.dart';
+import 'package:playstack/screens/Homescreen/Settings.dart';
 import 'package:playstack/screens/Homescreen/Social/Social.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/common.dart';
@@ -21,6 +23,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   SharedPreferences sharedPreferences;
+
   @override
   void initState() {
     super.initState();
@@ -58,8 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget startHome() {
     return Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(colors: [
@@ -74,8 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
               centerTitle: true,
               leading: IconButton(
                 icon: Icon(CupertinoIcons.group_solid),
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (BuildContext context) => Social())),
+                onPressed: () => homeIndex.value = 1,
               ),
               title: Container(
                   height: 40,
@@ -87,8 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
               actions: <Widget>[
                 IconButton(
                     icon: Icon(CupertinoIcons.settings),
-                    onPressed: () =>
-                        Navigator.of(context).pushNamed('Settings'))
+                    onPressed: () => homeIndex.value = 2)
               ],
             ),
             backgroundColor: Colors.transparent,
@@ -103,5 +103,26 @@ class _HomeScreenState extends State<HomeScreen> {
                 )
               ],
             )));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder(
+        valueListenable: homeIndex,
+        builder: (BuildContext context, int value, Widget child) {
+          return homeIndex.value == 0
+              ? startHome()
+              : WillPopScope(
+                  onWillPop: () async {
+                    homeIndex.value = 0;
+                    return false;
+                  },
+                  child: homeIndex.value == 1
+                      ? Social()
+                      : homeIndex.value == 2
+                          ? Settings()
+                          : GenresSongs(
+                              genre: currentGenre, image: currentGenreImage));
+        });
   }
 }
