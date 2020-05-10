@@ -49,8 +49,10 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
       });
     }
     //TODO: descomentar
-    /* getListsData('mostListenedTo');
     getListsData('publicPlaylists');
+    /*
+     getListsData('mostListenedTo');
+    
     getListsData('likedGenres');
     getListsData('lastListenedTo'); */
   }
@@ -61,23 +63,6 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
     setState(() {
       _loading = false;
     });
-  }
-
-  void addToList(String item, String list) {
-    switch (list) {
-      case 'mostListenedTo':
-        mostListenedTo.add(item);
-        break;
-      case 'likedGenres':
-        likedGenres.add(item);
-        break;
-
-      case 'publicPlaylists':
-        publicPlaylists.add(item);
-        break;
-      default:
-        lastListenedTo.add(item);
-    }
   }
 
   Future<void> getListsData(String list) async {
@@ -100,10 +85,13 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
         );
         break;
       case 'publicPlaylists':
-        response = await http.get(
-          "https://playstack.azurewebsites.net/get/song/bygenre?user=$userName",
-          headers: {"Content-Type": "application/json"},
-        );
+        if (own) {
+          publicPlaylists = await getpublicPlaylistsDB(own);
+        } else {
+          publicPlaylists =
+              await getpublicPlaylistsDB(own, user: friendUserName);
+        }
+
         break;
       default:
         print("ultimas canciones y podcasts...");
@@ -112,22 +100,7 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
           headers: {"Content-Type": "application/json"},
         );
     }
-
-    print("Statuscode " + response.statusCode.toString());
-    //print("Body:" + response.body.toString());
-    if (response.statusCode == 200) {
-      response = jsonDecode(response.body);
-      //response.forEach((title, info) => print(title + info.toString()));
-      for (var item in response) {
-        addToList(item, list);
-      }
-
-      /* setState(() {
-        _loading = false;
-      }); */
-    } else {
-      print(response.body);
-    }
+    setState(() {});
   }
 
   Widget listItems(String list) {
@@ -159,7 +132,10 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
           shrinkWrap: true,
           itemCount: publicPlaylists.isEmpty ? 0 : publicPlaylists.length,
           itemBuilder: (BuildContext context, int index) {
-            return new ListTile(title: publicPlaylists[index]);
+            return new PlaylistItem(
+              publicPlaylists[index],
+              true,
+            );
           },
         );
         break;
@@ -188,9 +164,11 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
                     bool followed = await follow(friendUserName);
                     if (followed) {
                       BotToast.showText(text: "Seguido");
+
                       setState(() {
                         alreadyFollowing = true;
                       });
+                      following = await getUsersFollowingDB();
                     } else {
                       BotToast.showText(text: "Error siguiendo");
                     }
@@ -274,7 +252,7 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
                         "Listas de reproducción públicas",
                         style: TextStyle(fontSize: 20),
                       ),
-                      listItems('lastListenedTo'),
+                      listItems('publicPlaylists'),
                       Text(
                         "Últimas canciones y podcast escuchados",
                         style: TextStyle(fontSize: 20),

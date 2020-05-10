@@ -11,25 +11,30 @@ import 'package:toast/toast.dart';
 
 class Playlist extends StatefulWidget {
   final PlaylistType playlist;
-  Playlist(this.playlist);
+  final bool isForeign;
+  Playlist(this.playlist, {this.isForeign});
 
   @override
-  _PlaylistState createState() => _PlaylistState(playlist);
+  _PlaylistState createState() => _PlaylistState(playlist, isForeign);
 }
 
 class _PlaylistState extends State<Playlist> {
   final PlaylistType playlist;
+  bool isForeign;
   final TextEditingController playlistNameController =
       new TextEditingController();
 
   List songs = new List();
   bool _loading = true;
 
-  _PlaylistState(this.playlist);
+  _PlaylistState(this.playlist, this.isForeign);
 
   @override
   void initState() {
     super.initState();
+    if (isForeign == null) {
+      isForeign = false;
+    }
     getSongs();
   }
 
@@ -172,6 +177,7 @@ class _PlaylistState extends State<Playlist> {
                 icon: Icon(CupertinoIcons.back),
                 onPressed: () => Navigator.of(context).pop()),
           ),
+          bottomNavigationBar: bottomBar(context),
           backgroundColor: Colors.transparent,
           body: ListView(
             children: <Widget>[
@@ -212,13 +218,16 @@ class _PlaylistState extends State<Playlist> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                      Expanded(flex: 1, child: playlistOptionsButton()),
+                      Expanded(
+                          flex: 1,
+                          child:
+                              isForeign ? Text('') : playlistOptionsButton()),
                       Expanded(
                           flex: 2,
                           child: shuffleButton(playlist.name, songs, context)),
                       Expanded(
                           flex: 1,
-                          child: playlist.name == "Favoritas"
+                          child: playlist.name == "Favoritas" || isForeign
                               ? Text('')
                               : playlistStatusSwitch())
                     ],

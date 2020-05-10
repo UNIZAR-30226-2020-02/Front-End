@@ -6,7 +6,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:playstack/models/FolderType.dart';
 import 'package:playstack/models/PlaylistType.dart';
 import 'package:playstack/models/Song.dart';
+import 'package:playstack/models/user.dart';
 import 'package:playstack/screens/Homescreen/Home.dart';
+import 'package:playstack/screens/Homescreen/PublicProfile.dart';
 import 'package:playstack/screens/Library/Library.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
 import 'package:playstack/screens/Mainscreen.dart';
@@ -41,6 +43,8 @@ Map<String, dynamic> languageStrings = new Map<String, dynamic>();
 String songsNextUpName;
 List songsNextUp = new List();
 List songsPlayed = new List();
+List following = new List();
+List followers = new List();
 
 List playlists = new List();
 final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -61,9 +65,9 @@ Future<String> loadLanguagesString() {
 }
 
 Widget bottomBar(context) {
-  double height = MediaQuery.of(context).size.height * 0.1 > 60
-      ? 60
-      : MediaQuery.of(context).size.height * 0.1;
+  double height = MediaQuery.of(context).size.height / 10;
+  double iconsize = height / 3.2;
+  double textsize = height / 10;
   return SizedBox(
       height: height,
       child: BottomNavigationBar(
@@ -71,37 +75,35 @@ Widget bottomBar(context) {
           currentIndex: currentIndex,
           onTap: (int index) {
             currentIndex = index;
-            Navigator.pop(context);
-            Navigator.of(context).push(MaterialPageRoute(
-                builder: (BuildContext context) => mainScreens[index]));
+            Navigator.of(context).pushReplacement(MaterialPageRoute(
+                builder: (BuildContext context) => MainScreen()));
           },
           type: BottomNavigationBarType.shifting,
           items: [
             BottomNavigationBarItem(
                 icon: new Icon(
                   CupertinoIcons.home,
-                  size: height / 2.5,
+                  size: iconsize,
                 ),
                 title: new Text(
                   "Home",
-                  style: TextStyle(fontSize: height / 5),
+                  style: TextStyle(fontSize: textsize),
                 )),
             BottomNavigationBarItem(
-                icon: new Icon(CupertinoIcons.search, size: height / 2.5),
+                icon: new Icon(CupertinoIcons.search, size: iconsize),
                 title: new Text(
                   "Search",
-                  style: TextStyle(fontSize: height / 5),
+                  style: TextStyle(fontSize: textsize),
                 )),
             BottomNavigationBarItem(
-                icon: new Icon(CupertinoIcons.collections, size: height / 2.5),
+                icon: new Icon(CupertinoIcons.collections, size: iconsize),
                 title: new Text(
                   "Library",
-                  style: TextStyle(fontSize: height / 5),
+                  style: TextStyle(fontSize: textsize),
                 )),
             BottomNavigationBarItem(
-                icon: new Icon(CupertinoIcons.music_note, size: height / 2.5),
-                title:
-                    new Text("Play", style: TextStyle(fontSize: height / 5))),
+                icon: new Icon(CupertinoIcons.music_note, size: iconsize),
+                title: new Text("Play", style: TextStyle(fontSize: textsize))),
           ]));
 }
 
@@ -738,13 +740,23 @@ class FolderItem extends StatelessWidget {
 
 class PlaylistItem extends StatelessWidget {
   final playlist;
-  PlaylistItem(this.playlist);
+  final bool listingInProfile;
+  PlaylistItem(this.playlist, this.listingInProfile);
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(MaterialPageRoute(
-            builder: (BuildContext context) => Playlist(playlist)));
+        if (listingInProfile) {
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (BuildContext context) => Playlist(
+                    playlist,
+                    isForeign: true,
+                  )));
+        } else {
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (BuildContext context) => Playlist(playlist)));
+        }
       },
       child: Padding(
         padding: const EdgeInsets.all(10),
@@ -780,54 +792,80 @@ class PlaylistItem extends StatelessWidget {
                 ],
               ),
               Spacer(),
-              PopupMenuButton<String>(
-                  icon: Icon(Icons.more_horiz),
-                  color: Colors.grey[800],
-                  onSelected: (val) async {
-                    switch (val) {
-                      case "Delete":
-                        Scaffold.of(context).showSnackBar(SnackBar(
-                            content: Text(
-                              'Borrando lista de reproducción...',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            backgroundColor: Colors.grey[700]));
-                        bool deleted = await deletePlaylistDB(playlist.name);
-                        if (deleted) {
-                          Scaffold.of(context).showSnackBar(SnackBar(
-                              content: Text(
-                                'Lista de reproducción borrada!',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              backgroundColor: Colors.grey[700]));
-                          //TODO: por ahora lo dejo asi aunque estaria bn buscar una alternativa
-                          Navigator.of(context).push(MaterialPageRoute(
-                              builder: (BuildContext context) => MainScreen()));
-                        } else {
-                          Scaffold.of(context).showSnackBar(SnackBar(
-                              content: Text(
-                                'No se pudo borrar la lista de reproducción',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              backgroundColor: Colors.grey[700]));
-                        }
+              listingInProfile
+                  ? Text('')
+                  : PopupMenuButton<String>(
+                      icon: Icon(Icons.more_horiz),
+                      color: Colors.grey[800],
+                      onSelected: (val) async {
+                        switch (val) {
+                          case "Delete":
+                            Scaffold.of(context).showSnackBar(SnackBar(
+                                content: Text(
+                                  'Borrando lista de reproducción...',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                backgroundColor: Colors.grey[700]));
+                            bool deleted =
+                                await deletePlaylistDB(playlist.name);
+                            if (deleted) {
+                              Scaffold.of(context).showSnackBar(SnackBar(
+                                  content: Text(
+                                    'Lista de reproducción borrada!',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  backgroundColor: Colors.grey[700]));
+                              //TODO: por ahora lo dejo asi aunque estaria bn buscar una alternativa
+                              Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (BuildContext context) =>
+                                      MainScreen()));
+                            } else {
+                              Scaffold.of(context).showSnackBar(SnackBar(
+                                  content: Text(
+                                    'No se pudo borrar la lista de reproducción',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  backgroundColor: Colors.grey[700]));
+                            }
 
-                        break;
-                      default:
-                        null;
-                    }
-                  },
-                  itemBuilder: (context) => [
-                        PopupMenuItem(
-                            value: "Delete",
-                            child: ListTile(
-                              leading: Icon(CupertinoIcons.delete),
-                              title: Text("Eliminar playlist"),
-                            )),
-                      ])
+                            break;
+                          default:
+                            null;
+                        }
+                      },
+                      itemBuilder: (context) => [
+                            PopupMenuItem(
+                                value: "Delete",
+                                child: ListTile(
+                                  leading: Icon(CupertinoIcons.delete),
+                                  title: Text("Eliminar playlist"),
+                                )),
+                          ])
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class UserTile extends StatelessWidget {
+  final User user;
+
+  UserTile(this.user);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
+      child: ListTile(
+        leading: CircleAvatar(
+            radius: 30, backgroundImage: NetworkImage(user.photoUrl)),
+        title: Text(user.name),
+        trailing: IconButton(icon: Icon(Icons.more_vert), onPressed: null),
+        onTap: () => Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (BuildContext context) =>
+                YourPublicProfile(false, friendUserName: user.name))),
       ),
     );
   }

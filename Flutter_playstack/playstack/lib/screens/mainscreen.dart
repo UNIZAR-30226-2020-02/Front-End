@@ -29,6 +29,53 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
+  Widget bottomBar(context) {
+    double height = MediaQuery.of(context).size.height / 10;
+    double iconsize = height / 3.2;
+    double textsize = height / 10;
+    return SizedBox(
+        height: height,
+        child: BottomNavigationBar(
+            fixedColor: Colors.red[600],
+            currentIndex: currentIndex,
+            onTap: (int index) {
+              currentIndex = index;
+              if (index == 3) {
+                Navigator.of(context).pushReplacement(MaterialPageRoute(
+                    builder: (BuildContext context) => PlayingNowScreen()));
+              }
+              setState(() {});
+            },
+            type: BottomNavigationBarType.shifting,
+            items: [
+              BottomNavigationBarItem(
+                  icon: new Icon(
+                    CupertinoIcons.home,
+                    size: iconsize,
+                  ),
+                  title: new Text(
+                    "Home",
+                    style: TextStyle(fontSize: textsize),
+                  )),
+              BottomNavigationBarItem(
+                  icon: new Icon(CupertinoIcons.search, size: iconsize),
+                  title: new Text(
+                    "Search",
+                    style: TextStyle(fontSize: textsize),
+                  )),
+              BottomNavigationBarItem(
+                  icon: new Icon(CupertinoIcons.collections, size: iconsize),
+                  title: new Text(
+                    "Library",
+                    style: TextStyle(fontSize: textsize),
+                  )),
+              BottomNavigationBarItem(
+                  icon: new Icon(CupertinoIcons.music_note, size: iconsize),
+                  title:
+                      new Text("Play", style: TextStyle(fontSize: textsize))),
+            ]));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -5,7 +5,58 @@ import 'package:http/http.dart' as http;
 import 'package:playstack/models/FolderType.dart';
 import 'package:playstack/models/PlaylistType.dart';
 import 'package:playstack/models/Song.dart';
+import 'package:playstack/models/user.dart';
 import 'package:playstack/shared/common.dart';
+
+Future<List> getpublicPlaylistsDB(bool mine, {String user}) async {
+  List publicPlaylists = new List();
+
+  dynamic response;
+  if (mine) {
+    print("Recuperando playlists publicas mias $userName");
+    response = await http.get(
+        'https://playstack.azurewebsites.net/get/publicplaylists?NombreUsuario=$userName');
+  } else {
+    print("Recuperando playlists publicas de  $user");
+    response = await http.get(
+        'https://playstack.azurewebsites.net/get/publicplaylists?NombreUsuario=$user');
+  }
+
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("Playlists publicas recuperadas");
+    //FotoDePerfil
+    response.forEach((name, info) => addPlaylistToList(
+        publicPlaylists, name, info['Fotos'], info['Privado']));
+  } else {
+    print('Error playlists publicas');
+  }
+  print("Tiene " + following.length.toString() + " playlists publicas");
+  return publicPlaylists;
+}
+
+Future<List> getUsersFollowingDB() async {
+  print("Recuperando usuarios seguidos de $userName");
+
+  List following = new List();
+  dynamic response = await http.get(
+      'https://playstack.azurewebsites.net/user/get/following?Usuario=$userName');
+
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("Usuarios seguidos recuperados");
+    //FotoDePerfil
+    response.forEach((title, profilePhoto) => addUserToList(
+          following,
+          title,
+          profilePhoto['FotoDePerfil'],
+        ));
+  } else {
+    print('Error buscando followers');
+  }
+  print("Tiene " + following.length.toString() + " following");
+  return following;
+}
 
 Future<bool> removeSongFromPlaylistDB(
     String songName, String playlistName) async {
@@ -247,24 +298,36 @@ Future<List> getAllSongs() async {
   return allSongs;
 }
 
-Future<List> getFollowersDB() async {
-  dynamic response = await http.get(
-      'https://playstack.azurewebsites.net/user/get/profilephoto?Usuario=$userName');
+addUserToList(List list, String name, String photoUrl) {
+  User newUser = new User(name, photoUrl);
+  list.add(newUser);
+}
 
-  print("Codigo recuperando followers: " + response.statusCode.toString());
+Future<List> getFollowersDB() async {
+  print("Recuperando followers de $userName");
+
+  List followers = new List();
+  dynamic response = await http.get(
+      'https://playstack.azurewebsites.net/user/get/followers?Usuario=$userName');
+
   if (response.statusCode == 200) {
     response = jsonDecode(response.body);
-    print("Response " + response.toString());
-    return response['Usuarios'];
+    print("Followers recuperados");
+    //FotoDePerfil
+    response.forEach((title, profilePhoto) => addUserToList(
+          followers,
+          title,
+          profilePhoto['FotoDePerfil'],
+        ));
   } else {
-    print('Error buscando usuarios');
-
-    return null;
+    print('Error buscando followers');
   }
+  print("Tiene " + followers.length.toString() + " followers");
+  return followers;
 }
 
 Future<bool> follow(String newFriend) async {
-  print("Siguiendo a $newFriend...");
+  print("Siguiendo $userName a $newFriend...");
   dynamic data = {'Usuario': userName, 'Seguidor': newFriend};
 
   data = jsonEncode(data);
@@ -276,10 +339,10 @@ Future<bool> follow(String newFriend) async {
   print("Statuscode follow: " + response.statusCode.toString());
 
   if (response.statusCode == 200) {
-    print("Marcada como escuchada");
+    print("Usuario seguido");
     return true;
   } else {
-    print("Status code not 200, body: " + response.body.toString());
+    print("Usuario no seguido, body: " + response.body.toString());
     return false;
   }
 }
@@ -301,6 +364,7 @@ Future<String> getForeignPicture(String username) async {
 }
 
 Future<bool> checkIfFollowing(String otherPerson) async {
+  List tempList = new List();
   dynamic response = await http.get(
       'https://playstack.azurewebsites.net/user/get/followers?Usuario=$otherPerson');
 
@@ -311,8 +375,10 @@ Future<bool> checkIfFollowing(String otherPerson) async {
   if (response.statusCode == 200) {
     response = jsonDecode(response.body);
     //Tiene algun follower
-    if (response.length > 0) {
-      for (var user in response['Usuarios']) {
+    response.forEach((title, profilePhoto) => tempList.add(title));
+
+    if (tempList.length > 0) {
+      for (var user in tempList) {
         if (user == userName) return true;
       }
     }
@@ -320,7 +386,7 @@ Future<bool> checkIfFollowing(String otherPerson) async {
   } else {
     print('Error buscando usuarios');
 
-    return null;
+    return true;
   }
 }
 

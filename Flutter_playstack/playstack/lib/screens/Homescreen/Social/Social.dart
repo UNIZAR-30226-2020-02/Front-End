@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/screens/Homescreen/Social/SearchPeople.dart';
+import 'package:playstack/shared/Loading.dart';
+import 'package:playstack/shared/common.dart';
 
 class Social extends StatefulWidget {
   @override
@@ -8,21 +10,76 @@ class Social extends StatefulWidget {
 }
 
 class _SocialState extends State<Social> {
-  List following = new List();
-  List followers = new List();
+  bool _loadingFollowing = true;
+  bool _loadingFollowers = true;
 
   @override
   void initState() {
     super.initState();
+    getFollowing();
     getFollowers();
+  }
+
+  void getFollowing() async {
+    following = await getUsersFollowingDB();
+    setState(() {
+      _loadingFollowing = false;
+    });
   }
 
   void getFollowers() async {
     followers = await getFollowersDB();
-    setState(() {});
+    setState(() {
+      _loadingFollowers = false;
+    });
   }
 
-  Widget showFollowers() {}
+  Widget showList(String listName) {
+    switch (listName) {
+      case "Following":
+        return Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: ListView.builder(
+            scrollDirection: Axis.vertical,
+            shrinkWrap: true,
+            itemCount: following.isEmpty ? 0 : following.length,
+            itemBuilder: (BuildContext context, int index) {
+              return new UserTile(following[index]);
+            },
+          ),
+        );
+
+        break;
+
+      case "Followers":
+        return Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: ListView.builder(
+            scrollDirection: Axis.vertical,
+            shrinkWrap: true,
+            itemCount: followers.isEmpty ? 0 : followers.length,
+            itemBuilder: (BuildContext context, int index) {
+              return new UserTile(followers[index]);
+            },
+          ),
+        );
+
+        break;
+
+      default:
+        return Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: ListView.builder(
+            scrollDirection: Axis.vertical,
+            shrinkWrap: true,
+            itemCount: following.isEmpty ? 0 : following.length,
+            itemBuilder: (BuildContext context, int index) {
+              return new UserTile(following[index]);
+            },
+          ),
+        );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +125,11 @@ class _SocialState extends State<Social> {
           ),
         ),
         body: TabBarView(
-          children: [Center(child: Text('tab1')), Text('tab2'), Text('Tab3')],
+          children: [
+            _loadingFollowing ? LoadingSongs() : showList("Following"),
+            _loadingFollowers ? LoadingSongs() : showList('Followers'),
+            Text('Tab3')
+          ],
         ),
       ),
     );

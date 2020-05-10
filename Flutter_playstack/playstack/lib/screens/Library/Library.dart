@@ -224,63 +224,65 @@ class _LibraryState extends State<Library> {
       barrierDismissible: true,
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text("Crear lista de reproducción"),
-          elevation: 100.0,
-          backgroundColor: Colors.grey[900],
-          actions: <Widget>[
-            SizedBox(
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            title: Text("Crear lista de reproducción"),
+            elevation: 100.0,
+            backgroundColor: Colors.grey[900],
+            actions: <Widget>[
+              SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  child: TextField(
+                    controller: newPLaylistController,
+                    decoration: InputDecoration(
+                        hintText: "Nombre lista",
+                        errorText:
+                            _validate ? 'Introduzca un nombre válido' : null),
+                  )),
+              Container(
                 width: MediaQuery.of(context).size.width,
-                child: TextField(
-                  controller: newPLaylistController,
-                  decoration: InputDecoration(
-                      hintText: "Nombre lista",
-                      errorText:
-                          _validate ? 'Introduzca un nombre válido' : null),
-                )),
-            Container(
-              width: MediaQuery.of(context).size.width,
-              child: CheckboxListTile(
-                activeColor: Colors.amber,
-                value: _isPrivate,
-                onChanged: (newVal) {
-                  setState(() {
-                    _isPrivate = !_isPrivate;
-                  });
-                },
-                title: Text("¿Hacer playlist privada?"),
+                child: CheckboxListTile(
+                  activeColor: Colors.amber,
+                  value: _isPrivate,
+                  onChanged: (newVal) {
+                    setState(() {
+                      _isPrivate = !_isPrivate;
+                    });
+                  },
+                  title: Text("¿Hacer playlist privada?"),
+                ),
               ),
-            ),
-            Container(
-              width: MediaQuery.of(context).size.width,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Expanded(
-                      flex: 1,
-                      child: FlatButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text("Cancelar"))),
-                  Expanded(
-                      flex: 1,
-                      child: FlatButton(
-                          onPressed: () {
-                            setState(() {
-                              if (newPLaylistController.text.isEmpty) {
-                                _validate = true;
-                              } else {
-                                _validate = false;
-                                Navigator.pop(context);
-                                createPlaylist(_isPrivate);
-                              }
-                            });
-                          },
-                          child: Text("Crear")))
-                ],
-              ),
-            )
-          ],
-        );
+              Container(
+                width: MediaQuery.of(context).size.width,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Expanded(
+                        flex: 1,
+                        child: FlatButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text("Cancelar"))),
+                    Expanded(
+                        flex: 1,
+                        child: FlatButton(
+                            onPressed: () {
+                              setState(() {
+                                if (newPLaylistController.text.isEmpty) {
+                                  _validate = true;
+                                } else {
+                                  _validate = false;
+                                  Navigator.pop(context);
+                                  createPlaylist(_isPrivate);
+                                }
+                              });
+                            },
+                            child: Text("Crear")))
+                  ],
+                ),
+              )
+            ],
+          );
+        });
       },
     );
   }
@@ -373,7 +375,8 @@ class _LibraryState extends State<Library> {
                   if (index < folders.length) {
                     return new FolderItem(folders[index]);
                   } else {
-                    return new PlaylistItem(playlists[index - folders.length]);
+                    return new PlaylistItem(
+                        playlists[index - folders.length], false);
                   }
                 },
               )
