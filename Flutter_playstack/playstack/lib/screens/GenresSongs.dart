@@ -138,7 +138,6 @@ class _GenresSongsState extends State<GenresSongs> {
           _loading ? LoadingSongs() : _buildList()
         ],
       ),
-      bottomNavigationBar: bottomBar(context),
     );
   }
 }

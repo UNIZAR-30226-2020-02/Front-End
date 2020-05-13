@@ -1,8 +1,13 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:io';
-import 'dart:convert';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:bot_toast/bot_toast.dart';
 import 'package:dio/dio.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:flutter/foundation.dart';
+import 'package:playstack/screens/Library/Folder.dart';
+import 'package:playstack/screens/Player/PlayerWidget.dart';
+import 'package:playstack/screens/mainscreen.dart';
 import 'package:playstack/models/FolderType.dart';
 import 'package:playstack/models/PlaylistType.dart';
 import 'package:playstack/models/Song.dart';
@@ -11,18 +16,28 @@ import 'package:playstack/screens/Homescreen/Home.dart';
 import 'package:playstack/screens/Homescreen/PublicProfile.dart';
 import 'package:playstack/screens/Library/Library.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
-import 'package:playstack/screens/Mainscreen.dart';
 import 'package:playstack/screens/Player/PlayingNow.dart';
 import 'package:playstack/screens/Search/SearchScreen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:audioplayers/audio_cache.dart';
 import 'package:playstack/services/database.dart';
 import 'package:toast/toast.dart';
 
 //////////////////////////////////////////////////////////////////////////////////
 /////                   SHARED VARIABLES DO NOT TOUCH                       //////
 //////////////////////////////////////////////////////////////////////////////////
+
+enum PlayerState { stopped, playing, paused }
+
+final ValueNotifier<int> homeIndex = ValueNotifier<int>(0);
+
+var currentGenre;
+var currentGenreImage;
+
+var currentArtist;
+var currentArtistImage;
 
 var dio = Dio();
 var defaultImagePath =
@@ -36,6 +51,9 @@ String userEmail;
 int currentIndex = 0;
 Song currentSong;
 String kindOfAccount = 'No premium';
+String friendName;
+bool leftAlready;
+bool loadingUserData = true;
 var rng = new Random();
 
 Map<String, dynamic> languageStrings = new Map<String, dynamic>();
@@ -47,7 +65,6 @@ List following = new List();
 List followers = new List();
 
 List playlists = new List();
-final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
 List<Widget> mainScreens = [
   HomeScreen(),
@@ -56,12 +73,56 @@ List<Widget> mainScreens = [
   PlayingNowScreen()
 ];
 
+// Para canciones de assets
+AudioCache audioCache = AudioCache();
+//Para canciones online SOLO HTTPS no HTTP
+AudioPlayer advancedPlayer = AudioPlayer();
+
+AudioPlayerState audioPlayerState;
+Duration duration;
+Duration position;
+bool playerActive = false;
+
+List<Song> allSongs = [];
+bool onPlayerScreen = false;
+
+PlayerState playerState = PlayerState.stopped;
+PlayingRouteState playingRouteState = PlayingRouteState.SPEAKERS;
+StreamSubscription durationSubscription;
+StreamSubscription positionSubscription;
+StreamSubscription playerCompleteSubscription;
+StreamSubscription playerErrorSubscription;
+StreamSubscription playerStateSubscription;
+
+get isPlaying => playerState == PlayerState.playing;
+get isPaused => playerState == PlayerState.paused;
+get durationText => duration?.toString()?.split('.')?.first ?? '';
+get positionText => position?.toString()?.split('.')?.first ?? '';
+
+PlayerMode mode = PlayerMode.MEDIA_PLAYER;
+
+Widget player;
+
 /////////////////////////////////////////////////////////////////////////////////////
 
 Future<String> loadLanguagesString() {
   Future<String> jsonString =
       rootBundle.loadString('assets/languages/spanish.json');
   return jsonString;
+}
+
+Widget extendedBottomBarWith(context, Widget widget) {
+  var height = MediaQuery.of(context).size.height;
+  return (onPlayerScreen || currentSong == null || player == null)
+      ? widget
+      : Container(
+          height: height,
+          child: Column(
+            children: <Widget>[
+              Expanded(child: widget),
+              SizedBox(height: height * 0.15, child: player),
+            ],
+          ));
 }
 
 Widget bottomBar(context) {
@@ -119,7 +180,9 @@ Widget show(int index) {
       return Library();
       break;
     case 3:
-      return PlayingNowScreen();
+      onPlayerScreen = true;
+      if (player == null) player = PlayerWidget();
+      return player;
       break;
   }
 }
@@ -183,7 +246,9 @@ Widget shuffleButton(
     width: MediaQuery.of(context).size.width / 3,
     child: RaisedButton(
       onPressed: () {
+        onPlayerScreen = true;
         setShuffleQueue(songsListName, songslist, song);
+        if (player == null) player = PlayerWidget();
         Navigator.of(context).push(MaterialPageRoute(
             builder: (BuildContext context) => PlayingNowScreen()));
       },
@@ -335,8 +400,10 @@ class SongItem extends StatelessWidget {
   final List songsList;
   final Song song;
   final PlaylistType playlist;
+  final bool isNotOwn;
 
-  SongItem(this.song, this.songsList, this.songsListName, {this.playlist});
+  SongItem(this.song, this.songsList, this.songsListName,
+      {this.playlist, @required this.isNotOwn});
 
   void setQueue(List songsList) {
     List tmpList = new List();
@@ -354,6 +421,8 @@ class SongItem extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         setQueue(songsList);
+        onPlayerScreen = true;
+        if (player == null) player = PlayerWidget();
         Navigator.of(context).push(MaterialPageRoute(
             builder: (BuildContext context) => PlayingNowScreen()));
       },
@@ -456,7 +525,7 @@ class SongItem extends StatelessWidget {
                               leading: Icon(CupertinoIcons.add),
                               title: Text("Añadir canción a playlist"),
                             )),
-                        playlist != null
+                        playlist != null && !isNotOwn
                             ? PopupMenuItem(
                                 value: "removeFromPlaylist",
                                 child: ListTile(
@@ -501,28 +570,36 @@ class ArtistItem extends StatelessWidget {
   ArtistItem(this.artistName, this.image);
 
   final String artistName;
-  final image;
+  final String image;
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        SizedBox(
-          height: 130.0,
-          width: 140.0,
-          child: Image.asset(
-            image,
-            fit: BoxFit.fitHeight,
+    return GestureDetector(
+      onTap: () {
+        leftAlready = false;
+        currentArtist = artistName;
+        currentArtistImage = image;
+        homeIndex.value = 3;
+      },
+      child: Column(
+        children: <Widget>[
+          SizedBox(
+            height: 130.0,
+            width: 140.0,
+            child: Image.asset(
+              image,
+              fit: BoxFit.fitHeight,
+            ),
           ),
-        ),
-        Padding(padding: EdgeInsets.all(5.0)),
-        Text(
-          artistName,
-          style: TextStyle(
-            color: Colors.white.withOpacity(1.0),
-            fontSize: 15.0,
-          ),
-        )
-      ],
+          Padding(padding: EdgeInsets.all(5.0)),
+          Text(
+            artistName,
+            style: TextStyle(
+              color: Colors.white.withOpacity(1.0),
+              fontSize: 15.0,
+            ),
+          )
+        ],
+      ),
     );
   }
 }
@@ -540,6 +617,8 @@ class GenericSongItem extends StatelessWidget {
         songsNextUp.remove(currentSong);
         // Se notifica que la canción se escucha
         currentSong.markAsListened();
+        onPlayerScreen = true;
+        if (player == null) player = PlayerWidget();
         Navigator.of(context).pushReplacement(MaterialPageRoute(
             builder: (BuildContext context) => PlayingNowScreen()));
       },
@@ -664,77 +743,240 @@ Widget playListCover(List insideCoverUrls) {
   }
 }
 
+List<DropdownMenuItem> listPlaylistNamesOfPlaylist(List availablePlaylists) {
+  List<DropdownMenuItem> items = new List();
+  for (var pl in availablePlaylists) {
+    DropdownMenuItem newItem =
+        new DropdownMenuItem<String>(value: pl.name, child: Text(pl.name));
+    items.add(newItem);
+  }
+  return items;
+}
+
+void addingOrRemovingPlaylistToFolder(String playlistName, String folderName,
+    bool adding, BuildContext context) async {
+  adding
+      ? Toast.show('Añadiendo ...', context,
+          gravity: Toast.CENTER, backgroundColor: Colors.blue)
+      : Toast.show('Retirando ...', context,
+          gravity: Toast.CENTER, backgroundColor: Colors.blue);
+  var result = adding
+      ? await addPlaylistToFolder(playlistName, folderName)
+      : await removePlaylistFromFolder(playlistName, folderName);
+  try {
+    if (result) {
+      adding
+          ? Toast.show('Playlist añadida!', context,
+              gravity: Toast.CENTER, backgroundColor: Colors.green)
+          : Toast.show('Playlist retirada!', context,
+              gravity: Toast.CENTER, backgroundColor: Colors.green);
+      Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (BuildContext context) => MainScreen()));
+    } else {
+      adding
+          ? Toast.show('No se pudo añadir la playlist', context,
+              gravity: Toast.CENTER, backgroundColor: Colors.red)
+          : Toast.show('No se pudo retirar la playlist', context,
+              gravity: Toast.CENTER, backgroundColor: Colors.red);
+      Navigator.of(context).pop();
+    }
+  } catch (e) {
+    print("Exception " + e.toString());
+  }
+}
+
+Future<void> showAddingOrRemovingPlaylistToFolderDialog(FolderType folder,
+    List availablePlaylists, bool adding, BuildContext context) async {
+  var dropdownItem = availablePlaylists.elementAt(0).name;
+  return showDialog(
+    barrierDismissible: true,
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(builder: (context, setState) {
+        return AlertDialog(
+          title: Text(adding
+              ? "Añadir a carpeta " + folder.name
+              : "Eliminar de carpeta " + folder.name),
+          elevation: 100.0,
+          backgroundColor: Colors.grey[900],
+          actions: <Widget>[
+            Container(
+              width: MediaQuery.of(context).size.width,
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    flex: 1,
+                    child: DropdownButton(
+                      isExpanded: true,
+                      value: dropdownItem,
+                      items: listPlaylistNamesOfPlaylist(availablePlaylists),
+                      onChanged: (val) {
+                        setState(() {
+                          dropdownItem = val;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Builder(
+              builder: (context) => Container(
+                width: MediaQuery.of(context).size.width,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Expanded(
+                        flex: 1,
+                        child: FlatButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text("Cancelar"))),
+                    Expanded(
+                        flex: 1,
+                        child: FlatButton(
+                            onPressed: () {
+                              addingOrRemovingPlaylistToFolder(
+                                  dropdownItem, folder.name, adding, context);
+                            },
+                            child: Text(adding ? "Añadir" : "Retirar")))
+                  ],
+                ),
+              ),
+            )
+          ],
+        );
+      });
+    },
+  );
+}
+
 class FolderItem extends StatelessWidget {
   final FolderType folder;
   FolderItem(this.folder);
   @override
   Widget build(BuildContext context) {
-    String playlistsInFolder = folder.containedPlaylists.elementAt(0);
+    String playlistsInFolder = folder.containedPlaylists.elementAt(0).name;
     for (var i = 1; i < folder.containedPlaylists.length; i++) {
-      playlistsInFolder =
-          playlistsInFolder + ", " + folder.containedPlaylists.elementAt(i);
+      playlistsInFolder = playlistsInFolder +
+          ", " +
+          folder.containedPlaylists.elementAt(i).name;
     }
     return ListTile(
-        leading: Container(
-          height: MediaQuery.of(context).size.height / 13,
-          width: MediaQuery.of(context).size.width / 6.5,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8.0),
-            child: Icon(CupertinoIcons.folder, size: 30),
-          ),
+      leading: Container(
+        height: MediaQuery.of(context).size.height / 13,
+        width: MediaQuery.of(context).size.width / 6.5,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8.0),
+          child: Icon(CupertinoIcons.folder, size: 30),
         ),
-        title: Text(folder.name,
-            style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w500)),
-        subtitle: Text(playlistsInFolder),
-        trailing: PopupMenuButton<String>(
-            icon: Icon(Icons.more_horiz),
-            color: Colors.grey[800],
-            onSelected: (val) async {
-              switch (val) {
-                case "Delete":
+      ),
+      title: Text(folder.name,
+          style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w500)),
+      subtitle: Text(playlistsInFolder),
+      trailing: PopupMenuButton<String>(
+          icon: Icon(Icons.more_horiz),
+          color: Colors.grey[800],
+          onSelected: (val) async {
+            switch (val) {
+              case "Delete":
+                Scaffold.of(context).showSnackBar(SnackBar(
+                    content: Text(
+                      'Borrando carpeta...',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    backgroundColor: Colors.grey[700]));
+                bool deleted = await deleteFolderDB(folder.name);
+                if (deleted) {
                   Scaffold.of(context).showSnackBar(SnackBar(
                       content: Text(
-                        'Borrando carpeta...',
+                        'Carpeta borrada!',
                         style: TextStyle(color: Colors.white),
                       ),
                       backgroundColor: Colors.grey[700]));
-                  bool deleted = await deleteFolderDB(folder.name);
-                  if (deleted) {
-                    Scaffold.of(context).showSnackBar(SnackBar(
-                        content: Text(
-                          'Carpeta borrada!',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        backgroundColor: Colors.grey[700]));
-                    Navigator.of(context).push(MaterialPageRoute(
-                        builder: (BuildContext context) => MainScreen()));
-                  } else {
-                    Scaffold.of(context).showSnackBar(SnackBar(
-                        content: Text(
-                          'No se pudo borrar la carpeta',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        backgroundColor: Colors.grey[700]));
-                  }
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (BuildContext context) => MainScreen()));
+                } else {
+                  Scaffold.of(context).showSnackBar(SnackBar(
+                      content: Text(
+                        'No se pudo borrar la carpeta',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      backgroundColor: Colors.grey[700]));
+                }
 
-                  break;
-                default:
-                  null;
-              }
-            },
-            itemBuilder: (context) => [
-                  PopupMenuItem(
-                      value: "Delete",
-                      child: ListTile(
-                        leading: Icon(CupertinoIcons.delete),
-                        title: Text("Eliminar carpeta"),
-                      )),
-                ]),
-        onTap: () =>
-            null /* Navigator.of(context).push(MaterialPageRoute(
-          builder: (BuildContext context) =>
-              Playlist(new PlaylistType(name: "Favoritas")))), */
-        );
+                break;
+              case "AddPlaylist":
+                //AddPlaylist
+                List availablePlaylists = new List();
+                for (var playlist in playlists) {
+                  bool found = false;
+                  int i = 0;
+                  while (!found && i < folder.containedPlaylists.length) {
+                    if (playlist.name ==
+                        folder.containedPlaylists.elementAt(i).name)
+                      found = true;
+
+                    i++;
+                  }
+                  if (!found) availablePlaylists.add(playlist);
+                }
+                if (availablePlaylists.isNotEmpty) {
+                  showAddingOrRemovingPlaylistToFolderDialog(
+                      folder, availablePlaylists, true, context);
+                } else {
+                  Toast.show(
+                      "No hay listas de reproducción que añadir", context,
+                      duration: Toast.LENGTH_LONG,
+                      gravity: Toast.CENTER,
+                      backgroundColor: Colors.blue[500]);
+
+                  Navigator.of(context).pop();
+                }
+                break;
+
+              case "DeletePlaylist":
+                if (folder.containedPlaylists.length == 1) {
+                  Toast.show(
+                      "Las carpetas deben contener al menos una playlist",
+                      context,
+                      duration: Toast.LENGTH_LONG,
+                      gravity: Toast.CENTER,
+                      backgroundColor: Colors.red[500]);
+                  Navigator.of(context).pop();
+                } else {
+                  showAddingOrRemovingPlaylistToFolderDialog(
+                      folder, folder.containedPlaylists, false, context);
+                }
+
+                break;
+              default:
+            }
+          },
+          itemBuilder: (context) => [
+                PopupMenuItem(
+                    value: "Delete",
+                    child: ListTile(
+                      leading: Icon(CupertinoIcons.delete, color: Colors.red),
+                      title: Text("Eliminar carpeta"),
+                    )),
+                PopupMenuItem(
+                    value: "AddPlaylist",
+                    child: ListTile(
+                      leading: Icon(CupertinoIcons.add),
+                      title: Text("Añadir lista"),
+                    )),
+                PopupMenuItem(
+                    value: "DeletePlaylist",
+                    child: ListTile(
+                      leading: Icon(
+                        Icons.remove,
+                      ),
+                      title: Text("Quitar lista de reproducción"),
+                    ))
+              ]),
+      onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (BuildContext context) => Folder(folder))),
+    );
   }
 }
 
@@ -751,7 +993,7 @@ class PlaylistItem extends StatelessWidget {
           Navigator.of(context).push(MaterialPageRoute(
               builder: (BuildContext context) => Playlist(
                     playlist,
-                    isForeign: true,
+                    isNotOwn: true,
                   )));
         } else {
           Navigator.of(context).push(MaterialPageRoute(
@@ -851,8 +1093,8 @@ class PlaylistItem extends StatelessWidget {
 
 class UserTile extends StatelessWidget {
   final User user;
-
-  UserTile(this.user);
+  final String tab;
+  UserTile(this.user, this.tab);
 
   @override
   Widget build(BuildContext context) {
@@ -862,11 +1104,44 @@ class UserTile extends StatelessWidget {
         leading: CircleAvatar(
             radius: 30, backgroundImage: NetworkImage(user.photoUrl)),
         title: Text(user.name),
-        trailing: IconButton(icon: Icon(Icons.more_vert), onPressed: null),
-        onTap: () => Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (BuildContext context) =>
-                YourPublicProfile(false, friendUserName: user.name))),
+        trailing: tab == "Requests" ? followRequestButtons(context) : Text(''),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (BuildContext context) => YourPublicProfile(
+                  false,
+                  friendUserName: user.name,
+                  otherUser: user,
+                ))),
       ),
     );
   }
+}
+
+Widget followRequestButtons(context) {
+  var _width = MediaQuery.of(context).size.width / 2;
+  return Container(
+    width: _width,
+    child: Row(
+      children: <Widget>[
+        Container(
+          width: _width / 2.3,
+          child: RaisedButton(
+            onPressed: () => print("Acceptar"),
+            child: Text("Aceptar"),
+            color: Colors.lime[500],
+          ),
+        ),
+        SizedBox(
+          width: 15,
+        ),
+        Container(
+          width: _width / 2.1,
+          child: RaisedButton(
+            onPressed: () => print("Rechazar"),
+            child: Text("Rechazar"),
+            color: Colors.red[500],
+          ),
+        )
+      ],
+    ),
+  );
 }
