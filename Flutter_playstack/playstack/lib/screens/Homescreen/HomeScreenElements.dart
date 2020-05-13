@@ -83,7 +83,7 @@ class ItemCard extends StatelessWidget {
                   child: FlatButton(
                     color: Colors.transparent,
                     onPressed: () {
-                      homeIndex.value = 3;
+                      homeIndex.value = 4;
                       currentGenre = title;
                       currentGenreImage = image;
                     },

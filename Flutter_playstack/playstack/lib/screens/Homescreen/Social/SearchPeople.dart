@@ -5,6 +5,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:playstack/screens/Homescreen/PublicProfile.dart';
 import 'package:playstack/services/database.dart';
+import 'package:playstack/shared/Loading.dart';
+import 'package:playstack/shared/common.dart';
 
 class SearchPeople extends StatefulWidget {
   @override
@@ -17,6 +19,7 @@ class _SearchPeopleState extends State<SearchPeople> {
   String _searchText = "";
 
   bool _searched = false;
+  bool _loading = true;
 
   List users = new List();
 
@@ -29,20 +32,24 @@ class _SearchPeopleState extends State<SearchPeople> {
   void getAllUsers() async {
     users = await getUsers("");
     print("Recopilados todos los usuarios");
-    setState(() {});
+    if (!leftAlready) setState(() {});
   }
 
   _SearchPeopleState() {
     _searchController.addListener(() {
       if (_searchController.text.isEmpty) {
-        setState(() {
-          _searched = false;
-          _searchText = "";
-        });
+        if (!leftAlready) {
+          setState(() {
+            _searched = false;
+            _searchText = "";
+          });
+        }
       } else {
-        setState(() {
-          _searchText = _searchController.text;
-        });
+        if (!leftAlready) {
+          setState(() {
+            _searchText = _searchController.text;
+          });
+        }
       }
     });
   }
@@ -60,7 +67,7 @@ class _SearchPeopleState extends State<SearchPeople> {
                   decoration: new InputDecoration(
                       prefixIcon: new Icon(CupertinoIcons.search),
                       hintText: 'Search...',
-                      hintStyle: TextStyle(color: Colors.black))),
+                      hintStyle: TextStyle(color: Colors.white))),
             ),
           ],
         )),
@@ -68,12 +75,19 @@ class _SearchPeopleState extends State<SearchPeople> {
           icon: _searched ? Icon(Icons.cancel) : Icon(Icons.search),
           onPressed: () async {
             if (_searched) {
+              leftAlready = true;
               Navigator.of(context).pop();
             } else {
-              users = await getUsers(_searchController.text);
-              setState(() {
-                _searched = !_searched;
-              });
+              if (!leftAlready) {
+                setState(() {
+                  _loading = true;
+                  _searched = !_searched;
+                });
+                users = await getUsers(_searchController.text);
+                setState(() {
+                  _loading = false;
+                });
+              }
             }
           },
         )
@@ -107,7 +121,7 @@ class _SearchPeopleState extends State<SearchPeople> {
         child: ListView(
           children: <Widget>[
             _searchBar(context),
-            _buildList(),
+            _loading ? LoadingSongs() : _buildList(),
           ],
         ),
       ),

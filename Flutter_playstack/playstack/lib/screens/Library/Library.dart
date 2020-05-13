@@ -1,6 +1,7 @@
 import 'package:bot_toast/bot_toast.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:playstack/models/Artist.dart';
 import 'package:playstack/models/PlaylistType.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
 import 'package:playstack/services/database.dart';
@@ -18,27 +19,44 @@ class _LibraryState extends State<Library> {
       new TextEditingController();
   final TextEditingController newFolderController = new TextEditingController();
   List folders = new List();
+  List artistsList = new List();
   bool _loading = true;
+  bool _loadingArtists = true;
   String dropdownItem;
   @override
   void initState() {
     super.initState();
     getFolders();
     getPlaylists();
+    getArtists();
+  }
+
+  void getArtists() async {
+    artistsList = await getAllArtistsDB();
+    if (currentIndex == 2) {
+      setState(() {
+        _loadingArtists = false;
+      });
+    }
   }
 
   void getFolders() async {
     folders = await getUserFolders();
-    setState(() {
-      _loading = false;
-    });
+
+    if (currentIndex == 2) {
+      setState(() {
+        _loading = false;
+      });
+    }
   }
 
   void getPlaylists() async {
     playlists = await getUserPlaylists();
-    setState(() {
-      _loading = false;
-    });
+    if (currentIndex == 2) {
+      setState(() {
+        _loading = false;
+      });
+    }
   }
 
   Widget musicTab() {
@@ -79,7 +97,7 @@ class _LibraryState extends State<Library> {
             ],
           ),
           body: TabBarView(
-            children: [playLists(), Text('artistas'), Text('albumes')],
+            children: [playLists(), artists(), Text('albumes')],
           ),
         ));
   }
@@ -285,6 +303,19 @@ class _LibraryState extends State<Library> {
         });
       },
     );
+  }
+
+  Widget artists() {
+    return _loadingArtists
+        ? LoadingSongs()
+        : ListView.builder(
+            scrollDirection: Axis.vertical,
+            shrinkWrap: true,
+            itemCount: artistsList.isEmpty ? 0 : artistsList.length,
+            itemBuilder: (BuildContext context, int index) {
+              return new ArtistTile(artistsList[index]);
+            },
+          );
   }
 
   Widget playLists() {

@@ -98,7 +98,11 @@ class _SearchProcessState extends State<SearchProcess> {
       itemCount: names == null ? 0 : filteredNames.length,
       itemBuilder: (BuildContext context, int index) {
         return new SongItem(
-            filteredNames[index], new List(), filteredNames[index].title);
+          filteredNames[index],
+          new List(),
+          filteredNames[index].title,
+          isNotOwn: true,
+        );
       },
     );
   }

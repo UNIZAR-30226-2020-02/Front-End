@@ -11,29 +11,29 @@ import 'package:toast/toast.dart';
 
 class Playlist extends StatefulWidget {
   final PlaylistType playlist;
-  final bool isForeign;
-  Playlist(this.playlist, {this.isForeign});
+  final bool isNotOwn;
+  Playlist(this.playlist, {this.isNotOwn});
 
   @override
-  _PlaylistState createState() => _PlaylistState(playlist, isForeign);
+  _PlaylistState createState() => _PlaylistState(playlist, isNotOwn);
 }
 
 class _PlaylistState extends State<Playlist> {
   final PlaylistType playlist;
-  bool isForeign;
+  bool isNotOwn;
   final TextEditingController playlistNameController =
       new TextEditingController();
 
   List songs = new List();
   bool _loading = true;
 
-  _PlaylistState(this.playlist, this.isForeign);
+  _PlaylistState(this.playlist, this.isNotOwn);
 
   @override
   void initState() {
     super.initState();
-    if (isForeign == null) {
-      isForeign = false;
+    if (isNotOwn == null) {
+      isNotOwn = false;
     }
     getSongs();
   }
@@ -42,7 +42,9 @@ class _PlaylistState extends State<Playlist> {
     if (playlist.name == "Favoritas") {
       songs = await getFavoriteSongs();
     } else {
-      songs = await getPlaylistSongsDB(playlist.name);
+      isNotOwn
+          ? songs = await getPlaylistSongsDB(playlist.name, isNotOwn: true)
+          : songs = await getPlaylistSongsDB(playlist.name);
     }
     setState(() {
       _loading = false;
@@ -189,20 +191,20 @@ class _PlaylistState extends State<Playlist> {
                     playlist.name == "Favoritas"
                         ? Image.asset("assets/images/Favs_cover.jpg")
                         : SizedBox(
-                            height: MediaQuery.of(context).size.height / 3,
+                            height: MediaQuery.of(context).size.height / 4,
                             width: MediaQuery.of(context).size.width / 2,
                             child: playListCover(playlist.coverUrls)),
                     BackdropFilter(
                       filter: ui.ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                       child: Container(
-                        height: MediaQuery.of(context).size.height / 3,
+                        height: MediaQuery.of(context).size.height / 4,
                         width: MediaQuery.of(context).size.width,
                         decoration: new BoxDecoration(
                             color: backgroundColor.withOpacity(0.3)),
                       ),
                     ),
                     SizedBox(
-                        height: MediaQuery.of(context).size.height / 3,
+                        height: MediaQuery.of(context).size.height / 4,
                         width: MediaQuery.of(context).size.width / 2,
                         child: playlist.name == "Favoritas"
                             ? Image.asset("assets/images/Favs_cover.jpg")
@@ -220,14 +222,13 @@ class _PlaylistState extends State<Playlist> {
                     children: <Widget>[
                       Expanded(
                           flex: 1,
-                          child:
-                              isForeign ? Text('') : playlistOptionsButton()),
+                          child: isNotOwn ? Text('') : playlistOptionsButton()),
                       Expanded(
                           flex: 2,
                           child: shuffleButton(playlist.name, songs, context)),
                       Expanded(
                           flex: 1,
-                          child: playlist.name == "Favoritas" || isForeign
+                          child: playlist.name == "Favoritas" || isNotOwn
                               ? Text('')
                               : playlistStatusSwitch())
                     ],
@@ -247,6 +248,7 @@ class _PlaylistState extends State<Playlist> {
                           songs,
                           playlist.name,
                           playlist: playlist,
+                          isNotOwn: isNotOwn,
                         );
                       },
                     )

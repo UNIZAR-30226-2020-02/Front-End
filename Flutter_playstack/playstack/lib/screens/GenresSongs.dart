@@ -86,7 +86,12 @@ class _GenresSongsState extends State<GenresSongs> {
       shrinkWrap: true,
       itemCount: songs.isEmpty ? 0 : songs.length,
       itemBuilder: (BuildContext context, int index) {
-        return new SongItem(songs[index], songs, genre);
+        return new SongItem(
+          songs[index],
+          songs,
+          genre,
+          isNotOwn: false,
+        );
       },
     );
   }
@@ -95,11 +100,14 @@ class _GenresSongsState extends State<GenresSongs> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios),
+            onPressed: () => homeIndex.value = 0),
         centerTitle: true,
         title: Text(genre,
             style: TextStyle(
                 fontFamily: 'Circular',
-                fontSize: MediaQuery.of(context).size.width / 100)),
+                fontSize: MediaQuery.of(context).size.width / 18)),
       ),
       backgroundColor: backgroundColor,
       body: ListView(

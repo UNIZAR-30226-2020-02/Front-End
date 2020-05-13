@@ -3,6 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:playstack/screens/Player/PlayerWidget.dart';
 import 'package:playstack/screens/Player/PlayingNow.dart';
 import 'package:playstack/screens/authentication/AccessScreen.dart';
+import 'package:playstack/services/database.dart';
+import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:playstack/models/Song.dart';
@@ -10,23 +12,42 @@ import 'package:playstack/models/Song.dart';
 //import 'package:playstack/services/auth.dart';
 
 class MainScreen extends StatefulWidget {
-  //Singleton
+  /* //Singleton
   static final MainScreen _mainScreen = MainScreen._constructor();
   factory MainScreen() => _mainScreen;
   MainScreen._constructor();
 
-  final MainScreenState _mainScreenState = MainScreenState();
+  final MainScreenState _mainScreenState = MainScreenState(); */
   @override
-  MainScreenState createState() => _mainScreenState;
+  MainScreenState createState() => MainScreenState();
 }
 
 class MainScreenState extends State<MainScreen> {
   SharedPreferences sharedPreferences;
 
+  bool _loading = true;
+
   @override
   void initState() {
     super.initState();
     checkLoginStatus();
+    getUserData();
+  }
+
+  void getUserData() async {
+    bool _res1 = false, _res2 = false;
+    if (imagePath == null) {
+      _res1 = await getProfilePhoto();
+    }
+    if (currentSong == null) {
+      print("Va a setear la ultima cancion");
+      _res2 = await setLastSongAsCurrent();
+    }
+    if (_res1 && _res2) {
+      setState(() {
+        loadingUserData = false;
+      });
+    }
   }
 
   checkLoginStatus() async {
@@ -50,7 +71,7 @@ class MainScreenState extends State<MainScreen> {
             onTap: (int index) {
               currentIndex = index;
               if (index == 3) {
-                Navigator.of(context).pushReplacement(MaterialPageRoute(
+                Navigator.of(context).push(MaterialPageRoute(
                     builder: (BuildContext context) => PlayingNowScreen()));
               }
               setState(() {});
@@ -88,7 +109,9 @@ class MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: extendedBottomBarWith(context, show(currentIndex)),
-        bottomNavigationBar: bottomBar(context));
+        body: loadingUserData
+            ? Loading()
+            : extendedBottomBarWith(context, show(currentIndex)),
+        bottomNavigationBar: loadingUserData ? null : bottomBar(context));
   }
 }

@@ -4,6 +4,7 @@ import 'package:playstack/screens/GenresSongs.dart';
 import 'package:playstack/screens/Homescreen/HomeScreenElements.dart';
 import 'package:playstack/screens/Homescreen/Settings.dart';
 import 'package:playstack/screens/Homescreen/Social/Social.dart';
+import 'package:playstack/screens/Library/ArtistSongs.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/common.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,19 +25,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   SharedPreferences sharedPreferences;
 
-  @override
-  void initState() {
-    super.initState();
-    if (imagePath == null) {
-      getProfilePhoto();
-    }
-    if (currentSong == null) {
-      print("Va a setear la ultima cancion");
-      setLastSongAsCurrent();
-    }
-  }
-
-  Widget recommendedPlaylists() {
+  Widget artistsCards() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -76,7 +65,10 @@ class _HomeScreenState extends State<HomeScreen> {
               centerTitle: true,
               leading: IconButton(
                 icon: Icon(CupertinoIcons.group_solid),
-                onPressed: () => homeIndex.value = 1,
+                onPressed: () {
+                  leftAlready = false;
+                  homeIndex.value = 1;
+                },
               ),
               title: Container(
                   height: 40,
@@ -98,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   scrollDirection: Axis.vertical,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[genres(), recommendedPlaylists()],
+                    children: <Widget>[genres(), artistsCards()],
                   ),
                 )
               ],
@@ -121,8 +113,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       ? Social()
                       : homeIndex.value == 2
                           ? Settings()
-                          : GenresSongs(
-                              genre: currentGenre, image: currentGenreImage));
+                          : homeIndex.value == 3
+                              ? ArtistsSongs(currentArtist, currentArtistImage)
+                              : GenresSongs(
+                                  genre: currentGenre,
+                                  image: currentGenreImage));
         });
   }
 }

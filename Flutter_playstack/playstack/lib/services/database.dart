@@ -1,12 +1,140 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:playstack/models/Artist.dart';
 import 'package:playstack/models/FolderType.dart';
 import 'package:playstack/models/PlaylistType.dart';
 import 'package:playstack/models/Song.dart';
 import 'package:playstack/models/user.dart';
 import 'package:playstack/shared/common.dart';
+
+Future<bool> removePlaylistFromFolder(
+    String playlistName, String folderName) async {
+  print("Quitando playlist $playlistName de carpeta $folderName");
+  dynamic data = {
+    'NombreUsuario': userName,
+    'NombreCarpeta': folderName,
+    'NombrePlayList': playlistName,
+  };
+
+  data = jsonEncode(data);
+  dynamic response = await http.post(
+      "https://playstack.azurewebsites.net/user/remove/playlist/fromfolder",
+      headers: {"Content-Type": "application/json"},
+      body: data);
+
+  if (response.statusCode == 200) {
+    print("Playlist eliminada de carpeta");
+    return true;
+  } else {
+    print("No se pudo eliminar la playlist a de la carpeta: " +
+        response.body.toString());
+    return false;
+  }
+}
+
+Future<bool> addPlaylistToFolder(String playlistName, String folderName) async {
+  print("Metiendo playlist $playlistName en carpeta $folderName");
+  dynamic data = {
+    'NombreUsuario': userName,
+    'NombreCarpeta': folderName,
+    'NombrePlayList': playlistName,
+  };
+
+  data = jsonEncode(data);
+  dynamic response = await http.post(
+      "https://playstack.azurewebsites.net/user/add/playlist/tofolder",
+      headers: {"Content-Type": "application/json"},
+      body: data);
+
+  if (response.statusCode == 200) {
+    print("Playlist metida en carpeta");
+    return true;
+  } else {
+    print("No se pudo agnadir la playlist a la carpeta: " +
+        response.body.toString());
+    return false;
+  }
+}
+
+addArtistToList(List artists, String name, String photoUrl) {
+  Artist artist = new Artist(name, photoUrl);
+  artists.add(artist);
+}
+
+Future<List> getAllArtistsDB() async {
+  print("Recuperando todas los artistas");
+  List artists = new List();
+  dynamic response =
+      await http.get('https://playstack.azurewebsites.net/get/allartists');
+
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("Artistas recuperados");
+
+    response.forEach((name, photo) => addArtistToList(artists, name, photo));
+  } else {
+    print('Error buscando artistas, body: ' + response.body.toString());
+  }
+  print("Hay" + artists.length.toString() + " artistas");
+  return artists;
+}
+
+Future<List> getLastSongsListenedToDB(String user) async {
+  print("Recuperando ultimas 20 canciones de $user");
+  List songs = new List();
+  dynamic response = await http.get(
+      'https://playstack.azurewebsites.net/user/get/lastsongs?Usuario=$user');
+
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("Ultimas 20 canciones de $user recuperadas");
+
+    /*  response
+        .forEach((number, info) => print(title + " y info " + info.toString())); */
+    //List songs, String title, List artists, List albums,List albumCoverUrls, String url
+    response.forEach((number, info) => addSongToList(
+        songs,
+        info['Titulo'],
+        info['Artistas'],
+        info['Albumes'],
+        info['ImagenesAlbums'],
+        info['url']));
+  } else {
+    print(
+        "Statuscode de ultimas 20 canciones " + response.statusCode.toString());
+    print('Error buscando ultimas 20 canciones, body: ' +
+        response.body.toString());
+  }
+  print("Solo tiene " + songs.length.toString() + " canciones");
+  return songs;
+}
+
+Future<List> getArtistSongsDB(String artist) async {
+  print("Recuperando canciones de artista $artist");
+
+  List songs = new List();
+  dynamic response = await http.get(
+      'https://playstack.azurewebsites.net/get/song/byartist?NombreArtista=$artist&NombreUsuario=$userName');
+
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("Canciones de $artist recuperadas");
+
+    response
+        .forEach((title, info) => print(title + " y info " + info.toString()));
+
+    response.forEach((title, info) => addSongToList(songs, title,
+        info['Artistas'], info['Albumes'], info['ImagenesAlbum'], info['url']));
+  } else {
+    print(
+        "Statuscode de canciones de artista " + response.statusCode.toString());
+    print('Error buscando canciones de artista $artist, body: ' +
+        response.body.toString());
+  }
+  print("Tiene " + songs.length.toString() + " canciones");
+  return songs;
+}
 
 Future<List> getpublicPlaylistsDB(bool mine, {String user}) async {
   List publicPlaylists = new List();
@@ -203,12 +331,19 @@ Future<List> updatePlaylistCoversDB(String playlistName) async {
   return coverUrls;
 }
 
-Future<List> getPlaylistSongsDB(String playlistName) async {
+Future<List> getPlaylistSongsDB(String playlistName, {bool isNotOwn}) async {
   List playlistSongs = new List();
-
-  print("Recuperando canciones de $playlistName");
-  dynamic response = await http.get(
-      "https://playstack.azurewebsites.net/get/playlist/songs?NombreUsuario=$userName&NombrePlayList=$playlistName");
+  dynamic response;
+  if (isNotOwn == null) isNotOwn = false;
+  if (isNotOwn) {
+    print("Recuperando canciones de playlist $playlistName de $friendName");
+    response = await http.get(
+        "https://playstack.azurewebsites.net/get/playlist/songs?NombreUsuario=$friendName&NombrePlayList=$playlistName");
+  } else {
+    print("Recuperando canciones de playlist $playlistName de $userName");
+    response = await http.get(
+        "https://playstack.azurewebsites.net/get/playlist/songs?NombreUsuario=$userName&NombrePlayList=$playlistName");
+  }
 
   print("Statuscode recoger canciones de playlist $playlistName: " +
       response.statusCode.toString());
@@ -216,7 +351,7 @@ Future<List> getPlaylistSongsDB(String playlistName) async {
   if (response.statusCode == 200) {
     response = json.decode(response.body);
 
-    response.forEach((title, info) => print(title + info.toString()));
+    //response.forEach((title, info) => print(title + info.toString()));
     response.forEach((title, info) => addSongToList(
         playlistSongs,
         title,
@@ -328,8 +463,7 @@ Future<List> getFollowersDB() async {
 
 Future<bool> follow(String newFriend) async {
   print("Siguiendo $userName a $newFriend...");
-  dynamic data = {'Usuario': userName, 'Seguidor': newFriend};
-
+  dynamic data = {'Usuario': newFriend, 'Seguidor': userName};
   data = jsonEncode(data);
   dynamic response = await http.post(
       "https://playstack.azurewebsites.net/user/follow",
@@ -343,6 +477,51 @@ Future<bool> follow(String newFriend) async {
     return true;
   } else {
     print("Usuario no seguido, body: " + response.body.toString());
+    return false;
+  }
+}
+
+Future<List> listFollowRequests() async {
+  print("Recuperando solicitudes de amistad de  $userName");
+  List followRequests = new List();
+  dynamic response = await http.get(
+      'https://playstack.azurewebsites.net/user/get/followrequests?Usuario=$userName');
+
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("Solicitudes de amistad de $userName recuperadas");
+
+    response.forEach((name, profilePhoto) => addUserToList(
+          followRequests,
+          name,
+          profilePhoto['FotoDePerfil'],
+        ));
+  } else {
+    print('Error buscando solicitudes de amistad ,body: ' +
+        response.body.toString());
+  }
+  print("Tiene " + followRequests.length.toString() + " solicitudes");
+  return followRequests;
+}
+
+Future<bool> sendFollowRequest(String newFriend) async {
+  print("Enviando solicitud de seguimiento $userName a $newFriend...");
+  dynamic data = {'NombreUsuario': userName, 'Seguidor': newFriend};
+  print("La data" + data.toString());
+
+  data = jsonEncode(data);
+  dynamic response = await http.post(
+      "https://playstack.azurewebsites.net/user/add/followRequest",
+      headers: {"Content-Type": "application/json"},
+      body: data);
+
+  print("Statuscode solicitud follow: " + response.statusCode.toString());
+
+  if (response.statusCode == 200) {
+    print("Solicitud enviada ");
+    return true;
+  } else {
+    print("Solicitud no enviada, body: " + response.body.toString());
     return false;
   }
 }
@@ -405,7 +584,7 @@ Future<List> getUsers(String keyword) async {
   }
 }
 
-void setLastSongAsCurrent() async {
+Future<bool> setLastSongAsCurrent() async {
   dynamic response = await http.get(
       "https://playstack.azurewebsites.net/user/get/lastsong?Usuario=$userName");
 
@@ -423,8 +602,10 @@ void setLastSongAsCurrent() async {
         info['ImagenesAlbums'],
         info['Generos']));
     print("Ultima cancion seteada");
+    return true;
   } else {
     print('Error cogiendo ultima cancion escuchada');
+    return false;
   }
 }
 
@@ -478,8 +659,13 @@ addPlaylistToList(List playlists, String name, dynamic covers, bool isPrivate) {
 }
 
 addFolderToList(List folders, String folderName, List containedPlaylists) {
+  List playlists = new List();
+  for (var playlist in containedPlaylists) {
+    playlist.forEach((name, info) =>
+        addPlaylistToList(playlists, name, info['Fotos'], info['Privado']));
+  }
   FolderType newFolder =
-      new FolderType(name: folderName, containedPlaylists: containedPlaylists);
+      new FolderType(name: folderName, containedPlaylists: playlists);
   folders.add(newFolder);
 }
 
@@ -493,9 +679,10 @@ Future<List> getUserFolders() async {
   print("Statuscode carpetas: " + response.statusCode.toString());
 
   if (response.statusCode == 200) {
+    print("Carpetas recuperadas");
     response = json.decode(response.body);
     response.forEach(
-        (name, playlistNames) => addFolderToList(folders, name, playlistNames));
+        (name, playlists) => addFolderToList(folders, name, playlists));
   } else {
     print("Status code not 200, body: " + response.body);
   }
@@ -532,6 +719,8 @@ addSongToList(List songs, String title, List artists, List albums,
       url: url,
       albums: albums,
       albumCoverUrls: albumCoverUrls);
+  print(
+      "Creada cancion con titulo $title y covers " + albumCoverUrls.toString());
   songs.add(newSong);
 }
 
@@ -680,7 +869,7 @@ Future<String> _getSongUrl(String songName) async {
   print("Statuscode: " + response.statusCode.toString());
 }
 
-Future getProfilePhoto() async {
+Future<bool> getProfilePhoto() async {
   print("Recuperando foto de " + userName);
   dynamic response = await http.get(
       "https://playstack.azurewebsites.net/user/get/profilephoto?Usuario=$userName");
@@ -691,8 +880,9 @@ Future getProfilePhoto() async {
     response = json.decode(response.body);
     print("Response: " + response.toString());
     imagePath = response['FotoDePerfil'];
+    return true;
   } else {
     print("Status code not 200, body: " + response.body);
-    return null;
+    return false;
   }
 }

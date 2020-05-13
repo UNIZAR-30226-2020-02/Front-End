@@ -12,26 +12,45 @@ class Social extends StatefulWidget {
 class _SocialState extends State<Social> {
   bool _loadingFollowing = true;
   bool _loadingFollowers = true;
+  bool _loadingFollowRequests = true;
+
+  List followRequests = new List();
 
   @override
   void initState() {
     super.initState();
     getFollowing();
     getFollowers();
+    getFollowRequests();
   }
 
   void getFollowing() async {
     following = await getUsersFollowingDB();
-    setState(() {
-      _loadingFollowing = false;
-    });
+    if (!leftAlready) {
+      setState(() {
+        _loadingFollowing = false;
+      });
+    }
   }
 
   void getFollowers() async {
     followers = await getFollowersDB();
-    setState(() {
-      _loadingFollowers = false;
-    });
+
+    if (!leftAlready) {
+      setState(() {
+        _loadingFollowers = false;
+      });
+    }
+  }
+
+  void getFollowRequests() async {
+    followRequests = await listFollowRequests();
+
+    if (!leftAlready) {
+      setState(() {
+        _loadingFollowRequests = false;
+      });
+    }
   }
 
   Widget showList(String listName) {
@@ -44,7 +63,7 @@ class _SocialState extends State<Social> {
             shrinkWrap: true,
             itemCount: following.isEmpty ? 0 : following.length,
             itemBuilder: (BuildContext context, int index) {
-              return new UserTile(following[index]);
+              return new UserTile(following[index], "Following");
             },
           ),
         );
@@ -59,7 +78,7 @@ class _SocialState extends State<Social> {
             shrinkWrap: true,
             itemCount: followers.isEmpty ? 0 : followers.length,
             itemBuilder: (BuildContext context, int index) {
-              return new UserTile(followers[index]);
+              return new UserTile(followers[index], "Followers");
             },
           ),
         );
@@ -67,16 +86,13 @@ class _SocialState extends State<Social> {
         break;
 
       default:
-        return Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: ListView.builder(
-            scrollDirection: Axis.vertical,
-            shrinkWrap: true,
-            itemCount: following.isEmpty ? 0 : following.length,
-            itemBuilder: (BuildContext context, int index) {
-              return new UserTile(following[index]);
-            },
-          ),
+        return ListView.builder(
+          scrollDirection: Axis.vertical,
+          shrinkWrap: true,
+          itemCount: followRequests.isEmpty ? 0 : followRequests.length,
+          itemBuilder: (BuildContext context, int index) {
+            return new UserTile(followRequests[index], "Requests");
+          },
         );
     }
   }
@@ -88,13 +104,22 @@ class _SocialState extends State<Social> {
       child: Scaffold(
         backgroundColor: Color(0xFF191414),
         appBar: AppBar(
+          leading: IconButton(
+              icon: Icon(Icons.arrow_back_ios),
+              onPressed: () {
+                leftAlready = true;
+                homeIndex.value = 0;
+              }),
           backgroundColor: Colors.transparent,
           bottomOpacity: 1.0,
           actions: <Widget>[
             IconButton(
                 icon: Icon(Icons.search),
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (BuildContext context) => SearchPeople())))
+                onPressed: () {
+                  leftAlready = false;
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (BuildContext context) => SearchPeople()));
+                })
           ],
           bottom: TabBar(
             indicatorColor: Colors.orange[800],
@@ -128,7 +153,7 @@ class _SocialState extends State<Social> {
           children: [
             _loadingFollowing ? LoadingSongs() : showList("Following"),
             _loadingFollowers ? LoadingSongs() : showList('Followers'),
-            Text('Tab3')
+            _loadingFollowRequests ? LoadingSongs() : showList('FollowRequests')
           ],
         ),
       ),
