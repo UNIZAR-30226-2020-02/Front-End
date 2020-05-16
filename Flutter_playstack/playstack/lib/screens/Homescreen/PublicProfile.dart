@@ -4,26 +4,31 @@ import 'package:bot_toast/bot_toast.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:playstack/models/user.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
 
 import 'package:playstack/shared/common.dart';
+import 'package:toast/toast.dart';
 
 class YourPublicProfile extends StatefulWidget {
   final bool own;
   final String friendUserName;
-  YourPublicProfile(this.own, {this.friendUserName});
+  final User otherUser;
+  YourPublicProfile(this.own, {this.friendUserName, this.otherUser});
   @override
   _YourPublicProfileState createState() =>
-      _YourPublicProfileState(own, friendUserName);
+      _YourPublicProfileState(own, friendUserName, otherUser: otherUser);
 }
 
 class _YourPublicProfileState extends State<YourPublicProfile> {
   final bool own;
   final String friendUserName;
+  final User otherUser;
 
   bool _loading = true;
   bool alreadyFollowing = false;
+  bool requestedFollow = false;
 
   String friendProfilePhoto;
 
@@ -32,7 +37,7 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
   List lastListenedTo;
   List publicPlaylists;
 
-  _YourPublicProfileState(this.own, this.friendUserName) {
+  _YourPublicProfileState(this.own, this.friendUserName, {this.otherUser}) {
     mostListenedTo = new List();
     likedGenres = new List();
     lastListenedTo = new List();
@@ -42,20 +47,31 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
   void initState() {
     super.initState();
     if (!own) {
-      getPhoto();
+      friendName = friendUserName;
+      if (otherUser == null) {
+        getPhotoAndFollowStatus();
+      } else {
+        friendProfilePhoto = otherUser.photoUrl;
+        checkFollowStatus();
+      }
     } else {
       setState(() {
         _loading = false;
       });
     }
     //TODO: descomentar
-    /* getListsData('mostListenedTo');
+
     getListsData('publicPlaylists');
+    getListsData('lastListenedTo');
+
+    /*
+        getListsData('mostListenedTo');
+
     getListsData('likedGenres');
-    getListsData('lastListenedTo'); */
+    */
   }
 
-  void getPhoto() async {
+  void getPhotoAndFollowStatus() async {
     friendProfilePhoto = await getForeignPicture(friendUserName);
     alreadyFollowing = await checkIfFollowing(friendUserName);
     setState(() {
@@ -63,21 +79,15 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
     });
   }
 
-  void addToList(String item, String list) {
-    switch (list) {
-      case 'mostListenedTo':
-        mostListenedTo.add(item);
-        break;
-      case 'likedGenres':
-        likedGenres.add(item);
-        break;
+  void getPhoto() async {
+    friendProfilePhoto = await getForeignPicture(friendUserName);
+  }
 
-      case 'publicPlaylists':
-        publicPlaylists.add(item);
-        break;
-      default:
-        lastListenedTo.add(item);
-    }
+  void checkFollowStatus() async {
+    alreadyFollowing = await checkIfFollowing(friendUserName);
+    setState(() {
+      _loading = false;
+    });
   }
 
   Future<void> getListsData(String list) async {
@@ -87,10 +97,7 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
     switch (list) {
       case 'mostListenedTo':
         print("Recopilando las mas escuchadas...");
-        response = await http.get(
-          "https://playstack.azurewebsites.net/get/song/bygenre?user=$userName",
-          headers: {"Content-Type": "application/json"},
-        );
+
         break;
       case 'likedGenres':
         print("Recopilando generos favoritos...");
@@ -100,34 +107,23 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
         );
         break;
       case 'publicPlaylists':
-        response = await http.get(
-          "https://playstack.azurewebsites.net/get/song/bygenre?user=$userName",
-          headers: {"Content-Type": "application/json"},
-        );
+        if (own) {
+          publicPlaylists = await getpublicPlaylistsDB(own);
+        } else {
+          publicPlaylists =
+              await getpublicPlaylistsDB(own, user: friendUserName);
+        }
+
         break;
       default:
         print("ultimas canciones y podcasts...");
-        response = await http.get(
-          "https://playstack.azurewebsites.net/get/song/bygenre?user=$userName",
-          headers: {"Content-Type": "application/json"},
-        );
+        if (!own) {
+          lastListenedTo = await getLastSongsListenedToDB(friendUserName);
+        } else {
+          lastListenedTo = await getLastSongsListenedToDB(userName);
+        }
     }
-
-    print("Statuscode " + response.statusCode.toString());
-    //print("Body:" + response.body.toString());
-    if (response.statusCode == 200) {
-      response = jsonDecode(response.body);
-      //response.forEach((title, info) => print(title + info.toString()));
-      for (var item in response) {
-        addToList(item, list);
-      }
-
-      /* setState(() {
-        _loading = false;
-      }); */
-    } else {
-      print(response.body);
-    }
+    setState(() {});
   }
 
   Widget listItems(String list) {
@@ -159,7 +155,10 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
           shrinkWrap: true,
           itemCount: publicPlaylists.isEmpty ? 0 : publicPlaylists.length,
           itemBuilder: (BuildContext context, int index) {
-            return new ListTile(title: publicPlaylists[index]);
+            return new PlaylistItem(
+              publicPlaylists[index],
+              true,
+            );
           },
         );
         break;
@@ -169,7 +168,12 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
           shrinkWrap: true,
           itemCount: lastListenedTo.isEmpty ? 0 : lastListenedTo.length,
           itemBuilder: (BuildContext context, int index) {
-            return new ListTile(title: lastListenedTo[index]);
+            return new SongItem(
+              lastListenedTo[index],
+              lastListenedTo,
+              "Últimas canciones escuchadas",
+              isNotOwn: !own,
+            );
           },
         );
     }
@@ -185,14 +189,33 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
               child: RaisedButton(
                 onPressed: () async {
                   if (!alreadyFollowing) {
-                    bool followed = await follow(friendUserName);
-                    if (followed) {
-                      BotToast.showText(text: "Seguido");
+                    bool sent = await sendFollowRequest(friendUserName);
+                    if (sent) {
                       setState(() {
-                        alreadyFollowing = true;
+                        requestedFollow = true;
+                      });
+                      Toast.show("Solicitud enviada!", context,
+                          gravity: Toast.CENTER,
+                          backgroundColor: Colors.green[600],
+                          duration: Toast.LENGTH_LONG);
+                    } else {
+                      Toast.show("No se pudo enviar la solicitud", context,
+                          gravity: Toast.CENTER,
+                          backgroundColor: Colors.red[600],
+                          duration: Toast.LENGTH_LONG);
+                    }
+                  } else {
+                    bool res = await unfollow(friendUserName);
+                    if (res) {
+                      setState(() {
+                        alreadyFollowing = false;
                       });
                     } else {
-                      BotToast.showText(text: "Error siguiendo");
+                      Toast.show(
+                          "Error dejando de seguir a $friendUserName", context,
+                          gravity: Toast.CENTER,
+                          backgroundColor: Colors.red[600],
+                          duration: Toast.LENGTH_LONG);
                     }
                   }
                 },
@@ -225,6 +248,56 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
         : Text('');
   }
 
+  Widget cancelFollowButton(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 10.0),
+      child: Container(
+        height: 40.0,
+        width: MediaQuery.of(context).size.width / 3,
+        child: RaisedButton(
+          onPressed: () async {
+            bool res = await removeFollowRequest(friendUserName);
+            if (res) {
+              Toast.show("Solicitud de amistad cancelada", context,
+                  gravity: Toast.CENTER,
+                  duration: Toast.LENGTH_LONG,
+                  backgroundColor: Colors.grey);
+              setState(() {
+                requestedFollow = false;
+              });
+            } else {
+              Toast.show("No se pudo cancelar la solicitud de amistad", context,
+                  gravity: Toast.CENTER,
+                  duration: Toast.LENGTH_LONG,
+                  backgroundColor: Colors.grey);
+            }
+          },
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(80.0)),
+          padding: EdgeInsets.all(0.0),
+          child: Ink(
+            decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.orange[800],
+                    Colors.orange[300],
+                    Colors.orange[800]
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(10.0)),
+            child: Container(
+              constraints: BoxConstraints(maxWidth: 300.0, minHeight: 50.0),
+              alignment: Alignment.center,
+              child: Text("Cancelar solicitud"),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return _loading
@@ -251,7 +324,9 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
                               radius: 60,
                               backgroundImage:
                                   NetworkImage(friendProfilePhoto)),
-                      followButton(context)
+                      requestedFollow
+                          ? cancelFollowButton(context)
+                          : followButton(context),
                     ],
                   )),
                 ),
@@ -260,26 +335,71 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text(
-                        "Canciones y podcasts más escuchados",
-                        style: TextStyle(fontSize: 20),
+                      Center(
+                        child: Text("Canciones y podcasts más escuchados",
+                            style: TextStyle(fontSize: 20),
+                            textAlign: TextAlign.center),
                       ),
-                      listItems('mostListenedTo'),
-                      Text(
-                        "Géneros más escuchados",
-                        style: TextStyle(fontSize: 20),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0, bottom: 8),
+                        child: playlistsDivider(),
                       ),
-                      listItems('likedGenres'),
-                      Text(
-                        "Listas de reproducción públicas",
-                        style: TextStyle(fontSize: 20),
+                      mostListenedTo.isEmpty
+                          ? Center(
+                              child:
+                                  Text("Ninguna canción o podcast escuchado"))
+                          : listItems('mostListenedTo'),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Center(
+                          child: Text("Géneros más escuchados",
+                              style: TextStyle(
+                                fontSize: 20,
+                              ),
+                              textAlign: TextAlign.center),
+                        ),
                       ),
-                      listItems('lastListenedTo'),
-                      Text(
-                        "Últimas canciones y podcast escuchados",
-                        style: TextStyle(fontSize: 20),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0, bottom: 8),
+                        child: playlistsDivider(),
                       ),
-                      listItems('lastListenedTo'),
+                      likedGenres.isEmpty
+                          ? Center(child: Text("Ninguna género escuchado"))
+                          : listItems('likedGenres'),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Center(
+                          child: Text("Listas de reproducción públicas",
+                              style: TextStyle(fontSize: 20),
+                              textAlign: TextAlign.center),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0, bottom: 8),
+                        child: playlistsDivider(),
+                      ),
+                      publicPlaylists.isEmpty
+                          ? Center(
+                              child:
+                                  Text("Ninguna lista de reproducción pública"))
+                          : listItems('publicPlaylists'),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Center(
+                          child: Text("Últimas canciones y podcast escuchados",
+                              style: TextStyle(fontSize: 20),
+                              textAlign: TextAlign.center),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0, bottom: 8),
+                        child: playlistsDivider(),
+                      ),
+                      lastListenedTo.isEmpty
+                          ? Center(
+                              child:
+                                  Text("Ninguna canción o podcast escuchado"))
+                          : listItems('lastListenedTo'),
                     ],
                   ),
                 ),

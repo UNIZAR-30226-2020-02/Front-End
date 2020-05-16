@@ -68,7 +68,7 @@ class _SearchProcessState extends State<SearchProcess> {
                   decoration: new InputDecoration(
                       prefixIcon: new Icon(CupertinoIcons.search),
                       hintText: 'Search...',
-                      hintStyle: TextStyle(color: Colors.black))),
+                      hintStyle: TextStyle(color: Colors.white))),
             ),
           ],
         )),
@@ -84,7 +84,8 @@ class _SearchProcessState extends State<SearchProcess> {
     if (!(_searchText.isEmpty)) {
       List tempList = new List();
       for (int i = 0; i < filteredNames.length; i++) {
-        if (filteredNames[i]['name']
+        if (filteredNames[i]
+            .title
             .toLowerCase()
             .contains(_searchText.toLowerCase())) {
           tempList.add(filteredNames[i]);
@@ -98,14 +99,17 @@ class _SearchProcessState extends State<SearchProcess> {
       itemCount: names == null ? 0 : filteredNames.length,
       itemBuilder: (BuildContext context, int index) {
         return new SongItem(
-            filteredNames[index], new List(), filteredNames[index].title);
+          filteredNames[index],
+          new List(),
+          filteredNames[index].title,
+          isNotOwn: true,
+        );
       },
     );
   }
 
   void _getSongs() async {
     List allsongs = await getAllSongs();
-
     setState(() {
       names = allsongs;
       names.shuffle();

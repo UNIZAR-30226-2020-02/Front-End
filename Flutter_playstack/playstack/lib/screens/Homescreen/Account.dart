@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/common.dart';
+import 'package:toast/toast.dart';
 
 class Account extends StatefulWidget {
   @override
@@ -7,6 +9,25 @@ class Account extends StatefulWidget {
 }
 
 class _AccountState extends State<Account> {
+  void becomePremium() async {
+    Toast.show("Enviando solicitud...", context,
+        gravity: Toast.CENTER,
+        duration: Toast.LENGTH_LONG,
+        backgroundColor: Colors.blue[500]);
+    bool res = await askToBecomePremium();
+    if (res) {
+      Toast.show("Solicitud de premium enviada correctamente!", context,
+          gravity: Toast.CENTER,
+          duration: Toast.LENGTH_LONG,
+          backgroundColor: Colors.green[500]);
+    } else {
+      Toast.show("Error al enviar solicitud de premium", context,
+          gravity: Toast.CENTER,
+          duration: Toast.LENGTH_LONG,
+          backgroundColor: Colors.red[500]);
+    }
+  }
+
   Widget updateAccountTypeButton() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10.0),
@@ -14,10 +35,7 @@ class _AccountState extends State<Account> {
         height: 40.0,
         width: MediaQuery.of(context).size.width / 2,
         child: RaisedButton(
-          onPressed: () =>
-              /* Navigator.of(context).push(MaterialPageRoute(
-              builder: (BuildContext context) => YourPublicProfile(true))) */
-              null,
+          onPressed: () => becomePremium(),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(80.0)),
           padding: EdgeInsets.all(0.0),
@@ -48,34 +66,71 @@ class _AccountState extends State<Account> {
     );
   }
 
+  void checkIfAccepted() async {
+    Toast.show("Actualizando...", context,
+        gravity: Toast.CENTER, backgroundColor: Colors.grey[700]);
+    bool res = await checkAccountType();
+    if (res) {
+      Toast.show("Actualizando correctamente", context,
+          gravity: Toast.CENTER, backgroundColor: Colors.grey[700]);
+
+      setState(() {});
+    } else {
+      Toast.show("Error actualizando", context,
+          gravity: Toast.CENTER, backgroundColor: Colors.grey[700]);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: updateAccountTypeButton(),
+      floatingActionButton:
+          accountType == "No Premium" ? updateAccountTypeButton() : Text(''),
       backgroundColor: backgroundColor,
-      appBar: AppBar(title: Text('Cuenta')),
+      appBar: AppBar(
+        title: Text('Cuenta'),
+        actions: <Widget>[
+          IconButton(
+              icon: Icon(Icons.refresh), onPressed: () => checkIfAccepted())
+        ],
+      ),
       body: Padding(
           padding: const EdgeInsets.all(12.0),
           child: Column(
             children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Text(
-                    "Nombre de usuario: ",
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  SizedBox(width: MediaQuery.of(context).size.width / 3),
-                  Text(userName, style: TextStyle(fontSize: 16))
-                ],
+              Container(
+                width: MediaQuery.of(context).size.width,
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        "Nombre de usuario: ",
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                    Expanded(
+                        flex: 1,
+                        child: Text(userName, style: TextStyle(fontSize: 16)))
+                  ],
+                ),
               ),
               SizedBox(height: 15),
-              Row(
-                children: <Widget>[
-                  Text("Tipo de cuenta: ", style: TextStyle(fontSize: 16)),
-                  SizedBox(width: MediaQuery.of(context).size.width / 3 + 6),
-                  Text(kindOfAccount, style: TextStyle(fontSize: 16))
-                ],
+              Container(
+                width: MediaQuery.of(context).size.width,
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                        flex: 2,
+                        child: Text("Tipo de cuenta: ",
+                            style: TextStyle(fontSize: 16))),
+                    Expanded(
+                        flex: 1,
+                        child:
+                            Text(accountType, style: TextStyle(fontSize: 16)))
+                  ],
+                ),
               ),
             ],
           )),

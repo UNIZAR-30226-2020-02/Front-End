@@ -1,6 +1,8 @@
 import 'package:bot_toast/bot_toast.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:playstack/models/Album.dart';
+import 'package:playstack/models/Artist.dart';
 import 'package:playstack/models/PlaylistType.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
 import 'package:playstack/services/database.dart';
@@ -17,28 +19,61 @@ class _LibraryState extends State<Library> {
   final TextEditingController newPLaylistController =
       new TextEditingController();
   final TextEditingController newFolderController = new TextEditingController();
+
   List folders = new List();
+  List artistsList = new List();
+  List albumsList = new List();
+
   bool _loading = true;
+  bool _loadingArtists = true;
+  bool _loadingAlbums = true;
+
   String dropdownItem;
+
   @override
   void initState() {
     super.initState();
     getFolders();
     getPlaylists();
+    getArtists();
+    getAlbums();
+  }
+
+  void getAlbums() async {
+    albumsList = await getAlbumsDB();
+    if (currentIndex == 2) {
+      setState(() {
+        _loadingAlbums = false;
+      });
+    }
+  }
+
+  void getArtists() async {
+    artistsList = await getAllArtistsDB();
+    if (currentIndex == 2) {
+      setState(() {
+        _loadingArtists = false;
+      });
+    }
   }
 
   void getFolders() async {
     folders = await getUserFolders();
-    setState(() {
-      _loading = false;
-    });
+
+    if (currentIndex == 2) {
+      setState(() {
+        _loading = false;
+      });
+    }
   }
 
   void getPlaylists() async {
     playlists = await getUserPlaylists();
-    setState(() {
-      _loading = false;
-    });
+    if (currentIndex == 2) {
+      setState(() {
+        _loading = false;
+      });
+    }
   }
 
   Widget musicTab() {
@@ -79,7 +114,7 @@ class _LibraryState extends State<Library> {
             ],
           ),
           body: TabBarView(
-            children: [playLists(), Text('artistas'), Text('albumes')],
+            children: [playLists(), artists(), albums()],
           ),
         ));
   }
@@ -224,65 +259,93 @@ class _LibraryState extends State<Library> {
       barrierDismissible: true,
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text("Crear lista de reproducción"),
-          elevation: 100.0,
-          backgroundColor: Colors.grey[900],
-          actions: <Widget>[
-            SizedBox(
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            title: Text("Crear lista de reproducción"),
+            elevation: 100.0,
+            backgroundColor: Colors.grey[900],
+            actions: <Widget>[
+              SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  child: TextField(
+                    controller: newPLaylistController,
+                    decoration: InputDecoration(
+                        hintText: "Nombre lista",
+                        errorText:
+                            _validate ? 'Introduzca un nombre válido' : null),
+                  )),
+              Container(
                 width: MediaQuery.of(context).size.width,
-                child: TextField(
-                  controller: newPLaylistController,
-                  decoration: InputDecoration(
-                      hintText: "Nombre lista",
-                      errorText:
-                          _validate ? 'Introduzca un nombre válido' : null),
-                )),
-            Container(
-              width: MediaQuery.of(context).size.width,
-              child: CheckboxListTile(
-                activeColor: Colors.amber,
-                value: _isPrivate,
-                onChanged: (newVal) {
-                  setState(() {
-                    _isPrivate = !_isPrivate;
-                  });
-                },
-                title: Text("¿Hacer playlist privada?"),
+                child: CheckboxListTile(
+                  activeColor: Colors.amber,
+                  value: _isPrivate,
+                  onChanged: (newVal) {
+                    setState(() {
+                      _isPrivate = !_isPrivate;
+                    });
+                  },
+                  title: Text("¿Hacer playlist privada?"),
+                ),
               ),
-            ),
-            Container(
-              width: MediaQuery.of(context).size.width,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Expanded(
-                      flex: 1,
-                      child: FlatButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text("Cancelar"))),
-                  Expanded(
-                      flex: 1,
-                      child: FlatButton(
-                          onPressed: () {
-                            setState(() {
-                              if (newPLaylistController.text.isEmpty) {
-                                _validate = true;
-                              } else {
-                                _validate = false;
-                                Navigator.pop(context);
-                                createPlaylist(_isPrivate);
-                              }
-                            });
-                          },
-                          child: Text("Crear")))
-                ],
-              ),
-            )
-          ],
-        );
+              Container(
+                width: MediaQuery.of(context).size.width,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Expanded(
+                        flex: 1,
+                        child: FlatButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text("Cancelar"))),
+                    Expanded(
+                        flex: 1,
+                        child: FlatButton(
+                            onPressed: () {
+                              setState(() {
+                                if (newPLaylistController.text.isEmpty) {
+                                  _validate = true;
+                                } else {
+                                  _validate = false;
+                                  Navigator.pop(context);
+                                  createPlaylist(_isPrivate);
+                                }
+                              });
+                            },
+                            child: Text("Crear")))
+                  ],
+                ),
+              )
+            ],
+          );
+        });
       },
     );
+  }
+
+  Widget albums() {
+    return _loadingAlbums
+        ? LoadingSongs()
+        : ListView.builder(
+            scrollDirection: Axis.vertical,
+            shrinkWrap: true,
+            itemCount: albumsList.isEmpty ? 0 : albumsList.length,
+            itemBuilder: (BuildContext context, int index) {
+              return new AlbumTile(albumsList[index]);
+            },
+          );
+  }
+
+  Widget artists() {
+    return _loadingArtists
+        ? LoadingSongs()
+        : ListView.builder(
+            scrollDirection: Axis.vertical,
+            shrinkWrap: true,
+            itemCount: artistsList.isEmpty ? 0 : artistsList.length,
+            itemBuilder: (BuildContext context, int index) {
+              return new ArtistTile(artistsList[index]);
+            },
+          );
   }
 
   Widget playLists() {
@@ -373,7 +436,8 @@ class _LibraryState extends State<Library> {
                   if (index < folders.length) {
                     return new FolderItem(folders[index]);
                   } else {
-                    return new PlaylistItem(playlists[index - folders.length]);
+                    return new PlaylistItem(
+                        playlists[index - folders.length], false);
                   }
                 },
               )

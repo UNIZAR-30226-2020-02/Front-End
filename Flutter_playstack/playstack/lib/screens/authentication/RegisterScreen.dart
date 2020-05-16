@@ -25,7 +25,6 @@ class RegisterState extends State<RegisterScreen> {
   PageController _pageController = new PageController();
   var image;
 
-
   final TextEditingController _usernameController = new TextEditingController();
   final TextEditingController _passwordController = new TextEditingController();
   final TextEditingController _emailController = new TextEditingController();
@@ -69,14 +68,33 @@ class RegisterState extends State<RegisterScreen> {
     return response.statusCode;
   }
 
-  _launchPremiumURL() async {
+  void _becomePremium() async {
+    Toast.show("Enviando solicitud...", context,
+        gravity: Toast.CENTER,
+        duration: Toast.LENGTH_LONG,
+        backgroundColor: Colors.blue[500]);
+    bool res = await askToBecomePremium();
+    if (res) {
+      Toast.show("Solicitud de premium enviada correctamente!", context,
+          gravity: Toast.CENTER,
+          duration: Toast.LENGTH_LONG,
+          backgroundColor: Colors.green[500]);
+    } else {
+      Toast.show("Error al enviar solicitud de premium", context,
+          gravity: Toast.CENTER,
+          duration: Toast.LENGTH_LONG,
+          backgroundColor: Colors.red[500]);
+    }
+  }
+
+  /* _launchPremiumURL() async {
     const url = "https://www.google.com";
     if (await canLaunch(url)) {
       await launch(url);
     } else {
       throw 'Could not launch $url';
     }
-  }
+  } */
 
   // Toggles the password show status
   void _toggle() {
@@ -87,10 +105,10 @@ class RegisterState extends State<RegisterScreen> {
 
   void usernameNotTaken(String username) async {
     List matches = await getUsers(username);
-    if(matches!=null){
+    if (matches != null) {
       taken = matches.contains(username);
     }
-    
+
     checked = true;
   }
 
@@ -145,7 +163,53 @@ class RegisterState extends State<RegisterScreen> {
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeInOut,
     );
-    
+  }
+
+  Future<bool> regiterProcess(bool requestingPremium) async {
+    int statusCode = await _register(_usernameController.text,
+        _emailController.text, _passwordController.text);
+    switch (statusCode) {
+      case 201:
+        {
+          await uploadImage(image);
+          if (!requestingPremium) {
+            Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(
+                    builder: (BuildContext context) => MainScreen()),
+                (Route<dynamic> route) => false);
+          }
+
+          return true;
+        }
+        break;
+      case 400:
+        {
+          _formKey.currentState.validate();
+          Toast.show(languageStrings['invalidCredentials'], context,
+              duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+          _step = 0;
+          return false;
+        }
+        break;
+      case 406:
+        {
+          Toast.show(languageStrings['invalidRequest'], context,
+              duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+          _step = 0;
+        }
+        return false;
+
+        break;
+      case 500:
+        {
+          Toast.show(languageStrings['internalError'], context,
+              duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+          _step = 0;
+        }
+        return false;
+
+        break;
+    }
   }
 
   Widget registerButtons() {
@@ -177,49 +241,14 @@ class RegisterState extends State<RegisterScreen> {
                                 side: BorderSide(color: Colors.black)),
                             color: Colors.red[400],
                             onPressed: () async {
-                                if(_step == 2){
-                                  setState((){
-                                    _loading = true;
-                                  });
-                                  int statusCode = await _register(_usernameController.text, _emailController.text, _passwordController.text);
-                                  switch(statusCode) {
-                                    case 201: {
-                                    uploadImage(image);
-                                    Navigator.of(context).pushAndRemoveUntil(
-                                        MaterialPageRoute(
-                                            builder: (BuildContext context) =>
-                                                MainScreen()),
-                                        (Route<dynamic> route) => false);
-                                    }
-                                    break;
-                                    case 400: {
-                                      _formKey.currentState.validate();
-                                      Toast.show(languageStrings['invalidCredentials'], context,
-                              duration: Toast.LENGTH_LONG,
-                              gravity: Toast.BOTTOM);
-                              _step = 0;
-                                    }
-                                    break;
-                                    case 406: {
-                                      Toast.show(languageStrings['invalidRequest'], context,
-                              duration: Toast.LENGTH_LONG,
-                              gravity: Toast.BOTTOM);
-                              _step = 0;
-                                    }
-                                    break;
-                                    case 500: {
-                                      Toast.show(languageStrings['internalError'], context,
-                              duration: Toast.LENGTH_LONG,
-                              gravity: Toast.BOTTOM);
-                              _step = 0;
-                                    }
-                                    break;
-                                  }
-
-                                }
-                                else
-                                  goNext();
-                              },
+                              if (_step == 2) {
+                                setState(() {
+                                  _loading = true;
+                                });
+                                regiterProcess(false);
+                              } else
+                                goNext();
+                            },
                             child: Text(
                               languageStrings['next'],
                               style:
@@ -237,13 +266,13 @@ class RegisterState extends State<RegisterScreen> {
                       // devolverá true si el formulario es válido, o falso si
                       // el formulario no es válido.
                       if (_formKey.currentState.validate()) {
-                          // Si el formulario es válido, queremos mostrar un Snackbar
-                          goNext();
-                        } else {
-                          Toast.show(languageStrings['invalidCredentials'], context,
-                              duration: Toast.LENGTH_LONG,
-                              gravity: Toast.BOTTOM);
-                        }
+                        // Si el formulario es válido, queremos mostrar un Snackbar
+                        goNext();
+                      } else {
+                        Toast.show(
+                            languageStrings['invalidCredentials'], context,
+                            duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+                      }
                     },
                     child: Text(
                       languageStrings['next'],
@@ -257,19 +286,19 @@ class RegisterState extends State<RegisterScreen> {
       child: TextFormField(
           controller: _usernameController,
           decoration: InputDecoration(
-              labelText: languageStrings['username'], icon: Icon(Icons.alternate_email),
+              labelText: languageStrings['username'],
+              icon: Icon(Icons.alternate_email),
               errorMaxLines: 3),
           validator: (String value) {
-            
             if (value.length < 1)
               return languageStrings['usernameErr1'];
-            else{
+            else {
               usernameNotTaken(value);
               if (checked && taken)
                 return languageStrings['usernameErr2'];
               else
                 return null;
-            } 
+            }
           }),
     );
   }
@@ -301,11 +330,11 @@ class RegisterState extends State<RegisterScreen> {
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
       child: TextFormField(
         controller: _passwordController,
-        decoration:
-            InputDecoration(labelText: languageStrings['pass'], icon: Icon(Icons.lock),
+        decoration: InputDecoration(
+            labelText: languageStrings['pass'],
+            icon: Icon(Icons.lock),
             errorMaxLines: 3),
         obscureText: _obscureText,
-        
         validator: (val) {
           if (passwordIsSafe(val)) {
             return null;
@@ -321,9 +350,10 @@ class RegisterState extends State<RegisterScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
       child: TextFormField(
-        controller: _confirmController,
+          controller: _confirmController,
           decoration: InputDecoration(
-              labelText: languageStrings['confirm'], icon: Icon(Icons.check_circle)),
+              labelText: languageStrings['confirm'],
+              icon: Icon(Icons.check_circle)),
           obscureText: _obscureText,
           validator: (val) {
             if (_passwordController.text == val) {
@@ -355,7 +385,9 @@ class RegisterState extends State<RegisterScreen> {
               confirmField(),
               FlatButton(
                   onPressed: _toggle,
-                  child: new Text(_obscureText ? languageStrings['show'] : languageStrings['hide'])),
+                  child: new Text(_obscureText
+                      ? languageStrings['show']
+                      : languageStrings['hide'])),
             ],
           )),
         ),
@@ -380,8 +412,7 @@ class RegisterState extends State<RegisterScreen> {
                       Padding(
                           padding: const EdgeInsets.fromLTRB(0, 15, 0, 10),
                           child: Center(
-                              child: Text(
-                                  languageStrings['imageRegDesc'],
+                              child: Text(languageStrings['imageRegDesc'],
                                   style: TextStyle(
                                       fontFamily: 'Circular', fontSize: 15),
                                   textAlign: TextAlign.center,
@@ -395,7 +426,8 @@ class RegisterState extends State<RegisterScreen> {
                               height: 128.0,
                               child: GestureDetector(
                                 onTap: () async {
-                                  image = await ImagePicker.pickImage(source: ImageSource.gallery);
+                                  image = await ImagePicker.pickImage(
+                                      source: ImageSource.gallery);
                                   ProfilePictureState.setTempImage(image);
                                 },
                                 child: ProfilePicture(),
@@ -430,14 +462,12 @@ class RegisterState extends State<RegisterScreen> {
           Center(
               child: Text(
             languageStrings['premiumDesc1'],
-            style: TextStyle(fontFamily: 'Circular', fontSize: 30
-            ),
+            style: TextStyle(fontFamily: 'Circular', fontSize: 30),
           )),
           Padding(
               padding: const EdgeInsets.fromLTRB(0, 15, 0, 10),
               child: Center(
-                  child: Text(
-                      languageStrings['premiumDesc2'],
+                  child: Text(languageStrings['premiumDesc2'],
                       style: TextStyle(fontFamily: 'Circular', fontSize: 20),
                       maxLines: 2,
                       overflow: TextOverflow.fade,
@@ -446,16 +476,16 @@ class RegisterState extends State<RegisterScreen> {
               padding: const EdgeInsets.fromLTRB(10, 20, 30, 0),
               child: Center(
                   child: Table(children: <TableRow>[
-                premiumAdvantagesCell(Icon(Icons.music_note),
-                    languageStrings['premiumDesc3']),
-                premiumAdvantagesCell(Icon(Icons.queue_music),
-                    languageStrings['premiumDesc4']),
+                premiumAdvantagesCell(
+                    Icon(Icons.music_note), languageStrings['premiumDesc3']),
+                premiumAdvantagesCell(
+                    Icon(Icons.queue_music), languageStrings['premiumDesc4']),
                 premiumAdvantagesCell(Icon(Icons.signal_wifi_off),
                     languageStrings['premiumDesc5']),
-                premiumAdvantagesCell(Icon(Icons.library_music),
-                    languageStrings['premiumDesc6']),
-                premiumAdvantagesCell(Icon(Icons.skip_next),
-                    languageStrings['premiumDesc7']),
+                premiumAdvantagesCell(
+                    Icon(Icons.library_music), languageStrings['premiumDesc6']),
+                premiumAdvantagesCell(
+                    Icon(Icons.skip_next), languageStrings['premiumDesc7']),
               ]))),
           Padding(
               padding: const EdgeInsets.fromLTRB(70, 10, 70, 10),
@@ -464,38 +494,43 @@ class RegisterState extends State<RegisterScreen> {
                       borderRadius: new BorderRadius.circular(15.0),
                       side: BorderSide(color: Colors.black)),
                   color: Colors.red[400],
-                  onPressed: _launchPremiumURL,
+                  onPressed: () async {
+                    setState(() {
+                      _loading = true;
+                    });
+                    bool res = await regiterProcess(true);
+                    if (res) await _becomePremium();
+                    Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                            builder: (BuildContext context) => MainScreen()),
+                        (Route<dynamic> route) => false);
+                  },
                   child: Text(languageStrings['premiumButton'],
                       style: TextStyle(fontFamily: 'Circular', fontSize: 20),
                       textAlign: TextAlign.center)))
         ]));
   }
 
-Widget fourthPage() {
+  Widget fourthPage() {
     return Center(
-            child: Scaffold(
-                backgroundColor: Colors.transparent,
-                body: Column(children: <Widget>[
-                      Center(
-                          child: Text(
-                        languageStrings['welcomeMessage1'],
-                        style: TextStyle(fontFamily: 'Circular', fontSize: 30),
-                      )),
-                      Padding(
-              padding: const EdgeInsets.fromLTRB(0, 15, 0, 10),
-              child: Center(
+        child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: Column(children: <Widget>[
+              Center(
                   child: Text(
-                      languageStrings['welcomeMessage2'],
-                      style: TextStyle(fontFamily: 'Circular', fontSize: 20),
-                      maxLines: 2,
-                      overflow: TextOverflow.fade,
-                      textAlign: TextAlign.center)
-                      )
-                      )
-                      ]
-                      )
-                      )
-    );
+                languageStrings['welcomeMessage1'],
+                style: TextStyle(fontFamily: 'Circular', fontSize: 30),
+              )),
+              Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 15, 0, 10),
+                  child: Center(
+                      child: Text(languageStrings['welcomeMessage2'],
+                          style:
+                              TextStyle(fontFamily: 'Circular', fontSize: 20),
+                          maxLines: 2,
+                          overflow: TextOverflow.fade,
+                          textAlign: TextAlign.center)))
+            ])));
   }
 
   @override
@@ -521,7 +556,6 @@ Widget fourthPage() {
                   onWillPop: _onBackPressed,
                   child: Expanded(
                       child: PageView(
-                          
                           physics: new NeverScrollableScrollPhysics(),
                           controller: _pageController,
                           children: <Widget>[

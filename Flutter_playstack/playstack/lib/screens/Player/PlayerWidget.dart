@@ -34,7 +34,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
   bool _pressing = false;
   bool _showCover;
   bool seekDone;
-  bool _loopEnabled;
+  bool _loopEnabled = false;
   bool _shuffleEnabled;
   bool _usingButtons = false;
   int absoluteChangeInPage = 0;
@@ -56,11 +56,11 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
   void _initAudioPlayer() {
     if (!playerActive) {
+      playerActive = true;
       advancedPlayer.mode = mode;
 
-      durationSubscription =
-          advancedPlayer.onDurationChanged.listen((duration) {
-        setState(() => duration = duration);
+      durationSubscription = advancedPlayer.onDurationChanged.listen((value) {
+        setState(() => duration = value);
 
         // Para que aparezca en la barra de notificaciones la reproducción, sólo implementado para iOS
         if (Theme.of(context).platform == TargetPlatform.iOS) {
@@ -85,16 +85,16 @@ class _PlayerWidgetState extends State<PlayerWidget>
       // Listener para actualizar la posición de la canción
       positionSubscription =
           advancedPlayer.onAudioPositionChanged.listen((p) => setState(() {
-                position = p;
+                position.value = p;
               }));
 
       // Listener para cuando acabe
       playerCompleteSubscription =
           advancedPlayer.onPlayerCompletion.listen((event) {
-        if (position >= duration) {
+        if (position.value >= duration) {
           //_onComplete();
           //setState(() {
-          //  position = duration;
+          //  position.value = duration;
           //});
           skipSong(true);
         }
@@ -103,8 +103,8 @@ class _PlayerWidgetState extends State<PlayerWidget>
       playerErrorSubscription = advancedPlayer.onPlayerError.listen((msg) {
         print('advancedPlayer error : $msg');
         setState(() {
-          playerState = PlayerState.stopped;
-          position = Duration(seconds: 0);
+          audioPlayerState = AudioPlayerState.STOPPED;
+          position.value = Duration(seconds: 0);
         });
       });
 
@@ -124,60 +124,55 @@ class _PlayerWidgetState extends State<PlayerWidget>
     }
   }
 
-  Future<bool> waitForSong() {
-    return Future.any([
-      Future.value(Future.doWhile(() => currentSong == null) == null),
-      Future.delayed(Duration(seconds: 10), () {
-        if (currentSong == null) {
-          onPlayerScreen = false;
-          Toast.show(languageStrings['cantPlaySong'], context,
-              duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
-          return false;
-        } else {
-          return true;
-        }
-      })
-    ]);
+  Future<bool> errorInSong() async {
+    dynamic error = await Future.doWhile(() => currentSong == null)
+        .timeout(Duration(seconds: 5), onTimeout: () {
+      if (currentSong == null) {
+        onPlayerScreen = false;
+        Toast.show(languageStrings['cantPlaySong'], context,
+            duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+        return true;
+      } else {
+        return false;
+      }
+    });
+    return !(error == null);
   }
 
   @override
   void initState() {
-    super.initState();
-
-    waitForSong().then((value) {
-      if (value) {
-        print("Url de la cancion: " + currentSong.url);
-        advancedPlayer.seekCompleteHandler =
-            (finished) => setState(() => seekDone = finished);
-        _showCover = false;
-        _loopEnabled = false;
-        _shuffleEnabled = true;
-        _pageController.addListener(() {
-          _backController.jumpTo(_pageController.offset);
-          print(absoluteChangeInPage);
-          if ((_pageController.page - currentPage).abs() > 0.9) {
-            if (absoluteChangeInPage > 0) {
-              skipSong(false);
-            } else if (absoluteChangeInPage < 0) {
-              skipPrevious(false);
-            }
-            absoluteChangeInPage = 0;
+    if (errorInSong() != null) {
+      print("Url de la cancion: " + currentSong.url);
+      advancedPlayer.seekCompleteHandler =
+          (finished) => setState(() => seekDone = finished);
+      _showCover = false;
+      _loopEnabled = false;
+      _shuffleEnabled = true;
+      _pageController.addListener(() {
+        _backController.jumpTo(_pageController.offset);
+        print(absoluteChangeInPage);
+        if ((_pageController.page - currentPage).abs() > 0.9) {
+          if (absoluteChangeInPage > 0) {
+            skipSong(false);
+          } else if (absoluteChangeInPage < 0) {
+            skipPrevious(false);
           }
-        });
-        initAnim();
-        _initAudioPlayer();
-        if (playerState != PlayerState.playing && !playerActive) {
-          togglePlayPause();
+          absoluteChangeInPage = 0;
         }
-        playerActive = true;
-      } else {
-        Navigator.of(context).pop();
+      });
+      initAnim();
+      if (audioPlayerState != AudioPlayerState.PLAYING && !playerActive) {
+        togglePlayPause();
       }
-    });
+      playerActive = true;
+    } else {
+      Navigator.of(context).pop();
+    }
+    super.initState();
   }
 
   void _onComplete() {
-    setState(() => playerState = PlayerState.stopped);
+    setState(() => audioPlayerState = AudioPlayerState.STOPPED);
   }
 
   void buildPageLists(bool onlyNext) {
@@ -196,7 +191,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
   Future<int> _pause() async {
     final result = await advancedPlayer.pause();
-    if (result == 1) setState(() => playerState = PlayerState.paused);
+    if (result == 1) setState(() => audioPlayerState = AudioPlayerState.PAUSED);
     return result;
   }
 
@@ -204,24 +199,25 @@ class _PlayerWidgetState extends State<PlayerWidget>
     final result = await advancedPlayer.stop();
     if (result == 1) {
       setState(() {
-        playerState = PlayerState.stopped;
-        position = Duration();
+        audioPlayerState = AudioPlayerState.STOPPED;
+        position.value = Duration();
       });
     }
     return result;
   }
 
   Future<int> _play() async {
-    final playPosition = (position != null &&
+    final playposition = (position.value != null &&
             duration != null &&
-            position.inMilliseconds > 0 &&
-            position.inMilliseconds < duration.inMilliseconds)
-        ? position
+            position.value.inMilliseconds > 0 &&
+            position.value.inMilliseconds < duration.inMilliseconds)
+        ? position.value
         : Duration.zero;
-    print('Duration: ${duration}, Position: ${position}');
+    print('Duration: ${duration}, position.value: ${position.value}');
     final result =
-        await advancedPlayer.play(currentSong.url, position: playPosition);
-    if (result == 1) setState(() => playerState = PlayerState.playing);
+        await advancedPlayer.play(currentSong.url, position: playposition);
+    if (result == 1)
+      setState(() => audioPlayerState = AudioPlayerState.PLAYING);
 
     // default playback rate is 1.0
     // this should be called after advancedPlayer.play() or advancedPlayer.resume()
@@ -242,11 +238,12 @@ class _PlayerWidgetState extends State<PlayerWidget>
   void dispose() {
     /*advancedPlayer.stop();
     durationSubscription?.cancel();
-    positionSubscription?.cancel();
+    position.valueSubscription?.cancel();
     playerCompleteSubscription?.cancel();
     playerErrorSubscription?.cancel();
-    playerStateSubscription?.cancel();
-    super.dispose();*/
+    audioPlayerStateSubscription?.cancel();
+    */
+    super.dispose();
   }
 
   void skipPrevious(bool mustScroll) {
@@ -274,7 +271,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
       }
       currentPage -= 1;
       currentSong.markAsListened();
-      position = Duration(seconds: 0);
+      position.value = Duration(seconds: 0);
       duration = Duration(seconds: 0);
       Future.delayed(Duration(milliseconds: mustScroll ? 900 : 500), () {
         if (!isPlaying) togglePlayPause();
@@ -321,7 +318,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
       }
       currentPage += 1;
       currentSong.markAsListened();
-      position = Duration(seconds: 0);
+      position.value = Duration(seconds: 0);
       duration = Duration(seconds: 0);
       Future.delayed(Duration(milliseconds: mustScroll ? 900 : 500), () {
         if (!isPlaying) togglePlayPause();
@@ -360,6 +357,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
               ));
             });
           });
+    setState(() {
+      _animateIcon =
+          Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
+    });
   }
 
   void togglePlayPause() {
@@ -596,19 +597,24 @@ class _PlayerWidgetState extends State<PlayerWidget>
                       activeColor: Colors.white.withOpacity(0.8),
                       inactiveColor: Colors.grey.withOpacity(0.5),
                       onChanged: (v) async {
-                        final position = v * duration.inMilliseconds;
+                        /*position.value = Duration(
+                            milliseconds:
+                                (v * duration.inMilliseconds).round());
                         var temp = await advancedPlayer.getDuration();
-                        if (temp > position) {
+                        if (temp > position.value.inMilliseconds) {
                           print(temp.toString());
-                          advancedPlayer
-                              .seek(Duration(milliseconds: position.round()));
-                        }
+                          advancedPlayer.seek(Duration(
+                              milliseconds:
+                                  position.value.inMilliseconds.round()));
+                        }*/
                       },
-                      value: (position != null &&
+                      value: (position.value != null &&
                               duration != null &&
-                              position.inMilliseconds > 0 &&
-                              position.inMilliseconds < duration.inMilliseconds)
-                          ? position.inMilliseconds / duration.inMilliseconds
+                              position.value.inMilliseconds > 0 &&
+                              position.value.inMilliseconds <
+                                  duration.inMilliseconds)
+                          ? position.value.inMilliseconds /
+                              duration.inMilliseconds
                           : 0.0,
                     ),
                   ))),
@@ -616,17 +622,21 @@ class _PlayerWidgetState extends State<PlayerWidget>
               //Posicion actual
               padding: EdgeInsets.only(top: width * 0.005),
               child: Material(
-                color: Colors.transparent,
-                child: Text(
-                  positionText,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: width / 20,
-                      color: Colors.white.withOpacity(0.6),
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.0),
-                ),
-              )),
+                  color: Colors.transparent,
+                  child: ValueListenableBuilder(
+                      valueListenable: position,
+                      builder:
+                          (BuildContext context, Duration value, Widget child) {
+                        return Text(
+                          positionText,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontSize: width / 20,
+                              color: Colors.white.withOpacity(0.6),
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 1.0),
+                        );
+                      }))),
           Padding(
               //SECCION DE BOTONES
               padding: EdgeInsets.fromLTRB(
@@ -703,6 +713,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
   @override
   Widget build(BuildContext context) {
+    _initAudioPlayer();
     width = MediaQuery.of(context).size.width;
     allSongs.clear();
     buildPageLists(false);
@@ -715,7 +726,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
               value: advancedPlayer.onAudioPositionChanged),
         ],
         child: onPlayerScreen
-            ? (currentSong == null
+            ? (currentSong != null
                 ? WillPopScope(
                     onWillPop: () async {
                       onPlayerScreen = false;

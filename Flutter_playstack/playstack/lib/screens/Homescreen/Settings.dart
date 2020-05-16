@@ -108,11 +108,18 @@ class _SettingsState extends State<Settings> {
                 MaterialPageRoute(
                     builder: (BuildContext context) => AccessScreen()),
                 (Route<dynamic> route) => false);
+            userName = null;
+            imagePath = null;
+            currentSong = null;
+            homeIndex.value = 0;
           },
           child: Text("Cerrar sesión")),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       backgroundColor: Color(0xFF191414),
       appBar: AppBar(
+        leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios),
+            onPressed: () => homeIndex.value = 0),
         centerTitle: true,
         title: Text("Configuración"),
       ),
@@ -128,7 +135,6 @@ class _SettingsState extends State<Settings> {
               onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (BuildContext context) => Account())),
               child: Text('Cuenta')),
-          FlatButton(onPressed: null, child: Text('Configuración'))
         ],
       ),
     );
