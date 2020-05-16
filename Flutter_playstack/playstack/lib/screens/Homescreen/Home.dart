@@ -112,6 +112,9 @@ class _HomeScreenState extends State<HomeScreen> {
       case 3:
         result = GenresSongs(genre: currentGenre, image: currentGenreImage);
         break;
+      case 4:
+        result = ArtistsSongs(currentArtist, currentArtistImage);
+        break;
     }
     return result;
   }

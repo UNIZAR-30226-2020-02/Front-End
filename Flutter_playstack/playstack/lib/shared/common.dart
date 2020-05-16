@@ -575,7 +575,7 @@ class ArtistItem extends StatelessWidget {
         leftAlready = false;
         currentArtist = artistName;
         currentArtistImage = image;
-        homeIndex.value = 3;
+        homeIndex.value = 4;
       },
       child: Column(
         children: <Widget>[
