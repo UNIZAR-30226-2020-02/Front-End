@@ -99,7 +99,7 @@ class _GenresSongsState extends State<GenresSongs> {
         title: Text(genre,
             style: TextStyle(
                 fontFamily: 'Circular',
-                fontSize: MediaQuery.of(context).size.width / 100)),
+                fontSize: MediaQuery.of(context).size.width / 20)),
       ),
       backgroundColor: backgroundColor,
       body: ListView(

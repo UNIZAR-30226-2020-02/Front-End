@@ -4,6 +4,7 @@ import 'package:playstack/screens/GenresSongs.dart';
 import 'package:playstack/screens/Homescreen/HomeScreenElements.dart';
 import 'package:playstack/screens/Homescreen/Settings.dart';
 import 'package:playstack/screens/Homescreen/Social/Social.dart';
+import 'package:playstack/screens/Player/PlayingNow.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/common.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -105,24 +106,36 @@ class _HomeScreenState extends State<HomeScreen> {
             )));
   }
 
+  Widget showHome(int index) {
+    Widget result;
+    switch (index) {
+      case 0:
+        result = startHome();
+        break;
+      case 1:
+        result = Social();
+        break;
+      case 2:
+        result = Settings();
+        break;
+      case 3:
+        result = GenresSongs(genre: currentGenre, image: currentGenreImage);
+        break;
+    }
+    return result;
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
         valueListenable: homeIndex,
         builder: (BuildContext context, int value, Widget child) {
-          return homeIndex.value == 0
-              ? startHome()
-              : WillPopScope(
-                  onWillPop: () async {
-                    homeIndex.value = 0;
-                    return false;
-                  },
-                  child: homeIndex.value == 1
-                      ? Social()
-                      : homeIndex.value == 2
-                          ? Settings()
-                          : GenresSongs(
-                              genre: currentGenre, image: currentGenreImage));
+          return WillPopScope(
+              onWillPop: () async {
+                homeIndex.value = 0;
+                return false;
+              },
+              child: showHome(homeIndex.value));
         });
   }
 }

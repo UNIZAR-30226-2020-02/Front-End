@@ -39,5 +39,6 @@
     "premiumButton": "Get Premium",
     "internalError": "Internal server error, please, try again later.",
     "invalidRequest": "Invalid request. Make sure you have the latest app version.",
-    "upNext": "UP NEXT"
+    "upNext": "UP NEXT",
+    "cantPlaySong": "Couldn't play requested song."
 }

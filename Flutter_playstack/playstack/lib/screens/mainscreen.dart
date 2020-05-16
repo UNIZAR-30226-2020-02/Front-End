@@ -11,13 +11,13 @@ import 'package:playstack/models/Song.dart';
 
 class MainScreen extends StatefulWidget {
   //Singleton
-  static final MainScreen _mainScreen = MainScreen._constructor();
+  /*static final MainScreen _mainScreen = MainScreen._constructor();
   factory MainScreen() => _mainScreen;
   MainScreen._constructor();
 
-  final MainScreenState _mainScreenState = MainScreenState();
+  final MainScreenState _mainScreenState = MainScreenState();*/
   @override
-  MainScreenState createState() => _mainScreenState;
+  MainScreenState createState() => MainScreenState();
 }
 
 class MainScreenState extends State<MainScreen> {
@@ -40,8 +40,12 @@ class MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        body: extendedBottomBarWith(context, show(currentIndex)),
-        bottomNavigationBar: bottomBar(context));
+    return ValueListenableBuilder(
+        valueListenable: currentIndex,
+        builder: (BuildContext context, int value, Widget child) {
+          return Scaffold(
+              body: extendedBottomBarWith(context, show(currentIndex.value)),
+              bottomNavigationBar: bottomBar(context));
+        });
   }
 }

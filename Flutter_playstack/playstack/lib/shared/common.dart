@@ -7,14 +7,13 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:playstack/screens/Player/PlayerWidget.dart';
-import 'package:playstack/screens/mainscreen.dart';
+import 'package:playstack/screens/MainScreen.dart';
 import 'package:playstack/models/FolderType.dart';
 import 'package:playstack/models/PlaylistType.dart';
 import 'package:playstack/models/Song.dart';
 import 'package:playstack/screens/Homescreen/Home.dart';
 import 'package:playstack/screens/Library/Library.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
-import 'package:playstack/screens/Mainscreen.dart';
 import 'package:playstack/screens/Player/PlayingNow.dart';
 import 'package:playstack/screens/Search/SearchScreen.dart';
 import 'package:flutter/cupertino.dart';
@@ -44,7 +43,7 @@ var backgroundColor = Color(0xFF191414);
 
 String userName;
 String userEmail;
-int currentIndex = 0;
+final ValueNotifier<int> currentIndex = ValueNotifier<int>(0);
 Song currentSong;
 String kindOfAccount = 'No premium';
 var rng = new Random();
@@ -123,13 +122,10 @@ Widget bottomBar(context) {
       height: height,
       child: BottomNavigationBar(
           fixedColor: Colors.red[600],
-          currentIndex: currentIndex,
+          currentIndex: currentIndex.value,
           onTap: (int index) {
-            currentIndex = index;
-            if (currentIndex == 3) onPlayerScreen = true;
-            Navigator.pop(context);
-            Navigator.of(context).push(MaterialPageRoute(
-                builder: (BuildContext context) => mainScreens[index]));
+            currentIndex.value = index;
+            if (currentIndex.value == 3) onPlayerScreen = true;
           },
           type: BottomNavigationBarType.shifting,
           items: [
@@ -175,7 +171,7 @@ Widget show(int index) {
     case 3:
       onPlayerScreen = true;
       if (player == null) player = PlayerWidget();
-      return player;
+      return PlayingNowScreen();
       break;
   }
 }
