@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:playstack/models/Album.dart';
 import 'package:playstack/models/Artist.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/services/database.dart';
@@ -17,6 +18,7 @@ class _ArtistProfileState extends State<ArtistProfile> {
   bool _loading = true;
 
   List songs = new List();
+  List albums = new List();
 
   _ArtistProfileState(this.artist);
 
@@ -24,10 +26,15 @@ class _ArtistProfileState extends State<ArtistProfile> {
   void initState() {
     super.initState();
     _getArtistSongs();
+    _getArtisAlbums();
   }
 
   void _getArtistSongs() async {
     songs = await getArtistSongsDB(artist.name);
+  }
+
+  void _getArtisAlbums() async {
+    albums = await getArtistAlbumsDB(artist.name);
     setState(() {
       _loading = false;
     });
@@ -68,7 +75,7 @@ class _ArtistProfileState extends State<ArtistProfile> {
                       children: <Widget>[
                         SizedBox(height: 10),
                         CircleAvatar(
-                            radius: 60,
+                            radius: 70,
                             backgroundImage: NetworkImage(artist.photo)),
                       ],
                     )),
@@ -97,7 +104,24 @@ class _ArtistProfileState extends State<ArtistProfile> {
                               isNotOwn: true,
                             );
                           },
-                        )
+                        ),
+                        albums.isNotEmpty
+                            ? Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Text("Álbumes de " + artist.name,
+                                    style: TextStyle(fontSize: 20)),
+                              )
+                            : Text(""),
+                        albums.isNotEmpty
+                            ? ListView.builder(
+                                scrollDirection: Axis.vertical,
+                                shrinkWrap: true,
+                                itemCount: albums.isEmpty ? 0 : albums.length,
+                                itemBuilder: (BuildContext context, int index) {
+                                  return new AlbumTile(albums[index]);
+                                },
+                              )
+                            : Text("")
                       ],
                     ),
                   )

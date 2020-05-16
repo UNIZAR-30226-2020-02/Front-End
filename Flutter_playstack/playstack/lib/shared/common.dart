@@ -50,7 +50,7 @@ String userName;
 String userEmail;
 int currentIndex = 0;
 Song currentSong;
-String kindOfAccount = 'No premium';
+String accountType = 'No premium';
 String friendName;
 bool leftAlready;
 bool loadingUserData = true;
@@ -1089,59 +1089,4 @@ class PlaylistItem extends StatelessWidget {
       ),
     );
   }
-}
-
-class UserTile extends StatelessWidget {
-  final User user;
-  final String tab;
-  UserTile(this.user, this.tab);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
-      child: ListTile(
-        leading: CircleAvatar(
-            radius: 30, backgroundImage: NetworkImage(user.photoUrl)),
-        title: Text(user.name),
-        trailing: tab == "Requests" ? followRequestButtons(context) : Text(''),
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(
-            builder: (BuildContext context) => YourPublicProfile(
-                  false,
-                  friendUserName: user.name,
-                  otherUser: user,
-                ))),
-      ),
-    );
-  }
-}
-
-Widget followRequestButtons(context) {
-  var _width = MediaQuery.of(context).size.width / 2;
-  return Container(
-    width: _width,
-    child: Row(
-      children: <Widget>[
-        Container(
-          width: _width / 2.3,
-          child: RaisedButton(
-            onPressed: () => print("Acceptar"),
-            child: Text("Aceptar"),
-            color: Colors.lime[500],
-          ),
-        ),
-        SizedBox(
-          width: 15,
-        ),
-        Container(
-          width: _width / 2.1,
-          child: RaisedButton(
-            onPressed: () => print("Rechazar"),
-            child: Text("Rechazar"),
-            color: Colors.red[500],
-          ),
-        )
-      ],
-    ),
-  );
 }

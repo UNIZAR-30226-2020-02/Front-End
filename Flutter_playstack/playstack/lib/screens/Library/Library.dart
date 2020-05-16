@@ -1,6 +1,7 @@
 import 'package:bot_toast/bot_toast.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:playstack/models/Album.dart';
 import 'package:playstack/models/Artist.dart';
 import 'package:playstack/models/PlaylistType.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
@@ -18,17 +19,33 @@ class _LibraryState extends State<Library> {
   final TextEditingController newPLaylistController =
       new TextEditingController();
   final TextEditingController newFolderController = new TextEditingController();
+
   List folders = new List();
   List artistsList = new List();
+  List albumsList = new List();
+
   bool _loading = true;
   bool _loadingArtists = true;
+  bool _loadingAlbums = true;
+
   String dropdownItem;
+
   @override
   void initState() {
     super.initState();
     getFolders();
     getPlaylists();
     getArtists();
+    getAlbums();
+  }
+
+  void getAlbums() async {
+    albumsList = await getAlbumsDB();
+    if (currentIndex == 2) {
+      setState(() {
+        _loadingAlbums = false;
+      });
+    }
   }
 
   void getArtists() async {
@@ -97,7 +114,7 @@ class _LibraryState extends State<Library> {
             ],
           ),
           body: TabBarView(
-            children: [playLists(), artists(), Text('albumes')],
+            children: [playLists(), artists(), albums()],
           ),
         ));
   }
@@ -303,6 +320,19 @@ class _LibraryState extends State<Library> {
         });
       },
     );
+  }
+
+  Widget albums() {
+    return _loadingAlbums
+        ? LoadingSongs()
+        : ListView.builder(
+            scrollDirection: Axis.vertical,
+            shrinkWrap: true,
+            itemCount: albumsList.isEmpty ? 0 : albumsList.length,
+            itemBuilder: (BuildContext context, int index) {
+              return new AlbumTile(albumsList[index]);
+            },
+          );
   }
 
   Widget artists() {

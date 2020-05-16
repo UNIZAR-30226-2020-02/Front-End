@@ -1,12 +1,201 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
+import 'package:playstack/models/Album.dart';
 import 'package:playstack/models/Artist.dart';
 import 'package:playstack/models/FolderType.dart';
 import 'package:playstack/models/PlaylistType.dart';
 import 'package:playstack/models/Song.dart';
 import 'package:playstack/models/user.dart';
 import 'package:playstack/shared/common.dart';
+
+void addSongToListFull(List songs, String title, List artists, String url,
+    List albunes, dynamic urlAlbums, bool isFavorite) {
+  if (urlAlbums is String) {
+    urlAlbums = urlAlbums.toList();
+  }
+  Song newSong = new Song(
+      title: title,
+      artists: artists,
+      url: url,
+      albums: albunes,
+      albumCoverUrls: urlAlbums,
+      isFav: isFavorite);
+
+  songs.add(newSong);
+}
+
+Future<List> getAlbumSongs(String album) async {
+  print("Recuperando camciones de album $album");
+
+  List songs = new List();
+  dynamic response = await http.get(
+      'https://playstack.azurewebsites.net/get/song/byalbum?NombreUsuario=$userName&NombreAlbum=$album');
+
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("Canciones de album $album recuperadas");
+
+    response.forEach((title, info) => addSongToListFull(
+        songs,
+        title,
+        info['Artistas'],
+        info['url'],
+        info['Albumes'],
+        info['ImagenesAlbum'],
+        info['EsFavorita']));
+  } else {
+    print("Statuscode de album $album " + response.statusCode.toString());
+    print('Error buscando canciones de album $album, body: ' +
+        response.body.toString());
+  }
+  print("El album tiene  " + songs.length.toString() + " canciones");
+  return songs;
+}
+
+Future<List> getArtistAlbumsDB(String artistName) async {
+  print("Recuperando albumes de $artistName");
+
+  List albums = new List();
+  dynamic response = await http.get(
+      'https://playstack.azurewebsites.net/get/artist/albums?NombreArtista=$artistName');
+
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("Albumes de $artistName recuperados");
+    response.forEach((name, coverUrl) => addAlbumToList(
+          albums,
+          name,
+          coverUrl,
+        ));
+  } else {
+    print('Error buscando albumes');
+  }
+  print("Hay " + albums.length.toString() + " albumes");
+  return albums;
+}
+
+addAlbumToList(List list, String name, String coverUrl) {
+  Album newAlbum = new Album(name, coverUrl);
+  list.add(newAlbum);
+}
+
+Future<List> getAlbumsDB() async {
+  print("Recuperando albumes");
+
+  List albums = new List();
+  dynamic response =
+      await http.get('https://playstack.azurewebsites.net/get/randomalbums');
+
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("Albumes recuperados");
+    response.forEach((name, coverUrl) => addAlbumToList(
+          albums,
+          name,
+          coverUrl,
+        ));
+  } else {
+    print('Error buscando albumes');
+  }
+  print("Hay " + albums.length.toString() + " albumes");
+  return albums;
+}
+
+Future<bool> unfollow(String user) async {
+  print("Dejando de seguir a $user");
+  dynamic data = {'NombreUsuario': userName, 'Seguido': user};
+  data = jsonEncode(data);
+  dynamic response = await http.post(
+      "https://playstack.azurewebsites.net/user/unfollow",
+      headers: {"Content-Type": "application/json"},
+      body: data);
+
+  if (response.statusCode == 200) {
+    print("Dejado de seguir a $user correctamente");
+    return true;
+  } else {
+    print("Statuscode: " + response.statusCode.toString());
+    print("No se pudo dejar de seguir a $user: " + response.body.toString());
+    return false;
+  }
+}
+
+Future<bool> rejectFollowRequest(String follower) async {
+  print("Rechazando solicitud de $follower");
+  dynamic data = {'NombreUsuario': userName, 'Seguidor': follower};
+  data = jsonEncode(data);
+  dynamic response = await http.post(
+      "https://playstack.azurewebsites.net/user/reject/followRequest",
+      headers: {"Content-Type": "application/json"},
+      body: data);
+
+  if (response.statusCode == 200) {
+    print("Solicitud rechazada correctamente");
+    return true;
+  } else {
+    print("No se pudo rechazar la solicitud de follow: " +
+        response.body.toString());
+    return false;
+  }
+}
+
+Future<bool> removeFollowRequest(String follow) async {
+  print("Retirando solicitud a $follow");
+  dynamic data = {'NombreUsuario': userName, 'Seguido': follow};
+  data = jsonEncode(data);
+  dynamic response = await http.post(
+      "https://playstack.azurewebsites.net/user/remove/followRequest",
+      headers: {"Content-Type": "application/json"},
+      body: data);
+
+  if (response.statusCode == 200) {
+    print("Solicitud eliminada correctamente");
+    return true;
+  } else {
+    print("No se pudo eliminar la solicitud de follow: " +
+        response.body.toString());
+    return false;
+  }
+}
+
+Future<bool> checkAccountType() async {
+  print("Comprobando tipo de cuenta de $userName");
+  dynamic response = await http.get(
+      'https://playstack.azurewebsites.net/user/get/permissions?Usuario=$userName');
+
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("Tipo de cuenta recuperada");
+    accountType = response['Permiso'];
+    return true;
+  } else {
+    print(
+        'Error recuperando tipo de cuenta, body: ' + response.body.toString());
+    return false;
+  }
+}
+
+Future<bool> askToBecomePremium() async {
+  print("Solicitando ser premium $userName");
+  dynamic data = {
+    'NombreUsuario': userName,
+  };
+  data = jsonEncode(data);
+  dynamic response = await http.post(
+      "https://playstack.azurewebsites.net/user/askforpremium",
+      headers: {"Content-Type": "application/json"},
+      body: data);
+
+  if (response.statusCode == 200) {
+    print("Solicitud enviada correctamente");
+    return true;
+  } else {
+    print("No se pudo enviar la solicitud de hacerse premium: " +
+        response.body.toString());
+    return false;
+  }
+}
 
 Future<bool> removePlaylistFromFolder(
     String playlistName, String folderName) async {
@@ -120,9 +309,6 @@ Future<List> getArtistSongsDB(String artist) async {
   if (response.statusCode == 200) {
     response = jsonDecode(response.body);
     print("Canciones de $artist recuperadas");
-
-    response
-        .forEach((title, info) => print(title + " y info " + info.toString()));
 
     response.forEach((title, info) => addSongToList(songs, title,
         info['Artistas'], info['Albumes'], info['ImagenesAlbum'], info['url']));
@@ -462,8 +648,8 @@ Future<List> getFollowersDB() async {
 }
 
 Future<bool> follow(String newFriend) async {
-  print("Siguiendo $userName a $newFriend...");
-  dynamic data = {'Usuario': newFriend, 'Seguidor': userName};
+  print("Siguiendo $newFriend a $userName...");
+  dynamic data = {'NombreUsuario': userName, 'Seguidor': newFriend};
   data = jsonEncode(data);
   dynamic response = await http.post(
       "https://playstack.azurewebsites.net/user/follow",
@@ -506,7 +692,7 @@ Future<List> listFollowRequests() async {
 
 Future<bool> sendFollowRequest(String newFriend) async {
   print("Enviando solicitud de seguimiento $userName a $newFriend...");
-  dynamic data = {'NombreUsuario': userName, 'Seguidor': newFriend};
+  dynamic data = {'NombreUsuario': userName, 'Seguido': newFriend};
   print("La data" + data.toString());
 
   data = jsonEncode(data);
@@ -576,7 +762,9 @@ Future<List> getUsers(String keyword) async {
   if (response.statusCode == 200) {
     response = jsonDecode(response.body);
     print("Response " + response.toString());
-    return response['Usuarios'];
+    List users = response['Usuarios'];
+    users.remove(userName);
+    return users;
   } else {
     print('Error buscando usuarios');
 
@@ -719,8 +907,7 @@ addSongToList(List songs, String title, List artists, List albums,
       url: url,
       albums: albums,
       albumCoverUrls: albumCoverUrls);
-  print(
-      "Creada cancion con titulo $title y covers " + albumCoverUrls.toString());
+
   songs.add(newSong);
 }
 

@@ -31,6 +31,7 @@ class MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     checkLoginStatus();
+    checkAccountType();
     getUserData();
   }
 

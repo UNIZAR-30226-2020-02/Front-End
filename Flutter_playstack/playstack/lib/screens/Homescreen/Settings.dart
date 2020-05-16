@@ -135,7 +135,6 @@ class _SettingsState extends State<Settings> {
               onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (BuildContext context) => Account())),
               child: Text('Cuenta')),
-          FlatButton(onPressed: null, child: Text('Configuración'))
         ],
       ),
     );

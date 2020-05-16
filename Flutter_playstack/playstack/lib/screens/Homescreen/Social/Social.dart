@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:playstack/models/user.dart';
+import 'package:playstack/screens/Homescreen/PublicProfile.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/screens/Homescreen/Social/SearchPeople.dart';
 import 'package:playstack/shared/Loading.dart';
+import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:playstack/shared/common.dart';
+import 'package:toast/toast.dart';
 
 class Social extends StatefulWidget {
   @override
@@ -13,6 +17,7 @@ class _SocialState extends State<Social> {
   bool _loadingFollowing = true;
   bool _loadingFollowers = true;
   bool _loadingFollowRequests = true;
+  bool _applying = false;
 
   List followRequests = new List();
 
@@ -33,7 +38,7 @@ class _SocialState extends State<Social> {
     }
   }
 
-  void getFollowers() async {
+  Future<void> getFollowers() async {
     followers = await getFollowersDB();
 
     if (!leftAlready) {
@@ -43,7 +48,7 @@ class _SocialState extends State<Social> {
     }
   }
 
-  void getFollowRequests() async {
+  Future<void> getFollowRequests() async {
     followRequests = await listFollowRequests();
 
     if (!leftAlready) {
@@ -51,6 +56,96 @@ class _SocialState extends State<Social> {
         _loadingFollowRequests = false;
       });
     }
+  }
+
+  Widget followRequestButtons(User user, context) {
+    var _width = MediaQuery.of(context).size.width / 2;
+    return Container(
+      width: _width,
+      child: Row(
+        children: <Widget>[
+          Container(
+            width: _width / 2.3,
+            child: RaisedButton(
+              onPressed: () async {
+                setState(() {
+                  _applying = true;
+                });
+                bool res = await follow(user.name);
+                if (res) {
+                  Toast.show("Solicitud aceptada correctamente", context,
+                      gravity: Toast.CENTER,
+                      backgroundColor: Colors.grey,
+                      duration: Toast.LENGTH_LONG);
+                  await getFollowRequests();
+                  await getFollowers();
+                } else {
+                  Toast.show("Error aceptando solicitud", context,
+                      gravity: Toast.CENTER,
+                      backgroundColor: Colors.grey,
+                      duration: Toast.LENGTH_LONG);
+                }
+                setState(() {
+                  _applying = false;
+                });
+              },
+              child: Text("Aceptar"),
+              color: Colors.lime[500],
+            ),
+          ),
+          SizedBox(
+            width: 15,
+          ),
+          Container(
+            width: _width / 2.1,
+            child: RaisedButton(
+              onPressed: () async {
+                setState(() {
+                  _applying = true;
+                });
+                bool res = await rejectFollowRequest(user.name);
+                if (res) {
+                  Toast.show("Solicitud rechazada correctamente", context,
+                      gravity: Toast.CENTER,
+                      backgroundColor: Colors.grey,
+                      duration: Toast.LENGTH_LONG);
+                  await getFollowRequests();
+                } else {
+                  Toast.show("Error rechazando solicitud", context,
+                      gravity: Toast.CENTER,
+                      backgroundColor: Colors.grey,
+                      duration: Toast.LENGTH_LONG);
+                }
+                setState(() {
+                  _applying = false;
+                });
+              },
+              child: Text("Rechazar"),
+              color: Colors.red[500],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget userTile(User user, String tab) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
+      child: ListTile(
+        leading: CircleAvatar(
+            radius: 30, backgroundImage: NetworkImage(user.photoUrl)),
+        title: Text(user.name),
+        trailing:
+            tab == "Requests" ? followRequestButtons(user, context) : Text(''),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (BuildContext context) => YourPublicProfile(
+                  false,
+                  friendUserName: user.name,
+                  otherUser: user,
+                ))),
+      ),
+    );
   }
 
   Widget showList(String listName) {
@@ -63,7 +158,7 @@ class _SocialState extends State<Social> {
             shrinkWrap: true,
             itemCount: following.isEmpty ? 0 : following.length,
             itemBuilder: (BuildContext context, int index) {
-              return new UserTile(following[index], "Following");
+              return userTile(following[index], "Following");
             },
           ),
         );
@@ -78,7 +173,7 @@ class _SocialState extends State<Social> {
             shrinkWrap: true,
             itemCount: followers.isEmpty ? 0 : followers.length,
             itemBuilder: (BuildContext context, int index) {
-              return new UserTile(followers[index], "Followers");
+              return userTile(followers[index], "Followers");
             },
           ),
         );
@@ -91,7 +186,7 @@ class _SocialState extends State<Social> {
           shrinkWrap: true,
           itemCount: followRequests.isEmpty ? 0 : followRequests.length,
           itemBuilder: (BuildContext context, int index) {
-            return new UserTile(followRequests[index], "Requests");
+            return userTile(followRequests[index], "Requests");
           },
         );
     }
@@ -149,12 +244,37 @@ class _SocialState extends State<Social> {
             style: TextStyle(fontFamily: 'Circular'),
           ),
         ),
-        body: TabBarView(
-          children: [
-            _loadingFollowing ? LoadingSongs() : showList("Following"),
-            _loadingFollowers ? LoadingSongs() : showList('Followers'),
-            _loadingFollowRequests ? LoadingSongs() : showList('FollowRequests')
-          ],
+        body: ModalProgressHUD(
+          opacity: 0,
+          child: Scaffold(
+            floatingActionButton: FloatingActionButton(
+                backgroundColor: Colors.red[400],
+                child: Icon(
+                  Icons.refresh,
+                  color: Colors.white,
+                ),
+                onPressed: () async {
+                  setState(() {
+                    _loadingFollowing = true;
+                    _loadingFollowers = true;
+                    _loadingFollowRequests = true;
+                  });
+                  getFollowing();
+                  getFollowers();
+                  getFollowRequests();
+                }),
+            backgroundColor: Colors.transparent,
+            body: TabBarView(
+              children: [
+                _loadingFollowing ? LoadingSongs() : showList("Following"),
+                _loadingFollowers ? LoadingSongs() : showList('Followers'),
+                _loadingFollowRequests
+                    ? LoadingSongs()
+                    : showList('FollowRequests')
+              ],
+            ),
+          ),
+          inAsyncCall: _applying,
         ),
       ),
     );

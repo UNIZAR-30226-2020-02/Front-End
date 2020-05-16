@@ -47,6 +47,7 @@ class _SearchPeopleState extends State<SearchPeople> {
       } else {
         if (!leftAlready) {
           setState(() {
+            _searched = false;
             _searchText = _searchController.text;
           });
         }
@@ -75,7 +76,9 @@ class _SearchPeopleState extends State<SearchPeople> {
           icon: _searched ? Icon(Icons.cancel) : Icon(Icons.search),
           onPressed: () async {
             if (_searched) {
-              leftAlready = true;
+              setState(() {
+                leftAlready = true;
+              });
               Navigator.of(context).pop();
             } else {
               if (!leftAlready) {
