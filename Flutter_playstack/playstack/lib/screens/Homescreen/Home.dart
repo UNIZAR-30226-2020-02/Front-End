@@ -96,27 +96,39 @@ class _HomeScreenState extends State<HomeScreen> {
             )));
   }
 
+  Widget showHome(int index) {
+    Widget result;
+    switch (index) {
+      case 0:
+        result = startHome();
+        break;
+      case 1:
+        result = Social();
+        break;
+      case 2:
+        result = Settings();
+        break;
+      case 3:
+        result = GenresSongs(genre: currentGenre, image: currentGenreImage);
+        break;
+      case 4:
+        result = ArtistsSongs(currentArtist, currentArtistImage);
+        break;
+    }
+    return result;
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
         valueListenable: homeIndex,
         builder: (BuildContext context, int value, Widget child) {
-          return homeIndex.value == 0
-              ? startHome()
-              : WillPopScope(
-                  onWillPop: () async {
-                    homeIndex.value = 0;
-                    return false;
-                  },
-                  child: homeIndex.value == 1
-                      ? Social()
-                      : homeIndex.value == 2
-                          ? Settings()
-                          : homeIndex.value == 3
-                              ? ArtistsSongs(currentArtist, currentArtistImage)
-                              : GenresSongs(
-                                  genre: currentGenre,
-                                  image: currentGenreImage));
+          return WillPopScope(
+              onWillPop: () async {
+                homeIndex.value = 0;
+                return false;
+              },
+              child: showHome(homeIndex.value));
         });
   }
 }

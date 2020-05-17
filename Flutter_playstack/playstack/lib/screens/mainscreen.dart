@@ -68,9 +68,9 @@ class MainScreenState extends State<MainScreen> {
         height: height,
         child: BottomNavigationBar(
             fixedColor: Colors.red[600],
-            currentIndex: currentIndex,
+            currentIndex: currentIndex.value,
             onTap: (int index) {
-              currentIndex = index;
+              currentIndex.value = index;
               if (index == 3) {
                 Navigator.of(context).push(MaterialPageRoute(
                     builder: (BuildContext context) => PlayingNowScreen()));
@@ -109,10 +109,14 @@ class MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        body: loadingUserData
-            ? Loading()
-            : extendedBottomBarWith(context, show(currentIndex)),
-        bottomNavigationBar: loadingUserData ? null : bottomBar(context));
+    return ValueListenableBuilder(
+        valueListenable: currentIndex,
+        builder: (BuildContext context, int value, Widget child) {
+          return Scaffold(
+              body: loadingUserData
+                  ? Loading()
+                  : extendedBottomBarWith(context, show(currentIndex.value)),
+              bottomNavigationBar: bottomBar(context));
+        });
   }
 }

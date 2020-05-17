@@ -7,7 +7,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:playstack/screens/Library/Folder.dart';
 import 'package:playstack/screens/Player/PlayerWidget.dart';
-import 'package:playstack/screens/mainscreen.dart';
+import 'package:playstack/screens/MainScreen.dart';
 import 'package:playstack/models/FolderType.dart';
 import 'package:playstack/models/PlaylistType.dart';
 import 'package:playstack/models/Song.dart';
@@ -29,8 +29,6 @@ import 'package:toast/toast.dart';
 /////                   SHARED VARIABLES DO NOT TOUCH                       //////
 //////////////////////////////////////////////////////////////////////////////////
 
-enum PlayerState { stopped, playing, paused }
-
 final ValueNotifier<int> homeIndex = ValueNotifier<int>(0);
 
 var currentGenre;
@@ -48,7 +46,7 @@ var backgroundColor = Color(0xFF191414);
 
 String userName;
 String userEmail;
-int currentIndex = 0;
+final ValueNotifier<int> currentIndex = ValueNotifier<int>(0);
 Song currentSong;
 String accountType = 'No premium';
 String friendName;
@@ -77,15 +75,13 @@ AudioCache audioCache = AudioCache();
 //Para canciones online SOLO HTTPS no HTTP
 AudioPlayer advancedPlayer = AudioPlayer();
 
-AudioPlayerState audioPlayerState;
+AudioPlayerState audioPlayerState = AudioPlayerState.STOPPED;
 Duration duration;
-Duration position;
 bool playerActive = false;
 
 List<Song> allSongs = [];
 bool onPlayerScreen = false;
 
-PlayerState playerState = PlayerState.stopped;
 PlayingRouteState playingRouteState = PlayingRouteState.SPEAKERS;
 StreamSubscription durationSubscription;
 StreamSubscription positionSubscription;
@@ -93,10 +89,12 @@ StreamSubscription playerCompleteSubscription;
 StreamSubscription playerErrorSubscription;
 StreamSubscription playerStateSubscription;
 
-get isPlaying => playerState == PlayerState.playing;
-get isPaused => playerState == PlayerState.paused;
+get isPlaying => audioPlayerState == AudioPlayerState.PLAYING;
+get isPaused => audioPlayerState == AudioPlayerState.PAUSED;
 get durationText => duration?.toString()?.split('.')?.first ?? '';
-get positionText => position?.toString()?.split('.')?.first ?? '';
+final ValueNotifier<Duration> position =
+    ValueNotifier<Duration>(Duration(seconds: 0));
+get positionText => position.value?.toString()?.split('.')?.first ?? '';
 
 PlayerMode mode = PlayerMode.MEDIA_PLAYER;
 
@@ -132,11 +130,10 @@ Widget bottomBar(context) {
       height: height,
       child: BottomNavigationBar(
           fixedColor: Colors.red[600],
-          currentIndex: currentIndex,
+          currentIndex: currentIndex.value,
           onTap: (int index) {
-            currentIndex = index;
-            Navigator.of(context).pushReplacement(MaterialPageRoute(
-                builder: (BuildContext context) => MainScreen()));
+            currentIndex.value = index;
+            if (currentIndex.value == 3) onPlayerScreen = true;
           },
           type: BottomNavigationBarType.shifting,
           items: [
@@ -181,7 +178,7 @@ Widget show(int index) {
     case 3:
       onPlayerScreen = true;
       if (player == null) player = PlayerWidget();
-      return player;
+      return PlayingNowScreen();
       break;
   }
 }
@@ -576,7 +573,7 @@ class ArtistItem extends StatelessWidget {
       onTap: () {
         currentArtist = artistName;
         currentArtistImage = image;
-        homeIndex.value = 3;
+        homeIndex.value = 4;
       },
       child: Column(
         children: <Widget>[

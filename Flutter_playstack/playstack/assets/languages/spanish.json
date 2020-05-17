@@ -41,5 +41,6 @@
   "invalidRequest": "Petición no válida. Asegúrese de tener la última versión de la aplicación.",
   "upNext": "A CONTINUACIÓN",
   "addSongToPlaylist": "Añadir canción a playlist",
-  "editPlaylist": "Editar playlist"
+  "editPlaylist": "Editar playlist",
+  "cantPlaySong": "No se ha podido reproducir la canción actual."
 }
