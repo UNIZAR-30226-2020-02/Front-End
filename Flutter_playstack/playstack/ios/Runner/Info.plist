@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>Playstack necesita acceso a tu música local</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Playstack requiere acceso a Fotos para cambiar la foto de perfil</string>
 	<key>NSCameraUsageDescription</key>

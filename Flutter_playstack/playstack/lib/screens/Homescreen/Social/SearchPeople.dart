@@ -32,20 +32,22 @@ class _SearchPeopleState extends State<SearchPeople> {
   void getAllUsers() async {
     users = await getUsers("");
     print("Recopilados todos los usuarios");
-    if (!leftAlready) setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   _SearchPeopleState() {
     _searchController.addListener(() {
       if (_searchController.text.isEmpty) {
-        if (!leftAlready) {
+        if (mounted) {
           setState(() {
             _searched = false;
             _searchText = "";
           });
         }
       } else {
-        if (!leftAlready) {
+        if (mounted) {
           setState(() {
             _searched = false;
             _searchText = _searchController.text;
@@ -76,20 +78,18 @@ class _SearchPeopleState extends State<SearchPeople> {
           icon: _searched ? Icon(Icons.cancel) : Icon(Icons.search),
           onPressed: () async {
             if (_searched) {
-              setState(() {
-                leftAlready = true;
-              });
               Navigator.of(context).pop();
             } else {
-              if (!leftAlready) {
+              if (mounted) {
                 setState(() {
                   _loading = true;
                   _searched = !_searched;
                 });
                 users = await getUsers(_searchController.text);
-                setState(() {
-                  _loading = false;
-                });
+                if (mounted)
+                  setState(() {
+                    _loading = false;
+                  });
               }
             }
           },

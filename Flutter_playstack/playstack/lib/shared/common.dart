@@ -52,7 +52,6 @@ int currentIndex = 0;
 Song currentSong;
 String accountType = 'No premium';
 String friendName;
-bool leftAlready;
 bool loadingUserData = true;
 var rng = new Random();
 
@@ -575,7 +574,6 @@ class ArtistItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        leftAlready = false;
         currentArtist = artistName;
         currentArtistImage = image;
         homeIndex.value = 3;

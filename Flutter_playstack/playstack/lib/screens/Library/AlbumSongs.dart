@@ -30,11 +30,10 @@ class _AlbumSongsState extends State<AlbumSongs> {
 
   void _getAlbumSongs() async {
     songs = await getAlbumSongs(album.name);
-    if (!leftAlready) {
+    if (mounted)
       setState(() {
         _loading = false;
       });
-    }
   }
 
   @override

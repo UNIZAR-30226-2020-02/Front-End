@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:playstack/models/Album.dart';
 import 'package:playstack/models/Artist.dart';
 import 'package:playstack/models/PlaylistType.dart';
+import 'package:playstack/screens/Library/LocalMusic.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
@@ -403,7 +404,8 @@ class _LibraryState extends State<Library> {
           title: Text('Música del dispositivo',
               style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w500)),
           subtitle: Text('Música local'),
-          onTap: null,
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (BuildContext context) => LocalMusic())),
         ),
         ListTile(
           leading: Container(

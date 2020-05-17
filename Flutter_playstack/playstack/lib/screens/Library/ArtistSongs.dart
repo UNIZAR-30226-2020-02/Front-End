@@ -32,11 +32,10 @@ class _ArtistsSongsState extends State<ArtistsSongs> {
 
   void _getArtistSongs() async {
     songs = await getArtistSongsDB(artistName);
-    if (!leftAlready) {
+    if (mounted)
       setState(() {
         _loading = false;
       });
-    }
   }
 
   @override

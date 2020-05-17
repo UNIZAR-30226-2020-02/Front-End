@@ -31,7 +31,6 @@ class AlbumTile extends StatelessWidget {
           ),
         ),
         onTap: () {
-          leftAlready = false;
           Navigator.of(context).push(MaterialPageRoute(
               builder: (BuildContext context) => AlbumSongs(album)));
         },

@@ -31,31 +31,27 @@ class _SocialState extends State<Social> {
 
   void getFollowing() async {
     following = await getUsersFollowingDB();
-    if (!leftAlready) {
+    if (mounted)
       setState(() {
         _loadingFollowing = false;
       });
-    }
   }
 
   Future<void> getFollowers() async {
     followers = await getFollowersDB();
 
-    if (!leftAlready) {
+    if (mounted)
       setState(() {
         _loadingFollowers = false;
       });
-    }
   }
 
   Future<void> getFollowRequests() async {
     followRequests = await listFollowRequests();
-
-    if (!leftAlready) {
+    if (mounted)
       setState(() {
         _loadingFollowRequests = false;
       });
-    }
   }
 
   Widget followRequestButtons(User user, context) {
@@ -202,7 +198,6 @@ class _SocialState extends State<Social> {
           leading: IconButton(
               icon: Icon(Icons.arrow_back_ios),
               onPressed: () {
-                leftAlready = true;
                 homeIndex.value = 0;
               }),
           backgroundColor: Colors.transparent,
@@ -211,7 +206,6 @@ class _SocialState extends State<Social> {
             IconButton(
                 icon: Icon(Icons.search),
                 onPressed: () {
-                  leftAlready = false;
                   Navigator.of(context).push(MaterialPageRoute(
                       builder: (BuildContext context) => SearchPeople()));
                 })
