@@ -214,8 +214,11 @@ class _PlayerWidgetState extends State<PlayerWidget>
         ? position.value
         : Duration.zero;
     print('Duration: ${duration}, position.value: ${position.value}');
-    final result =
-        await advancedPlayer.play(currentSong.url, position: playposition);
+    print(
+        "Se va a reproducir la canion con url: ${currentSong.url} y isLocal ${currentSong.isLocal}");
+    final result = await advancedPlayer.play(currentSong.url,
+        position: playposition, isLocal: currentSong.isLocal);
+    print("El result es ${result.toString()}");
     if (result == 1)
       setState(() => audioPlayerState = AudioPlayerState.PLAYING);
 
@@ -330,12 +333,12 @@ class _PlayerWidgetState extends State<PlayerWidget>
     }
   }
 
-  dynamic getImage(Song song) {
+  /* dynamic getImage(Song song) {
     if (song.albumCoverUrls == null) return null;
     return song == null
         ? null
         : new File.fromUri(Uri.parse(song.albumCoverUrls.elementAt(0)));
-  }
+  } */
 
   initAnim() {
     _animationController =
@@ -404,7 +407,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(8.0),
           image: DecorationImage(
-              image: song.albumCoverUrls.elementAt(0) != null
+              image: song.albumCoverUrls.isNotEmpty
                   ? NetworkImage(song.albumCoverUrls.elementAt(0))
                   : Image.asset("assets/images/defaultCover.png").image,
               fit: BoxFit.cover)),
@@ -443,8 +446,12 @@ class _PlayerWidgetState extends State<PlayerWidget>
                   child: Material(
                       color: Colors.transparent,
                       child: slidingText(
-                          texto: getSongArtists(song.artists),
-                          condicion: song.artists.length * 24.50 > width,
+                          texto: currentSong.isLocal
+                              ? ''
+                              : getSongArtists(song.artists),
+                          condicion: currentSong.isLocal
+                              ? false
+                              : song.artists.length * 24.50 > width,
                           estilo: new TextStyle(
                               color: Colors.white.withOpacity(0.6),
                               fontSize: width / 24.50,
@@ -457,7 +464,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
     return Container(
         //Fondo
         height: MediaQuery.of(context).size.height,
-        child: song.albumCoverUrls == null
+        child: song.albumCoverUrls.isEmpty
             ? Image.asset(
                 'assets/images/defaultCover.png',
                 fit: BoxFit.fitWidth,
@@ -678,7 +685,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                   Expanded(
                       //Favorita
                       flex: 10,
-                      child: favButton(width))
+                      child: currentSong.isLocal ? Text("") : favButton(width))
                 ],
               ))
         ]));
@@ -702,8 +709,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
                   color: Colors.transparent,
                   child: slidingText(
                     condicion: true,
-                    texto:
-                        '${currentSong.title} - ${getSongArtists(currentSong.artists)}',
+                    texto: currentSong.isLocal
+                        ? '${currentSong.title}'
+                        : '${currentSong.title} - ${getSongArtists(currentSong.artists)}',
                     estilo: TextStyle(
                         color: Colors.white.withOpacity(0.8),
                         fontSize: height / 6),

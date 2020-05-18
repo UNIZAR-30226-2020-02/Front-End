@@ -42,12 +42,13 @@ class _GenresSongsState extends State<GenresSongs> {
       urlAlbums = urlAlbums.toList();
     }
     Song newSong = new Song(
-        title: title,
-        artists: artists,
-        url: url,
-        albums: albunes,
-        albumCoverUrls: urlAlbums,
-        isFav: isFavorite);
+      title: title,
+      artists: artists,
+      url: url,
+      albums: albunes,
+      albumCoverUrls: urlAlbums,
+      isFav: isFavorite,
+    );
 
     songs.add(newSong);
   }

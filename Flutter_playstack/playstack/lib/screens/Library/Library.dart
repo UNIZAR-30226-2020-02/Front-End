@@ -42,38 +42,42 @@ class _LibraryState extends State<Library> {
 
   void getAlbums() async {
     albumsList = await getAlbumsDB();
-    if (currentIndex == 2) {
-      setState(() {
-        _loadingAlbums = false;
-      });
+    if (currentIndex.value == 2) {
+      if (mounted)
+        setState(() {
+          _loadingAlbums = false;
+        });
     }
   }
 
   void getArtists() async {
     artistsList = await getAllArtistsDB();
-    if (currentIndex == 2) {
-      setState(() {
-        _loadingArtists = false;
-      });
+    if (currentIndex.value == 2) {
+      if (mounted)
+        setState(() {
+          _loadingArtists = false;
+        });
     }
   }
 
   void getFolders() async {
     folders = await getUserFolders();
 
-    if (currentIndex == 2) {
-      setState(() {
-        _loading = false;
-      });
+    if (currentIndex.value == 2) {
+      if (mounted)
+        setState(() {
+          _loading = false;
+        });
     }
   }
 
   void getPlaylists() async {
     playlists = await getUserPlaylists();
-    if (currentIndex == 2) {
-      setState(() {
-        _loading = false;
-      });
+    if (currentIndex.value == 2) {
+      if (mounted)
+        setState(() {
+          _loading = false;
+        });
     }
   }
 

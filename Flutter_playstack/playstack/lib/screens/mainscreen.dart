@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:playstack/screens/Player/PlayerWidget.dart';
 import 'package:playstack/screens/Player/PlayingNow.dart';
 import 'package:playstack/screens/authentication/AccessScreen.dart';
+import 'package:playstack/services/SQLite.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
@@ -33,6 +34,7 @@ class MainScreenState extends State<MainScreen> {
     checkLoginStatus();
     checkAccountType();
     getUserData();
+    createLocalDatabase();
   }
 
   void getUserData() async {
@@ -116,7 +118,7 @@ class MainScreenState extends State<MainScreen> {
               body: loadingUserData
                   ? Loading()
                   : extendedBottomBarWith(context, show(currentIndex.value)),
-              bottomNavigationBar: bottomBar(context));
+              bottomNavigationBar: loadingUserData ? null : bottomBar(context));
         });
   }
 }

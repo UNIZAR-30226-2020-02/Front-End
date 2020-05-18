@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:audioplayers/audio_cache.dart';
 import 'package:playstack/services/database.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:toast/toast.dart';
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -49,6 +50,7 @@ String userEmail;
 final ValueNotifier<int> currentIndex = ValueNotifier<int>(0);
 Song currentSong;
 String accountType = 'No premium';
+String defaultCover = "assets/images/defaultCover.png";
 String friendName;
 bool loadingUserData = true;
 var rng = new Random();
@@ -99,6 +101,8 @@ get positionText => position.value?.toString()?.split('.')?.first ?? '';
 PlayerMode mode = PlayerMode.MEDIA_PLAYER;
 
 Widget player;
+
+Future<Database> database;
 
 /////////////////////////////////////////////////////////////////////////////////////
 
@@ -436,10 +440,12 @@ class SongItem extends StatelessWidget {
                     width: MediaQuery.of(context).size.width / 5.8,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8.0),
-                      child: Image.network(
-                        song.albumCoverUrls.elementAt(0),
-                        fit: BoxFit.cover,
-                      ),
+                      child: song.isLocal
+                          ? Image.asset(defaultCover, fit: BoxFit.cover)
+                          : Image.network(
+                              song.albumCoverUrls.elementAt(0),
+                              fit: BoxFit.cover,
+                            ),
                     ),
                   ),
                   Container(
@@ -464,12 +470,15 @@ class SongItem extends StatelessWidget {
                         fontSize: MediaQuery.of(context).size.height / 40),
                   ),
                   SizedBox(height: 5),
-                  Text(
-                    getSongArtists(song.artists),
-                    style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
-                        fontSize: MediaQuery.of(context).size.height / 50),
-                  ),
+                  song.isLocal
+                      ? Text("")
+                      : Text(
+                          getSongArtists(song.artists),
+                          style: TextStyle(
+                              color: Colors.white.withOpacity(0.5),
+                              fontSize:
+                                  MediaQuery.of(context).size.height / 50),
+                        ),
                 ],
               ),
               Spacer(),
@@ -486,8 +495,12 @@ class SongItem extends StatelessWidget {
                         }
                         break;
                       case "AddToPlaylist":
-                        playlists = await getUserPlaylists();
-                        showAddingSongToPlaylistDialog(song.title, context);
+                        if (song.isLocal) {
+                        } else {
+                          playlists = await getUserPlaylists();
+                          showAddingSongToPlaylistDialog(song.title, context);
+                        }
+
                         break;
                       case "removeFromPlaylist":
                         await removeSongFromPlaylistDB(
@@ -497,24 +510,26 @@ class SongItem extends StatelessWidget {
                             builder: (BuildContext context) =>
                                 Playlist(playlist)));
                         break;
+
                       default:
                         showSharableLink(context, song.url);
                     }
                   },
                   itemBuilder: (context) => [
-                        PopupMenuItem(
-                            value: "Fav",
-                            child: ListTile(
-                              leading: Icon(
-                                song.isFav
-                                    ? CupertinoIcons.heart_solid
-                                    : CupertinoIcons.heart,
-                                color: Colors.red,
-                              ),
-                              title: Text(song.isFav
-                                  ? "Quitar de favoritos"
-                                  : "Añadir a favoritos"),
-                            )),
+                        if (!song.isLocal)
+                          PopupMenuItem(
+                              value: "Fav",
+                              child: ListTile(
+                                leading: Icon(
+                                  song.isFav
+                                      ? CupertinoIcons.heart_solid
+                                      : CupertinoIcons.heart,
+                                  color: Colors.red,
+                                ),
+                                title: Text(song.isFav
+                                    ? "Quitar de favoritos"
+                                    : "Añadir a favoritos"),
+                              )),
                         PopupMenuItem(
                             value: "AddToPlaylist",
                             child: ListTile(
@@ -529,12 +544,13 @@ class SongItem extends StatelessWidget {
                                   title: Text("Eliminar canción de lista"),
                                 ))
                             : null,
-                        PopupMenuItem(
-                            value: "Share",
-                            child: ListTile(
-                              leading: Icon(CupertinoIcons.share),
-                              title: Text('Compartir'),
-                            ))
+                        if (!song.isLocal)
+                          PopupMenuItem(
+                              value: "Share",
+                              child: ListTile(
+                                leading: Icon(CupertinoIcons.share),
+                                title: Text('Compartir'),
+                              )),
                       ])
             ],
           ),

@@ -4,13 +4,14 @@ import 'package:playstack/shared/common.dart';
 
 class Song {
   String title;
-  List artists;
+  List artists = new List();
   List albums;
   List genres;
   int duration;
   bool isFav = false;
+  bool isLocal = false;
   String url;
-  List albumCoverUrls;
+  List albumCoverUrls = new List();
 
   Song(
       {this.title,
@@ -18,9 +19,9 @@ class Song {
       this.url,
       this.albums,
       this.albumCoverUrls,
-      this.isFav = false});
-  /* Song(this.title, this.album, this.artists, this.duration,
-      this.isFav, this.url, this.albumCoverUrl); */
+      this.isFav = false,
+      this.isLocal = false,
+      bool isNotOwn});
 
   Map getInfo() {
     Map songInfo = {
@@ -53,24 +54,31 @@ class Song {
   }
 
   String getAlbumCover() {
-    return albumCoverUrls.elementAt(0);
+    if (!isLocal)
+      return albumCoverUrls.elementAt(0);
+    else
+      return "assets/image/defaultCover.png";
   }
 
   Future setAsFav() async {
-    bool added = await toggleFav(this.title, true);
-    if (added) {
-      this.isFav = true;
+    if (!isLocal) {
+      bool added = await toggleFav(this.title, true);
+      if (added) {
+        this.isFav = true;
+      }
     }
   }
 
   Future removeFromFavs() async {
-    bool removed = await toggleFav(this.title, false);
-    if (removed) {
-      this.isFav = false;
+    if (!isLocal) {
+      bool removed = await toggleFav(this.title, false);
+      if (removed) {
+        this.isFav = false;
+      }
     }
   }
 
   void markAsListened() async {
-    markAsListenedDB(this.title);
+    if (!isLocal) markAsListenedDB(this.title);
   }
 }
