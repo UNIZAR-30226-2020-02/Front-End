@@ -5,6 +5,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:bot_toast/bot_toast.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:playstack/models/Audio.dart';
+import 'package:playstack/models/Podcast.dart';
 import 'package:playstack/screens/Library/Folder.dart';
 import 'package:playstack/screens/Player/PlayerWidget.dart';
 import 'package:playstack/screens/MainScreen.dart';
@@ -47,12 +49,15 @@ var backgroundColor = Color(0xFF191414);
 String userName;
 String userEmail;
 final ValueNotifier<int> currentIndex = ValueNotifier<int>(0);
-Song currentSong;
+Audio currentAudio;
 String accountType = 'No premium';
 String friendName;
 bool leftAlready;
 bool loadingUserData = true;
 var rng = new Random();
+
+final ValueNotifier<int> podcastIndex = ValueNotifier<int>(0);
+Podcast currentPodcast;
 
 Map<String, dynamic> languageStrings = new Map<String, dynamic>();
 
@@ -80,7 +85,7 @@ AudioPlayerState audioPlayerState = AudioPlayerState.STOPPED;
 Duration duration;
 bool playerActive = false;
 
-List<Song> allSongs = [];
+List<Audio> allAudios = [];
 bool onPlayerScreen = false;
 
 PlayingRouteState playingRouteState = PlayingRouteState.SPEAKERS;
@@ -111,7 +116,7 @@ Future<String> loadLanguagesString() {
 
 Widget extendedBottomBarWith(context, Widget widget) {
   var height = MediaQuery.of(context).size.height;
-  return (onPlayerScreen || currentSong == null || player == null)
+  return (onPlayerScreen || currentAudio == null || player == null)
       ? widget
       : Container(
           height: height,
@@ -218,7 +223,7 @@ void setShuffleQueue(String songsListName, List songsList, Song firstSong) {
   tmpList.addAll(songsList);
   tmpList.remove(firstSong);
   songsNextUpName = songsListName;
-  currentSong = firstSong;
+  currentAudio = firstSong;
   songsNextUp = tmpList;
   firstSong.markAsListened();
 }
@@ -407,7 +412,7 @@ class SongItem extends StatelessWidget {
     tmpList.addAll(songsList);
     tmpList.remove(song);
     songsNextUpName = songsListName;
-    currentSong = song;
+    currentAudio = song;
     songsNextUp = tmpList;
     print("Tocada se marcara como escuchada");
     song.markAsListened();
@@ -610,10 +615,10 @@ class GenericSongItem extends StatelessWidget {
     double width = MediaQuery.of(context).size.width;
     return GestureDetector(
       onTap: () {
-        currentSong = song;
-        songsNextUp.remove(currentSong);
+        currentAudio = song;
+        songsNextUp.remove(currentAudio);
         // Se notifica que la canción se escucha
-        currentSong.markAsListened();
+        currentAudio.markAsListened();
         onPlayerScreen = true;
         if (player == null) player = PlayerWidget();
         Navigator.of(context).pushReplacement(MaterialPageRoute(

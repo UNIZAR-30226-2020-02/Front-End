@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:playstack/models/Audio.dart';
 import 'package:playstack/models/Song.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'dart:convert';
@@ -25,7 +26,7 @@ class _GenresSongsState extends State<GenresSongs> {
   var image;
   bool _loading = true;
 
-  List<Song> songs = new List();
+  List<Audio> songs = new List();
 
   _GenresSongsState(this.genre, this.image);
 

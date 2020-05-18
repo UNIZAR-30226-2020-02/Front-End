@@ -1,42 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:playstack/models/Audio.dart';
+import 'package:playstack/models/Podcast.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/common.dart';
 
-class Song extends Audio {
+class Episode extends Audio {
   String title;
   List artists;
-  List albums;
-  List genres;
+  List topics;
+  String date;
+  //List topics;
   int duration;
-  bool isFav = false;
+  bool isFav = false; //podcast is fav
   String url;
   List albumCoverUrls;
+  String podcastUrl;
 
-  Song(
+  Episode(
       {this.title,
       this.artists,
       this.url,
-      this.albums,
+      this.topics,
       this.albumCoverUrls,
-      this.isFav = false});
+      this.date,
+      this.duration});
 
   Map getInfo() {
     Map songInfo = {
       "title": title,
-      "album": albums,
+      "topics": topics,
       "url": url,
-      "isFav": isFav,
       "duration": duration,
       "artists": artists,
-      "albumCoverUrls": albumCoverUrls
+      "albumCoverUrls": albumCoverUrls,
+      "date": date,
+      "duration": duration
     };
     return songInfo;
   }
 
   @override
   void setInfo(String title, List artists, String url, List albums,
-      dynamic albumCovers, List genres) {
+      dynamic albumCovers, List genres) {}
+
+//TODO: Hay que mejorar
+  void setEInfo(String title, List artists, String url, List albums,
+      dynamic albumCovers, List genres, String date, int duration) {
     if (albumCovers is String) {
       albumCovers = albumCovers.toList();
     }
@@ -46,9 +55,19 @@ class Song extends Audio {
     this.albums = albums;
     this.albumCoverUrls = albumCovers;
     this.genres = genres;
+    this.date = date;
+    this.duration = duration;
   }
 
   String getCover() {
     return albumCoverUrls.elementAt(0);
+  }
+
+  Future setAsFav() async {
+    return true;
+  }
+
+  Future removeFromFavs() async {
+    return true;
   }
 }

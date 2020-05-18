@@ -5,6 +5,7 @@ import 'package:playstack/models/Album.dart';
 import 'package:playstack/models/Artist.dart';
 import 'package:playstack/models/PlaylistType.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
+import 'package:playstack/screens/Library/Podcasts.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
@@ -446,7 +447,7 @@ class _LibraryState extends State<Library> {
   }
 
   Widget podcastsTab() {
-    return Center(child: Text("Podcasts"));
+    return PodcastsTab();
   }
 
   @override

@@ -1,7 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:playstack/models/Song.dart';
-import 'package:playstack/screens/Player/PlayingNow.dart';
 import 'package:playstack/shared/common.dart';
 
 class UpNext extends StatefulWidget {
@@ -36,7 +34,7 @@ class _UpNextState extends State<UpNext> {
                 style: TextStyle(fontSize: 20, fontFamily: 'Circular'),
               ),
             ),
-            GenericSongItem(currentSong),
+            GenericSongItem(currentAudio),
             Padding(
               padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
               child: Text("A continuación en $songsNextUpName",

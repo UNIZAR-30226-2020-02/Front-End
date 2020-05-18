@@ -110,7 +110,7 @@ class _SettingsState extends State<Settings> {
                 (Route<dynamic> route) => false);
             userName = null;
             imagePath = null;
-            currentSong = null;
+            currentAudio = null;
             homeIndex.value = 0;
           },
           child: Text("Cerrar sesión")),
