@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:playstack/models/Audio.dart';
 import 'package:playstack/screens/mainscreen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:playstack/models/Song.dart';
@@ -125,9 +126,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
   }
 
   Future<bool> errorInSong() async {
-    dynamic error = await Future.doWhile(() => currentSong == null)
+    dynamic error = await Future.doWhile(() => currentAudio == null)
         .timeout(Duration(seconds: 5), onTimeout: () {
-      if (currentSong == null) {
+      if (currentAudio == null) {
         onPlayerScreen = false;
         Toast.show(languageStrings['cantPlaySong'], context,
             duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
@@ -142,7 +143,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
   @override
   void initState() {
     if (errorInSong() != null) {
-      print("Url de la cancion: " + currentSong.url);
+      print("Url de la cancion: " + currentAudio.url);
       advancedPlayer.seekCompleteHandler =
           (finished) => setState(() => seekDone = finished);
       _showCover = false;
@@ -178,14 +179,14 @@ class _PlayerWidgetState extends State<PlayerWidget>
   void buildPageLists(bool onlyNext) {
     if (!onlyNext) {
       songsPlayed.forEach((value) {
-        allSongs.add(value);
+        allAudios.add(value);
       });
 
-      allSongs.add(currentSong);
+      allAudios.add(currentAudio);
     }
 
     songsNextUp.forEach((value) {
-      allSongs.add(value);
+      allAudios.add(value);
     });
   }
 
@@ -214,11 +215,8 @@ class _PlayerWidgetState extends State<PlayerWidget>
         ? position.value
         : Duration.zero;
     print('Duration: ${duration}, position.value: ${position.value}');
-    print(
-        "Se va a reproducir la canion con url: ${currentSong.url} y isLocal ${currentSong.isLocal}");
-    final result = await advancedPlayer.play(currentSong.url,
-        position: playposition, isLocal: currentSong.isLocal);
-    print("El result es ${result.toString()}");
+    final result = await advancedPlayer.play(currentAudio.url,
+        position: playposition, isLocal: currentAudio.isLocal);
     if (result == 1)
       setState(() => audioPlayerState = AudioPlayerState.PLAYING);
 
@@ -256,8 +254,8 @@ class _PlayerWidgetState extends State<PlayerWidget>
       }
 
       setState(() {
-        songsNextUp.insert(0, currentSong);
-        currentSong = songsPlayed.last;
+        songsNextUp.insert(0, currentAudio);
+        currentAudio = songsPlayed.last;
         songsPlayed.removeAt(songsPlayed.length - 1);
       });
       if (mustScroll) {
@@ -273,7 +271,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
             Duration(milliseconds: 400), () => _usingButtons = false);
       }
       currentPage -= 1;
-      currentSong.markAsListened();
+      currentAudio.markAsListened();
       position.value = Duration(seconds: 0);
       duration = Duration(seconds: 0);
       Future.delayed(Duration(milliseconds: mustScroll ? 900 : 500), () {
@@ -295,12 +293,12 @@ class _PlayerWidgetState extends State<PlayerWidget>
       }
       if (songsNextUp.isNotEmpty) {
         setState(() {
-          songsPlayed.add(currentSong);
-          currentSong = songsNextUp.first;
+          songsPlayed.add(currentAudio);
+          currentAudio = songsNextUp.first;
           songsNextUp.removeAt(0);
         });
       } else {
-        songsNextUp = allSongs;
+        songsNextUp = allAudios;
         if (_shuffleEnabled) {
           setShuffleQueue(songsNextUpName, songsNextUp,
               songsNextUp.elementAt(rng.nextInt(songsPlayed.length)));
@@ -320,7 +318,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
             Duration(milliseconds: 400), () => _usingButtons = false);
       }
       currentPage += 1;
-      currentSong.markAsListened();
+      currentAudio.markAsListened();
       position.value = Duration(seconds: 0);
       duration = Duration(seconds: 0);
       Future.delayed(Duration(milliseconds: mustScroll ? 900 : 500), () {
@@ -333,12 +331,12 @@ class _PlayerWidgetState extends State<PlayerWidget>
     }
   }
 
-  /* dynamic getImage(Song song) {
-    if (song.albumCoverUrls == null) return null;
-    return song == null
+  dynamic getImage(Audio audio) {
+    if (audio.albumCoverUrls == null) return null;
+    return audio == null
         ? null
-        : new File.fromUri(Uri.parse(song.albumCoverUrls.elementAt(0)));
-  } */
+        : new File.fromUri(Uri.parse(audio.albumCoverUrls.elementAt(0)));
+  }
 
   initAnim() {
     _animationController =
@@ -399,7 +397,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
           );
   }
 
-  Widget songImage(Song song, double width) {
+  Widget songImage(Audio audio, double width) {
     return Container(
       height: width * 0.8,
       width: width * 0.8,
@@ -407,21 +405,21 @@ class _PlayerWidgetState extends State<PlayerWidget>
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(8.0),
           image: DecorationImage(
-              image: song.albumCoverUrls.isNotEmpty
-                  ? NetworkImage(song.albumCoverUrls.elementAt(0))
+              image: audio.albumCoverUrls.isNotEmpty
+                  ? NetworkImage(audio.albumCoverUrls.elementAt(0))
                   : Image.asset("assets/images/defaultCover.png").image,
               fit: BoxFit.cover)),
     );
   }
 
-  Widget infoCancion(Song song) {
+  Widget infoCancion(Audio audio) {
     return Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           Padding(
             //Carátula
             padding: EdgeInsets.only(top: width / 50),
-            child: songImage(song, width),
+            child: songImage(audio, width),
           ),
           Padding(
               //Título
@@ -432,8 +430,8 @@ class _PlayerWidgetState extends State<PlayerWidget>
                       color: Colors.transparent,
                       child: Center(
                           child: slidingText(
-                              texto: '${song.title}',
-                              condicion: song.title.length * 18.40 > width,
+                              texto: '${audio.title}',
+                              condicion: audio.title.length * 18.40 > width,
                               estilo: new TextStyle(
                                   color: Colors.white,
                                   fontSize: width / 18.40,
@@ -446,12 +444,12 @@ class _PlayerWidgetState extends State<PlayerWidget>
                   child: Material(
                       color: Colors.transparent,
                       child: slidingText(
-                          texto: currentSong.isLocal
+                          texto: currentAudio.isLocal
                               ? ''
-                              : getSongArtists(song.artists),
-                          condicion: currentSong.isLocal
+                              : getSongArtists(audio.artists),
+                          condicion: currentAudio.isLocal
                               ? false
-                              : song.artists.length * 24.50 > width,
+                              : audio.artists.length * 24.50 > width,
                           estilo: new TextStyle(
                               color: Colors.white.withOpacity(0.6),
                               fontSize: width / 24.50,
@@ -460,17 +458,17 @@ class _PlayerWidgetState extends State<PlayerWidget>
         ]);
   }
 
-  Widget fondo(Song song) {
+  Widget fondo(Audio audio) {
     return Container(
         //Fondo
         height: MediaQuery.of(context).size.height,
-        child: song.albumCoverUrls.isEmpty
+        child: audio.albumCoverUrls.isEmpty
             ? Image.asset(
                 'assets/images/defaultCover.png',
                 fit: BoxFit.fitWidth,
                 width: MediaQuery.of(context).size.width,
               )
-            : Image.network(song.albumCoverUrls.elementAt(0),
+            : Image.network(audio.albumCoverUrls.elementAt(0),
                 fit: BoxFit.fitHeight));
   }
 
@@ -569,20 +567,20 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 color: Colors.transparent,
                 child: GestureDetector(
                     child: Icon(
-                      currentSong.isFav
+                      currentAudio.isFav
                           ? Icons.favorite
                           : Icons.favorite_border,
-                      color: currentSong.isFav
+                      color: currentAudio.isFav
                           ? Colors.red
                           : Colors.white.withOpacity(0.8),
                       size: width / 17.62,
                     ),
                     onTap: () async {
-                      if (currentSong.isFav) {
-                        await currentSong.removeFromFavs();
+                      if (currentAudio.isFav) {
+                        await currentAudio.removeFromFavs();
                         setState(() {});
                       } else {
-                        await currentSong.setAsFav();
+                        await currentAudio.setAsFav();
                         setState(() {});
                       }
                     }))));
@@ -685,7 +683,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                   Expanded(
                       //Favorita
                       flex: 10,
-                      child: currentSong.isLocal ? Text("") : favButton(width))
+                      child: currentAudio.isLocal ? Text("") : favButton(width))
                 ],
               ))
         ]));
@@ -694,7 +692,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
   Widget extendedBottomBarControls(context) {
     double height = MediaQuery.of(context).size.height * 0.15;
     return Row(children: <Widget>[
-      songImage(currentSong, height),
+      songImage(currentAudio, height),
       Align(
           alignment: Alignment.centerRight,
           child: Row(children: <Widget>[
@@ -709,9 +707,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
                   color: Colors.transparent,
                   child: slidingText(
                     condicion: true,
-                    texto: currentSong.isLocal
-                        ? '${currentSong.title}'
-                        : '${currentSong.title} - ${getSongArtists(currentSong.artists)}',
+                    texto: currentAudio.isLocal
+                        ? '${currentAudio.title}'
+                        : '${currentAudio.title} - ${getSongArtists(currentAudio.artists)}',
                     estilo: TextStyle(
                         color: Colors.white.withOpacity(0.8),
                         fontSize: height / 6),
@@ -723,7 +721,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
   Widget build(BuildContext context) {
     _initAudioPlayer();
     width = MediaQuery.of(context).size.width;
-    allSongs.clear();
+    allAudios.clear();
     buildPageLists(false);
     final double statusBarHeight = MediaQuery.of(context).padding.top;
     final double ccPadding = MediaQuery.of(context).size.width / 12;
@@ -734,22 +732,23 @@ class _PlayerWidgetState extends State<PlayerWidget>
               value: advancedPlayer.onAudioPositionChanged),
         ],
         child: onPlayerScreen
-            ? (currentSong != null
+            ? (currentAudio != null
                 ? WillPopScope(
                     onWillPop: () async {
                       onPlayerScreen = false;
+                      if (currentIndex.value == 3) currentIndex.value = 0;
                       return true;
                     },
                     child: Stack(children: <Widget>[
                       Container(
                         height: MediaQuery.of(context).size.height,
                         child: PageView.builder(
-                            itemCount: allSongs.length,
+                            itemCount: allAudios.length,
                             controller: _backController,
                             pageSnapping: false,
                             physics: new NeverScrollableScrollPhysics(),
                             itemBuilder: (context, int index) =>
-                                fondo(allSongs[index])),
+                                fondo(allAudios[index])),
                       ),
                       BackdropFilter(
                         //Difuminado
@@ -769,7 +768,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                               child: Container(
                                   height: width * 0.9905,
                                   child: PageView.builder(
-                                      itemCount: allSongs.length,
+                                      itemCount: allAudios.length,
                                       onPageChanged: (newpage) {
                                         if (!_usingButtons) {
                                           if (newpage - currentPage > 0) {
@@ -782,7 +781,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                                       controller: _pageController,
                                       //physics: new NeverScrollableScrollPhysics(),
                                       itemBuilder: (context, int index) =>
-                                          infoCancion(allSongs[index]))))),
+                                          infoCancion(allAudios[index]))))),
                       Positioned(
                           top: width / 20,
                           //Equis para cerrar
@@ -794,8 +793,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
                                     size: 35,
                                   ),
                                   onPressed: () {
-                                    print("jelou");
                                     onPlayerScreen = false;
+                                    if (currentIndex.value == 3)
+                                      currentIndex.value = 0;
                                     Navigator.of(context).pop();
                                   }))),
                       Align(

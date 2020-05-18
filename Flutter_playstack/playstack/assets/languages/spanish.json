@@ -42,5 +42,16 @@
   "upNext": "A CONTINUACIÓN",
   "addSongToPlaylist": "Añadir canción a playlist",
   "editPlaylist": "Editar playlist",
-  "cantPlaySong": "No se ha podido reproducir la canción actual."
+  "cantPlaySong": "No se ha podido reproducir la canción actual.",
+  "favPodcasts": "Tus podcasts",
+  "podcasters": "Colaboradores",
+  "topics": "Temas",
+  "released": "Publicado el:",
+  "spanish": "Español",
+  "english": "Inglés",
+  "french": "Francés",
+  "german": "Alemán",
+  "italian": "Italiano",
+  "chinese": "Chino",
+  "japanese": "Japonés"
 }

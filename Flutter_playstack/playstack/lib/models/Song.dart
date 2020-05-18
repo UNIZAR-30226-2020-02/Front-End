@@ -1,16 +1,15 @@
-import 'package:flutter/material.dart';
+import 'package:playstack/models/Audio.dart';
 import 'package:playstack/services/database.dart';
-import 'package:playstack/shared/common.dart';
 
-class Song {
+class Song extends Audio {
   String title;
   List artists = new List();
   List albums;
   List genres;
   int duration;
   bool isFav = false;
-  bool isLocal = false;
   String url;
+  bool isLocal = false;
   List albumCoverUrls = new List();
 
   Song(
@@ -19,8 +18,8 @@ class Song {
       this.url,
       this.albums,
       this.albumCoverUrls,
-      this.isFav = false,
       this.isLocal = false,
+      this.isFav = false,
       bool isNotOwn});
 
   Map getInfo() {
@@ -36,6 +35,7 @@ class Song {
     return songInfo;
   }
 
+  @override
   void setInfo(String title, List artists, String url, List albums,
       dynamic albumCovers, List genres) {
     if (albumCovers is String) {
@@ -49,10 +49,6 @@ class Song {
     this.genres = genres;
   }
 
-  String getSongUrl() {
-    return this.url;
-  }
-
   String getAlbumCover() {
     if (!isLocal)
       return albumCoverUrls.elementAt(0);
@@ -60,6 +56,7 @@ class Song {
       return "assets/image/defaultCover.png";
   }
 
+  @override
   Future setAsFav() async {
     if (!isLocal) {
       bool added = await toggleFav(this.title, true);
@@ -69,6 +66,7 @@ class Song {
     }
   }
 
+  @override
   Future removeFromFavs() async {
     if (!isLocal) {
       bool removed = await toggleFav(this.title, false);
@@ -78,6 +76,7 @@ class Song {
     }
   }
 
+  @override
   void markAsListened() async {
     if (!isLocal) markAsListenedDB(this.title);
   }

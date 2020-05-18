@@ -42,7 +42,7 @@ class MainScreenState extends State<MainScreen> {
     if (imagePath == null) {
       _res1 = await getProfilePhoto();
     }
-    if (currentSong == null) {
+    if (currentAudio == null) {
       print("Va a setear la ultima cancion");
       _res2 = await setLastSongAsCurrent();
     }

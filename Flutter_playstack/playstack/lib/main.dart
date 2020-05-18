@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:playstack/screens/Homescreen/ProfileSettings.dart';
-import 'package:playstack/screens/Homescreen/PublicProfile.dart';
 import 'package:playstack/screens/MainScreen.dart';
 import 'package:playstack/screens/Homescreen/Settings.dart';
 import 'package:playstack/screens/Search/SearchProcess.dart';

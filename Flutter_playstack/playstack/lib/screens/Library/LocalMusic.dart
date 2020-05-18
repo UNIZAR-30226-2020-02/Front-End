@@ -291,7 +291,7 @@ class _LocalMusicState extends State<LocalMusic> {
       tmpList.addAll(songsList);
       tmpList.remove(song);
       songsNextUpName = songsListName;
-      currentSong = song;
+      currentAudio = song;
       songsNextUp = tmpList;
       print("Tocada se marcara como escuchada");
       song.markAsListened();

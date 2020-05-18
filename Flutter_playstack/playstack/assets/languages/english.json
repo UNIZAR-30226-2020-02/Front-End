@@ -40,5 +40,16 @@
     "internalError": "Internal server error, please, try again later.",
     "invalidRequest": "Invalid request. Make sure you have the latest app version.",
     "upNext": "UP NEXT",
-    "cantPlaySong": "Couldn't play requested song."
+    "cantPlaySong": "Couldn't play requested song.",
+    "favPodcasts": "Your podcasts",
+    "podcasters": "Collaborators",
+    "topics": "Topics",
+    "released": "Released on:",
+    "spanish": "Spanish",
+    "english": "English",
+    "french": "French",
+    "german": "German",
+    "italian": "Italian",
+    "chinese": "Chinese",
+    "japanese": "Japanese"
 }

@@ -7,7 +7,13 @@ import 'package:playstack/models/FolderType.dart';
 import 'package:playstack/models/PlaylistType.dart';
 import 'package:playstack/models/Song.dart';
 import 'package:playstack/models/user.dart';
+import 'package:playstack/screens/Library/Podcasts.dart';
 import 'package:playstack/shared/common.dart';
+
+//TODO: Implementar cuando esté completo en Backend
+List getPodcastsDB() {
+  return getExampleList();
+}
 
 void addSongToListFull(List songs, String title, List artists, String url,
     List albunes, dynamic urlAlbums, bool isFavorite) {
@@ -781,8 +787,8 @@ Future<bool> setLastSongAsCurrent() async {
   if (response.statusCode == 200) {
     response = jsonDecode(response.body);
     response.forEach((title, info) => print(title + info.toString()));
-    currentSong = new Song();
-    response.forEach((title, info) => currentSong.setInfo(
+    currentAudio = new Song();
+    response.forEach((title, info) => currentAudio.setInfo(
         title,
         info['Artistas'],
         info['url'],
