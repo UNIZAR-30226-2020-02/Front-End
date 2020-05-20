@@ -840,7 +840,7 @@ class ArtistItem extends StatelessWidget {
           SizedBox(
             height: 130.0,
             width: 140.0,
-            child: Image.asset(
+            child: Image.network(
               image,
               fit: BoxFit.fitHeight,
             ),
@@ -937,7 +937,7 @@ Widget playListCover(List insideCoverUrls) {
   switch (insideCoverUrls.length) {
     case 0:
       return Image.asset(
-        'assets/images/defaultCover.png',
+        defaultCover,
         fit: BoxFit.cover,
       );
       break;
@@ -947,44 +947,137 @@ Widget playListCover(List insideCoverUrls) {
     case 2:
       return Row(
         children: <Widget>[
-          Expanded(flex: 1, child: Image.network(insideCoverUrls.elementAt(0))),
-          Expanded(flex: 1, child: Image.network(insideCoverUrls.elementAt(1))),
+          Flexible(
+            flex: 1,
+            child: Container(
+              decoration: new BoxDecoration(
+                image: new DecorationImage(
+                    fit: BoxFit.cover,
+                    alignment: FractionalOffset.topCenter,
+                    image: NetworkImage(insideCoverUrls.elementAt(0))),
+              ),
+            ),
+          ),
+          Flexible(
+            flex: 1,
+            child: Container(
+              decoration: new BoxDecoration(
+                image: new DecorationImage(
+                    fit: BoxFit.cover,
+                    alignment: FractionalOffset.topCenter,
+                    image: NetworkImage(insideCoverUrls.elementAt(1))),
+              ),
+            ),
+          ),
         ],
       );
       break;
     case 3:
       return Column(
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                  flex: 1, child: Image.network(insideCoverUrls.elementAt(0))),
-              Expanded(
-                  flex: 1, child: Image.network(insideCoverUrls.elementAt(1))),
-            ],
+          Flexible(
+            flex: 5,
+            child: Row(
+              children: <Widget>[
+                Flexible(
+                  flex: 1,
+                  child: Container(
+                    decoration: new BoxDecoration(
+                      image: new DecorationImage(
+                          fit: BoxFit.cover,
+                          alignment: FractionalOffset.topCenter,
+                          image: NetworkImage(insideCoverUrls.elementAt(0))),
+                    ),
+                  ),
+                ),
+                Flexible(
+                  flex: 1,
+                  child: Container(
+                    decoration: new BoxDecoration(
+                      image: new DecorationImage(
+                          fit: BoxFit.cover,
+                          alignment: FractionalOffset.topCenter,
+                          image: NetworkImage(insideCoverUrls.elementAt(1))),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          Expanded(flex: 1, child: Image.network(insideCoverUrls.elementAt(2)))
+          Flexible(
+            flex: 5,
+            child: Container(
+              decoration: new BoxDecoration(
+                image: new DecorationImage(
+                    fit: BoxFit.cover,
+                    alignment: FractionalOffset.center,
+                    image: NetworkImage(insideCoverUrls.elementAt(2))),
+              ),
+            ),
+          ),
         ],
       );
       break;
     case 4:
       return Column(
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                  flex: 1, child: Image.network(insideCoverUrls.elementAt(0))),
-              Expanded(
-                  flex: 1, child: Image.network(insideCoverUrls.elementAt(1))),
-            ],
+          Flexible(
+            flex: 5,
+            child: Row(
+              children: <Widget>[
+                Flexible(
+                  flex: 1,
+                  child: Container(
+                    decoration: new BoxDecoration(
+                      image: new DecorationImage(
+                          fit: BoxFit.cover,
+                          alignment: FractionalOffset.topCenter,
+                          image: NetworkImage(insideCoverUrls.elementAt(0))),
+                    ),
+                  ),
+                ),
+                Flexible(
+                  flex: 1,
+                  child: Container(
+                    decoration: new BoxDecoration(
+                      image: new DecorationImage(
+                          fit: BoxFit.cover,
+                          alignment: FractionalOffset.topCenter,
+                          image: NetworkImage(insideCoverUrls.elementAt(1))),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          Row(
-            children: <Widget>[
-              Expanded(
-                  flex: 1, child: Image.network(insideCoverUrls.elementAt(2))),
-              Expanded(
-                  flex: 1, child: Image.network(insideCoverUrls.elementAt(3))),
-            ],
+          Flexible(
+            flex: 5,
+            child: Row(
+              children: <Widget>[
+                Flexible(
+                  flex: 1,
+                  child: Container(
+                    decoration: new BoxDecoration(
+                      image: new DecorationImage(
+                          fit: BoxFit.cover,
+                          alignment: FractionalOffset.topCenter,
+                          image: NetworkImage(insideCoverUrls.elementAt(2))),
+                    ),
+                  ),
+                ),
+                Flexible(
+                  flex: 1,
+                  child: Container(
+                    decoration: new BoxDecoration(
+                      image: new DecorationImage(
+                          fit: BoxFit.cover,
+                          alignment: FractionalOffset.topCenter,
+                          image: NetworkImage(insideCoverUrls.elementAt(3))),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       );
@@ -1344,6 +1437,176 @@ class PlaylistItem extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class PodcastEpisodes extends StatelessWidget {
+  final Podcast podcast;
+
+  PodcastEpisodes(this.podcast);
+
+  @override
+  Widget build(BuildContext context) {
+    double width = MediaQuery.of(context).size.width;
+    double height = MediaQuery.of(context).size.height;
+    return Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          leading: IconButton(
+              icon: Icon(Icons.arrow_back_ios),
+              onPressed: () => Navigator.of(context).pop()),
+          centerTitle: true,
+          title: Text(podcast.title,
+              style: TextStyle(
+                  fontFamily: 'Circular',
+                  fontSize: MediaQuery.of(context).size.width / 18)),
+        ),
+        body: ListView.builder(
+            physics: BouncingScrollPhysics(),
+            itemCount: podcast.episodes.length,
+            scrollDirection: Axis.vertical,
+            itemBuilder: (context, int index) {
+              return GestureDetector(
+                  onTap: () {
+                    currentAudio = podcast.episodes[index];
+                    homeIndex.value = 3;
+                  },
+                  child: SizedBox(
+                      height: height / 5,
+                      width: width,
+                      child: Container(
+                          decoration: BoxDecoration(
+                              border: Border(
+                                  top: BorderSide(
+                                      width: 0.2,
+                                      color: Colors.white.withOpacity(0.7)),
+                                  bottom: BorderSide(
+                                      width: 0.2,
+                                      color: Colors.white.withOpacity(0.7)))),
+                          child: Padding(
+                              padding: EdgeInsets.fromLTRB(width / 20,
+                                  width / 20, width / 20, width / 20),
+                              child: Row(children: <Widget>[
+                                Container(
+                                    width: width / 5,
+                                    height: width / 5,
+                                    child: Stack(children: <Widget>[
+                                      Container(
+                                          width: width / 6,
+                                          child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(8.0),
+                                              child: Image.asset(
+                                                podcast.coverUrl,
+                                                fit: BoxFit.cover,
+                                              ))),
+                                      Align(
+                                          alignment: Alignment.bottomRight,
+                                          child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(2.0),
+                                              child: Container(
+                                                  width: width / 10,
+                                                  height: width / 15,
+                                                  color: Colors.white,
+                                                  child: Text(
+                                                      (index + 1).toString(),
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: TextStyle(
+                                                          fontSize: width / 20,
+                                                          color:
+                                                              Colors.black)))))
+                                    ])),
+                                Expanded(
+                                    child: Container(
+                                        child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: <Widget>[
+                                      Expanded(
+                                          flex: 2,
+                                          child: Text(
+                                              languageStrings['released'] +
+                                                  " " +
+                                                  podcast.episodes[index].date,
+                                              textAlign: TextAlign.left,
+                                              style: TextStyle(
+                                                  fontSize: width / 30,
+                                                  color: Colors.white
+                                                      .withOpacity(0.7)))),
+                                      Expanded(
+                                          flex: 5,
+                                          child: Padding(
+                                              padding: EdgeInsets.fromLTRB(
+                                                  width / 20, 0, 0, 0),
+                                              child: Text(
+                                                  podcast.episodes[index].title,
+                                                  textAlign: TextAlign.left,
+                                                  style: TextStyle(
+                                                      fontSize: width / 15,
+                                                      fontWeight:
+                                                          FontWeight.w500)))),
+                                      Expanded(
+                                          flex: 2,
+                                          child: Row(children: <Widget>[
+                                            Spacer(),
+                                            Container(
+                                                alignment:
+                                                    Alignment.bottomRight,
+                                                width: width / 20,
+                                                child: Text(
+                                                    //TODO: Hay que mejorar
+                                                    podcast.episodes[index]
+                                                        .duration
+                                                        .toString(),
+                                                    textAlign: TextAlign.right,
+                                                    style: TextStyle(
+                                                        fontSize: width / 23.5,
+                                                        color: Colors.white
+                                                            .withOpacity(0.7))))
+                                          ]))
+                                    ])))
+                              ])))));
+            }));
+  }
+}
+
+class PodcastItem extends StatelessWidget {
+  final Podcast podcast;
+
+  PodcastItem(
+    this.podcast,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (BuildContext context) => PodcastEpisodes(podcast)));
+      },
+      child: Column(
+        children: <Widget>[
+          SizedBox(
+            height: 130.0,
+            width: 140.0,
+            child: Image.network(
+              podcast.coverUrl,
+              fit: BoxFit.fitHeight,
+            ),
+          ),
+          Padding(padding: EdgeInsets.all(5.0)),
+          Text(
+            podcast.title,
+            style: TextStyle(
+              color: Colors.white.withOpacity(1.0),
+              fontSize: 15.0,
+            ),
+          )
+        ],
       ),
     );
   }

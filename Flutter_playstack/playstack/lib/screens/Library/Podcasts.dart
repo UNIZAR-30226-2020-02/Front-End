@@ -5,7 +5,6 @@ import 'package:playstack/models/Podcast.dart';
 import 'package:playstack/screens/Library/Language.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/common.dart';
-import 'package:lipsum/lipsum.dart' as lipsum;
 
 List episodesExample() {
   List<Episode> exampleList = List<Episode>();

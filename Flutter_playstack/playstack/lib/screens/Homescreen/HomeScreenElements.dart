@@ -1,17 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:playstack/screens/GenresSongs.dart';
 import 'package:playstack/shared/common.dart';
-
-import 'Home.dart';
 
 var blueColor = Color(0xFF090e42);
 var pinkColor = Color(0xFFff6b80);
-
-var flume = 'https://i.scdn.co/image/8d84f7b313ca9bafcefcf37d4e59a8265c7d3fff';
-var martinGarrix =
-    'https://c1.staticflickr.com/2/1841/44200429922_d0cbbf22ba_b.jpg';
-var rosieLowe =
-    'https://i.scdn.co/image/db8382f6c33134111a26d4bf5a482a1caa5f151c';
 
 Widget genres() {
   return Padding(
@@ -267,59 +258,4 @@ class DetailedScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-Widget lists() {
-  Column(
-    children: <Widget>[
-      Container(
-        height: 250.0,
-        child: Column(
-          children: <Widget>[
-            Text(
-              'Recommendation',
-              style: TextStyle(
-                color: Colors.white.withOpacity(1.0),
-                fontSize: 23.0,
-                fontFamily: 'Circular',
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.all(10.0),
-            ),
-            Container(
-              height: 165.0,
-              child: ListView.builder(
-                itemCount: imageurl.length,
-                scrollDirection: Axis.horizontal,
-                itemBuilder: (BuildContext context, int index) {
-                  return Column(
-                    children: <Widget>[
-                      SizedBox(
-                        height: 130.0,
-                        width: 140.0,
-                        child: Image.asset(
-                          imageurl[index],
-                          fit: BoxFit.fitHeight,
-                        ),
-                      ),
-                      Padding(padding: EdgeInsets.all(5.0)),
-                      Text(
-                        artists[index],
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(1.0),
-                          fontFamily: 'Circular',
-                          fontSize: 10.0,
-                        ),
-                      )
-                    ],
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      )
-    ],
-  );
 }

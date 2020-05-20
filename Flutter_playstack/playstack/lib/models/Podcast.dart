@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:playstack/models/Audio.dart';
 import 'package:playstack/screens/Library/Language.dart';
 
@@ -15,7 +16,7 @@ class Podcast {
   List topics;
 
   Podcast(
-      {this.title,
+      {@required this.title,
       this.coverUrl,
       this.hosts,
       this.episodes,

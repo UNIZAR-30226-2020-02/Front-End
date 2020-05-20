@@ -68,7 +68,9 @@ class _ArtistsSongsState extends State<ArtistsSongs> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: <Widget>[
-                    Image.asset(artistPhoto),
+                    SizedBox(
+                        width: MediaQuery.of(context).size.width / 2 + 20,
+                        child: Image.network(artistPhoto)),
                     BackdropFilter(
                       filter: ui.ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                       child: Container(
@@ -81,7 +83,7 @@ class _ArtistsSongsState extends State<ArtistsSongs> {
                     SizedBox(
                         height: MediaQuery.of(context).size.height / 4,
                         width: MediaQuery.of(context).size.width / 2,
-                        child: Image.asset(artistPhoto))
+                        child: Image.network(artistPhoto))
                   ],
                 ),
               ),

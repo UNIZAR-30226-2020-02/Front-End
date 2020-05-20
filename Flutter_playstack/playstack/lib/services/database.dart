@@ -5,6 +5,7 @@ import 'package:playstack/models/Album.dart';
 import 'package:playstack/models/Artist.dart';
 import 'package:playstack/models/FolderType.dart';
 import 'package:playstack/models/PlaylistType.dart';
+import 'package:playstack/models/Podcast.dart';
 import 'package:playstack/models/Song.dart';
 import 'package:playstack/models/user.dart';
 import 'package:playstack/screens/Library/Podcasts.dart';
@@ -13,6 +14,37 @@ import 'package:playstack/shared/common.dart';
 //TODO: Implementar cuando esté completo en Backend
 List getPodcastsDB() {
   return getExampleList();
+}
+
+void addPodcastToList(
+  List podcasts,
+  String title,
+  String coverUrl,
+) {
+  Podcast newPodcast = new Podcast(title: title, coverUrl: coverUrl);
+
+  podcasts.add(newPodcast);
+}
+
+Future<List> getAllPodcastsDB() async {
+  print("Recuperando todos los podcasts");
+
+  List podcasts = new List();
+  dynamic response =
+      await http.get('https://playstack.azurewebsites.net/get/allpodcasts');
+
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("Podcasts recuperados");
+
+    response.forEach(
+        (title, coverUrl) => addPodcastToList(podcasts, title, coverUrl));
+  } else {
+    print("Statuscode de recuperar podcasts " + response.statusCode.toString());
+    print('Error buscandopodcasts, body: ' + response.body.toString());
+  }
+  print("Hay " + podcasts.length.toString() + " podcasts");
+  return podcasts;
 }
 
 void addSongToListFull(List songs, String title, List artists, String url,
