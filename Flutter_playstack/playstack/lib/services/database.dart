@@ -948,9 +948,11 @@ Future<List> getFavoriteSongs() async {
 }
 
 void markAsListenedDB(String songTitle) async {
-  print(
-      "Probando con nombre de usuario " + userName + " y titulo " + songTitle);
-  dynamic data = {'Usuario': userName, 'Titulo': songTitle};
+  dynamic now = new DateTime.now();
+  now = now.toString().substring(0, 19);
+  now = now.replaceAll('-', '/');
+
+  dynamic data = {'Usuario': userName, 'Titulo': songTitle, 'Timestamp': now};
 
   data = jsonEncode(data);
   dynamic response = await http.post(

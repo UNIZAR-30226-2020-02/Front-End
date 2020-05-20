@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:playstack/models/LocalPlaylist.dart';
 import 'package:playstack/models/LocalSong.dart';
 import 'package:playstack/models/Song.dart';
+import 'package:playstack/screens/Library/Local%20Music/LocalPlaylistView.dart';
 import 'package:playstack/screens/Player/PlayerWidget.dart';
 import 'package:playstack/screens/Player/PlayingNow.dart';
 import 'package:playstack/services/SQLite.dart';
@@ -21,7 +22,6 @@ class _LocalMusicState extends State<LocalMusic> {
   TextEditingController newPLaylistController = new TextEditingController();
   TextEditingController newSongController = new TextEditingController();
 
-  List localPlaylistList = new List();
   List localSongsList = new List();
 
   bool _loading = true;
@@ -105,10 +105,13 @@ class _LocalMusicState extends State<LocalMusic> {
       shrinkWrap: true,
       itemCount: localSongsList.isEmpty ? 0 : localSongsList.length,
       itemBuilder: (BuildContext context, int index) {
-        return localSongItem(
+        return LocalSongItem(
           localSongsList[index],
           localSongsList,
           "Musica local",
+          onDeletedCallBack: () {
+            _getSongs();
+          },
         );
       },
     );
@@ -117,9 +120,13 @@ class _LocalMusicState extends State<LocalMusic> {
   Widget localPlaylistTile(LocalPlaylist playlist) {
     return GestureDetector(
       onTap: () {
-        /* 
-          Navigator.of(context).push(MaterialPageRoute(
-              builder: (BuildContext context) => Playlist(playlist))); */
+        Navigator.of(context)
+            .push(MaterialPageRoute(
+                builder: (BuildContext context) =>
+                    LocalPlaylistView(playlist.name)))
+            .then((val) {
+          _getSongs();
+        });
       },
       child: Padding(
         padding: const EdgeInsets.all(10),
@@ -192,212 +199,6 @@ class _LocalMusicState extends State<LocalMusic> {
                               leading: Icon(CupertinoIcons.delete),
                               title: Text("Eliminar playlist"),
                             )),
-                      ])
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  List<DropdownMenuItem> _listLocalPlaylistNames() {
-    List<DropdownMenuItem> items = new List();
-    for (var pl in localPlaylistList) {
-      DropdownMenuItem newItem =
-          new DropdownMenuItem<String>(value: pl.name, child: Text(pl.name));
-      items.add(newItem);
-    }
-    return items;
-  }
-
-  Future<void> _showAddingSongToPlaylistDialog(
-      String songName, BuildContext context) async {
-    var dropdownItem = localPlaylistList.elementAt(0).name;
-    return showDialog(
-      barrierDismissible: true,
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(builder: (context, setState) {
-          return AlertDialog(
-            title: Text("Añadir a playlist"),
-            elevation: 100.0,
-            backgroundColor: Colors.grey[900],
-            actions: <Widget>[
-              Container(
-                width: MediaQuery.of(context).size.width,
-                child: Row(
-                  children: <Widget>[
-                    Expanded(
-                      flex: 1,
-                      child: DropdownButton(
-                        isExpanded: true,
-                        value: dropdownItem,
-                        items: _listLocalPlaylistNames(),
-                        onChanged: (val) {
-                          setState(() {
-                            dropdownItem = val;
-                          });
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Builder(
-                builder: (context) => Container(
-                  width: MediaQuery.of(context).size.width,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Expanded(
-                          flex: 1,
-                          child: FlatButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: Text("Cancelar"))),
-                      Expanded(
-                          flex: 1,
-                          child: FlatButton(
-                              onPressed: () {
-                                LocalSongsPlaylists newEntry =
-                                    new LocalSongsPlaylists(
-                                        id: "$songName$dropdownItem",
-                                        songName: songName,
-                                        playlistName: dropdownItem);
-                                insertSongToPlaylist(newEntry);
-                                Toast.show("msg", context);
-                              },
-                              child: Text("Añadir")))
-                    ],
-                  ),
-                ),
-              )
-            ],
-          );
-        });
-      },
-    );
-  }
-
-  Widget localSongItem(Song song, List songsList, String songsListName) {
-    /* final String songsListName;
-  final List songsList;
-  final Song song;
-  final PlaylistType playlist;
-  final bool isNotOwn;
- */
-
-    void setQueue(List songsList) {
-      List tmpList = new List();
-      tmpList.addAll(songsList);
-      tmpList.remove(song);
-      songsNextUpName = songsListName;
-      currentAudio = song;
-      songsNextUp = tmpList;
-      print("Tocada se marcara como escuchada");
-      song.markAsListened();
-    }
-
-    return GestureDetector(
-      onTap: () {
-        setQueue(songsList);
-        onPlayerScreen = true;
-        if (player == null) player = PlayerWidget();
-        Navigator.of(context).push(MaterialPageRoute(
-            builder: (BuildContext context) => PlayingNowScreen()));
-      },
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Container(
-          height: MediaQuery.of(context).size.height / 13,
-          width: MediaQuery.of(context).size.width,
-          child: Row(
-            children: <Widget>[
-              Stack(
-                children: <Widget>[
-                  Container(
-                    height: MediaQuery.of(context).size.height / 13,
-                    width: MediaQuery.of(context).size.width / 5.8,
-                    child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8.0),
-                        child: Image.asset(defaultCover, fit: BoxFit.cover)),
-                  ),
-                  Container(
-                      height: MediaQuery.of(context).size.height / 13,
-                      width: 80.0,
-                      child: Icon(
-                        Icons.play_circle_filled,
-                        color: Colors.white.withOpacity(0.7),
-                        size: 42.0,
-                      ))
-                ],
-              ),
-              SizedBox(width: 16.0),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    song.title,
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: MediaQuery.of(context).size.height / 40),
-                  ),
-                  SizedBox(height: 5),
-                ],
-              ),
-              Spacer(),
-              PopupMenuButton<String>(
-                  icon: Icon(Icons.more_horiz),
-                  color: Colors.grey[800],
-                  onSelected: (val) async {
-                    switch (val) {
-                      case "Remove":
-                        int removed = await deleteLocalSong(song.title);
-                        if (removed > 0) {
-                          Toast.show(
-                              'Canción eliminada de la aplicación', context,
-                              gravity: Toast.CENTER,
-                              duration: Toast.LENGTH_LONG,
-                              backgroundColor: Colors.green);
-                          await _getSongs();
-                          setState(() {});
-                        } else {
-                          Toast.show('Error eliminando canción', context,
-                              gravity: Toast.CENTER,
-                              duration: Toast.LENGTH_LONG,
-                              backgroundColor: Colors.red);
-                        }
-                        break;
-
-                      case "AddToPlaylist":
-                        _showAddingSongToPlaylistDialog(song.title, context);
-                        break;
-                      case "removeFromPlaylist":
-                        break;
-                      default:
-                        null;
-                    }
-                  },
-                  itemBuilder: (context) => [
-                        PopupMenuItem(
-                            value: "Remove",
-                            child: ListTile(
-                              leading: Icon(CupertinoIcons.delete),
-                              title: Text("Eliminar canción de la aplicación"),
-                            )),
-                        PopupMenuItem(
-                            value: "AddToPlaylist",
-                            child: ListTile(
-                              leading: Icon(CupertinoIcons.add),
-                              title: Text("Añadir canción a playlist"),
-                            )),
-                        /*
-                           PopupMenuItem(
-                                value: "removeFromPlaylist",
-                                child: ListTile(
-                                  leading: Icon(CupertinoIcons.delete),
-                                  title: Text("Eliminar canción de lista"),
-                                )) */
                       ])
             ],
           ),
@@ -593,13 +394,6 @@ class _LocalMusicState extends State<LocalMusic> {
                 ],
               ),
             ),
-            FlatButton(
-                color: Colors.red,
-                onPressed: () async {
-                  await dropAndCreate();
-                  _getSongs();
-                },
-                child: Text("Drop"))
           ],
         ));
   }

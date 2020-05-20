@@ -2,20 +2,19 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:bot_toast/bot_toast.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:playstack/models/Audio.dart';
+import 'package:playstack/models/LocalSongsPlaylists.dart';
 import 'package:playstack/models/Podcast.dart';
 import 'package:playstack/screens/Library/Folder.dart';
+import 'package:playstack/screens/Library/Local%20Music/LocalPlaylistView.dart';
 import 'package:playstack/screens/Player/PlayerWidget.dart';
 import 'package:playstack/screens/MainScreen.dart';
 import 'package:playstack/models/FolderType.dart';
 import 'package:playstack/models/PlaylistType.dart';
 import 'package:playstack/models/Song.dart';
-import 'package:playstack/models/user.dart';
 import 'package:playstack/screens/Homescreen/Home.dart';
-import 'package:playstack/screens/Homescreen/PublicProfile.dart';
 import 'package:playstack/screens/Library/Library.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
 import 'package:playstack/screens/Player/PlayingNow.dart';
@@ -27,6 +26,7 @@ import 'package:audioplayers/audio_cache.dart';
 import 'package:playstack/services/database.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:toast/toast.dart';
+import 'package:playstack/services/SQLite.dart';
 
 //////////////////////////////////////////////////////////////////////////////////
 /////                   SHARED VARIABLES DO NOT TOUCH                       //////
@@ -67,6 +67,7 @@ List songsNextUp = new List();
 List songsPlayed = new List();
 List following = new List();
 List followers = new List();
+List localPlaylistList = new List();
 
 List playlists = new List();
 
@@ -508,9 +509,13 @@ class SongItem extends StatelessWidget {
 
                         break;
                       case "removeFromPlaylist":
-                        await removeSongFromPlaylistDB(
-                            song.title, playlist.name);
-                        await playlist.updateCovers();
+                        if (song.isLocal) {
+                        } else {
+                          await removeSongFromPlaylistDB(
+                              song.title, playlist.name);
+                          await playlist.updateCovers();
+                        }
+
                         Navigator.of(context).pushReplacement(MaterialPageRoute(
                             builder: (BuildContext context) =>
                                 Playlist(playlist)));
@@ -556,6 +561,240 @@ class SongItem extends StatelessWidget {
                                 leading: Icon(CupertinoIcons.share),
                                 title: Text('Compartir'),
                               )),
+                      ])
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+List<DropdownMenuItem> _listLocalPlaylistNames() {
+  List<DropdownMenuItem> items = new List();
+  if (accountType == "Premium") {
+    for (var pl in playlists) {
+      DropdownMenuItem newItem =
+          new DropdownMenuItem<String>(value: pl.name, child: Text(pl.name));
+      items.add(newItem);
+    }
+  }
+  for (var pl in localPlaylistList) {
+    DropdownMenuItem newItem =
+        new DropdownMenuItem<String>(value: pl.name, child: Text(pl.name));
+    items.add(newItem);
+  }
+  return items;
+}
+
+Future<void> _showAddingSongToPlaylistDialog(
+    String songName, BuildContext context) async {
+  var dropdownItem = localPlaylistList.elementAt(0).name;
+  return showDialog(
+    barrierDismissible: true,
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(builder: (context, setState) {
+        return AlertDialog(
+          title: Text("Añadir a playlist"),
+          elevation: 100.0,
+          backgroundColor: Colors.grey[900],
+          actions: <Widget>[
+            Container(
+              width: MediaQuery.of(context).size.width,
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    flex: 1,
+                    child: DropdownButton(
+                      isExpanded: true,
+                      value: dropdownItem,
+                      items: _listLocalPlaylistNames(),
+                      onChanged: (val) {
+                        setState(() {
+                          dropdownItem = val;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Builder(
+              builder: (context) => Container(
+                width: MediaQuery.of(context).size.width,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Expanded(
+                        flex: 1,
+                        child: FlatButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text("Cancelar"))),
+                    Expanded(
+                        flex: 1,
+                        child: FlatButton(
+                            onPressed: () async {
+                              LocalSongsPlaylists newEntry =
+                                  new LocalSongsPlaylists(
+                                      id: "$songName$dropdownItem",
+                                      songName: songName,
+                                      playlistName: dropdownItem);
+
+                              int inserted =
+                                  await insertSongToPlaylist(newEntry);
+                              if (inserted > 0)
+                                Toast.show('Añadida!', context,
+                                    gravity: Toast.CENTER,
+                                    duration: Toast.LENGTH_LONG,
+                                    backgroundColor: Colors.green);
+                              else
+                                Toast.show(
+                                    'Error añadiendo cancion a lista', context,
+                                    gravity: Toast.CENTER,
+                                    duration: Toast.LENGTH_LONG,
+                                    backgroundColor: Colors.red);
+                              Navigator.of(context).pop();
+                            },
+                            child: Text("Añadir")))
+                  ],
+                ),
+              ),
+            )
+          ],
+        );
+      });
+    },
+  );
+}
+
+class LocalSongItem extends StatelessWidget {
+  final Song song;
+  final List songsList;
+  final String songsListName;
+  final String playlistName;
+  final onDeletedCallBack;
+
+  LocalSongItem(this.song, this.songsList, this.songsListName,
+      {this.playlistName, @required this.onDeletedCallBack});
+
+  void setQueue(List songsList) {
+    List tmpList = new List();
+    tmpList.addAll(songsList);
+    tmpList.remove(song);
+    songsNextUpName = songsListName;
+    currentAudio = song;
+    songsNextUp = tmpList;
+    print("Tocada se marcara como escuchada");
+    song.markAsListened();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        setQueue(songsList);
+        onPlayerScreen = true;
+        if (player == null) player = PlayerWidget();
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (BuildContext context) => PlayingNowScreen()));
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Container(
+          height: MediaQuery.of(context).size.height / 13,
+          width: MediaQuery.of(context).size.width,
+          child: Row(
+            children: <Widget>[
+              Stack(
+                children: <Widget>[
+                  Container(
+                    height: MediaQuery.of(context).size.height / 13,
+                    width: MediaQuery.of(context).size.width / 5.8,
+                    child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8.0),
+                        child: Image.asset(defaultCover, fit: BoxFit.cover)),
+                  ),
+                  Container(
+                      height: MediaQuery.of(context).size.height / 13,
+                      width: 80.0,
+                      child: Icon(
+                        Icons.play_circle_filled,
+                        color: Colors.white.withOpacity(0.7),
+                        size: 42.0,
+                      ))
+                ],
+              ),
+              SizedBox(width: 16.0),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    song.title,
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: MediaQuery.of(context).size.height / 40),
+                  ),
+                  SizedBox(height: 5),
+                ],
+              ),
+              Spacer(),
+              PopupMenuButton<String>(
+                  icon: Icon(Icons.more_horiz),
+                  color: Colors.grey[800],
+                  onSelected: (val) async {
+                    switch (val) {
+                      case "Remove":
+                        await deleteLocalSongFromEveryWhere(song, context);
+                        onDeletedCallBack();
+
+                        break;
+
+                      case "AddToPlaylist":
+                        _showAddingSongToPlaylistDialog(song.title, context);
+                        break;
+                      case "removeFromPlaylist":
+                        int deleted = await deleteSongFromPlaylist(
+                            song.title, playlistName);
+                        if (deleted > 0) {
+                          Toast.show('Canción eliminada de la lista', context,
+                              gravity: Toast.CENTER,
+                              duration: Toast.LENGTH_LONG,
+                              backgroundColor: Colors.green);
+                          onDeletedCallBack();
+                        } else {
+                          Toast.show(
+                              'Error eliminando canción de lista', context,
+                              gravity: Toast.CENTER,
+                              duration: Toast.LENGTH_LONG,
+                              backgroundColor: Colors.red);
+                        }
+                        break;
+                      default:
+                        null;
+                    }
+                  },
+                  itemBuilder: (context) => [
+                        PopupMenuItem(
+                            value: "Remove",
+                            child: ListTile(
+                              leading: Icon(CupertinoIcons.delete),
+                              title: Text("Eliminar canción de la aplicación"),
+                            )),
+                        PopupMenuItem(
+                            value: "AddToPlaylist",
+                            child: ListTile(
+                              leading: Icon(CupertinoIcons.add),
+                              title: Text("Añadir canción a playlist"),
+                            )),
+                        if (playlistName != null)
+                          PopupMenuItem(
+                              value: "removeFromPlaylist",
+                              child: ListTile(
+                                leading: Icon(CupertinoIcons.delete),
+                                title: Text("Eliminar canción de lista"),
+                              ))
                       ])
             ],
           ),
@@ -1066,6 +1305,9 @@ class PlaylistItem extends StatelessWidget {
                                 backgroundColor: Colors.grey[700]));
                             bool deleted =
                                 await deletePlaylistDB(playlist.name);
+                            //Borra la referencia local
+                            deleteLocalPlaylist(playlist.name);
+
                             if (deleted) {
                               Scaffold.of(context).showSnackBar(SnackBar(
                                   content: Text(
@@ -1073,7 +1315,7 @@ class PlaylistItem extends StatelessWidget {
                                     style: TextStyle(color: Colors.white),
                                   ),
                                   backgroundColor: Colors.grey[700]));
-                              //TODO: por ahora lo dejo asi aunque estaria bn buscar una alternativa
+                              // TODO: por ahora lo dejo asi aunque estaria bn buscar una alternativa
                               Navigator.of(context).push(MaterialPageRoute(
                                   builder: (BuildContext context) =>
                                       MainScreen()));

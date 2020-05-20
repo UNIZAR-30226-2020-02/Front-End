@@ -258,6 +258,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
         currentAudio = songsPlayed.last;
         songsPlayed.removeAt(songsPlayed.length - 1);
       });
+
       if (mustScroll) {
         _pageController.previousPage(
           duration: const Duration(milliseconds: 400),
@@ -269,11 +270,11 @@ class _PlayerWidgetState extends State<PlayerWidget>
         );
         Future.delayed(
             Duration(milliseconds: 400), () => _usingButtons = false);
+        currentPage -= 1;
       }
-      currentPage -= 1;
       currentAudio.markAsListened();
-      position.value = Duration(seconds: 0);
-      duration = Duration(seconds: 0);
+      //position.value = Duration(seconds: 0);
+      //duration = Duration(seconds: 0);
       Future.delayed(Duration(milliseconds: mustScroll ? 900 : 500), () {
         if (!isPlaying) togglePlayPause();
       });
@@ -472,7 +473,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 fit: BoxFit.fitHeight));
   }
 
-  Widget backButton(double width) {
+  Widget nextOrBackButton(double width, bool back) {
     return Container(
         height: width / 5,
         child: Center(
@@ -480,13 +481,13 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 color: Colors.transparent,
                 child: GestureDetector(
                   child: Icon(
-                    Icons.skip_previous,
+                    back ? Icons.skip_previous : Icons.skip_next,
                     color: Colors.white.withOpacity(0.8),
                     size: width / 8.82,
                   ),
                   onTap: () {
                     _usingButtons = true;
-                    skipPrevious(true);
+                    back ? skipPrevious(true) : skipSong(true);
                   },
                 ))));
   }
@@ -656,7 +657,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                   Expanded(
                       //Atrás
                       flex: 15,
-                      child: backButton(width)),
+                      child: nextOrBackButton(width, true)),
                   Expanded(
                       //Botones apilados (Play/Pause y Cola)
                       flex: 20,
@@ -696,9 +697,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
       Align(
           alignment: Alignment.centerRight,
           child: Row(children: <Widget>[
-            backButton(height * 2),
+            nextOrBackButton(height * 2, true),
             playPauseButton(height * 2),
-            backButton(height * 2)
+            nextOrBackButton(height * 2, false)
           ])),
       Expanded(
           child: Padding(

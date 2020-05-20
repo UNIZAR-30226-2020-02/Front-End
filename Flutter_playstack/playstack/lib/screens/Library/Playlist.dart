@@ -1,11 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:playstack/models/LocalSongsPlaylists.dart';
 import 'package:playstack/models/PlaylistType.dart';
+import 'package:playstack/models/Song.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
 import 'dart:ui' as ui;
+import 'package:playstack/services/SQLite.dart';
 
 import 'package:toast/toast.dart';
 
@@ -25,6 +28,7 @@ class _PlaylistState extends State<Playlist> {
       new TextEditingController();
 
   List songs = new List();
+  List localSongs = new List();
   bool _loading = true;
 
   _PlaylistState(this.playlist, this.isNotOwn);
@@ -46,9 +50,23 @@ class _PlaylistState extends State<Playlist> {
           ? songs = await getPlaylistSongsDB(playlist.name, isNotOwn: true)
           : songs = await getPlaylistSongsDB(playlist.name);
     }
-    setState(() {
-      _loading = false;
-    });
+
+    if (accountType == "Premium") {
+      List<LocalSongsPlaylists> _tempList = await getSongsInPlaylists();
+      localSongs.clear();
+      for (var item in _tempList) {
+        if (item.playlistName == playlist.name) {
+          Song newSong = new Song(title: item.songName, isLocal: true);
+          localSongs.add(newSong);
+        }
+      }
+      print(
+          "Hay ${localSongs.length.toString()} canciones en la playlist local");
+    }
+    if (mounted)
+      setState(() {
+        _loading = false;
+      });
   }
 
   Widget playlistStatusSwitch() {
@@ -241,15 +259,29 @@ class _PlaylistState extends State<Playlist> {
                   : ListView.builder(
                       scrollDirection: Axis.vertical,
                       shrinkWrap: true,
-                      itemCount: songs.isEmpty ? 0 : songs.length,
+                      itemCount: (songs.isEmpty && localSongs.isEmpty)
+                          ? 0
+                          : (songs.length + localSongs.length),
                       itemBuilder: (BuildContext context, int index) {
-                        return new SongItem(
-                          songs[index],
-                          songs,
-                          playlist.name,
-                          playlist: playlist,
-                          isNotOwn: isNotOwn,
-                        );
+                        if (index < songs.length) {
+                          return new SongItem(
+                            songs[index],
+                            songs,
+                            playlist.name,
+                            playlist: playlist,
+                            isNotOwn: isNotOwn,
+                          );
+                        } else {
+                          return new LocalSongItem(
+                            localSongs[index - songs.length],
+                            songs,
+                            playlist.name,
+                            playlistName: playlist.name,
+                            onDeletedCallBack: () {
+                              getSongs();
+                            },
+                          );
+                        }
                       },
                     )
             ],

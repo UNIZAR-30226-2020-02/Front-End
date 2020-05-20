@@ -56,7 +56,6 @@ class _GenresSongsState extends State<GenresSongs> {
 
   Future<void> getSongsByGenre(String genre) async {
     print("Recopilando genero $genre...");
-    print("Con usuario " + userName);
     dynamic response = await http.get(
       "https://playstack.azurewebsites.net/get/song/bygenre?NombreGenero=$genre&Usuario=$userName",
       headers: {"Content-Type": "application/json"},
