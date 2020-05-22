@@ -29,7 +29,7 @@ class _AlbumSongsState extends State<AlbumSongs> {
   }
 
   void _getAlbumSongs() async {
-    songs = await getAlbumSongs(album.name);
+    songs = await getAlbumSongs(album.title);
     if (mounted)
       setState(() {
         _loading = false;
@@ -50,7 +50,7 @@ class _AlbumSongsState extends State<AlbumSongs> {
         child: Scaffold(
           appBar: AppBar(
             title: Text(
-              album.name,
+              album.title,
               style: TextStyle(fontSize: 25, fontFamily: 'Circular'),
             ),
             backgroundColor: Colors.transparent,
@@ -94,7 +94,7 @@ class _AlbumSongsState extends State<AlbumSongs> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                      shuffleButton(album.name, songs, context),
+                      shuffleButton(album.title, songs, context),
                     ],
                   ),
                 ),
@@ -110,7 +110,7 @@ class _AlbumSongsState extends State<AlbumSongs> {
                         return new SongItem(
                           songs[index],
                           songs,
-                          album.name,
+                          album.title,
                           isNotOwn: true,
                         );
                       },

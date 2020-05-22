@@ -43,19 +43,19 @@ class _PlaylistState extends State<Playlist> {
   }
 
   void getSongs() async {
-    if (playlist.name == "Favoritas") {
+    if (playlist.title == "Favoritas") {
       songs = await getFavoriteSongs();
     } else {
       isNotOwn
-          ? songs = await getPlaylistSongsDB(playlist.name, isNotOwn: true)
-          : songs = await getPlaylistSongsDB(playlist.name);
+          ? songs = await getPlaylistSongsDB(playlist.title, isNotOwn: true)
+          : songs = await getPlaylistSongsDB(playlist.title);
     }
 
     if (accountType == "Premium") {
       List<LocalSongsPlaylists> _tempList = await getSongsInPlaylists();
       localSongs.clear();
       for (var item in _tempList) {
-        if (item.playlistName == playlist.name) {
+        if (item.playlistName == playlist.title) {
           Song newSong = new Song(title: item.songName, isLocal: true);
           localSongs.add(newSong);
         }
@@ -189,7 +189,7 @@ class _PlaylistState extends State<Playlist> {
         child: Scaffold(
           appBar: AppBar(
             title: Text(
-              playlist.name,
+              playlist.title,
               style: TextStyle(fontSize: 25, fontFamily: 'Circular'),
             ),
             backgroundColor: Colors.transparent,
@@ -206,7 +206,7 @@ class _PlaylistState extends State<Playlist> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: <Widget>[
-                    playlist.name == "Favoritas"
+                    playlist.title == "Favoritas"
                         ? Image.asset("assets/images/Favs_cover.jpg")
                         : SizedBox(
                             height: MediaQuery.of(context).size.height / 4,
@@ -224,7 +224,7 @@ class _PlaylistState extends State<Playlist> {
                     SizedBox(
                         height: MediaQuery.of(context).size.height / 4,
                         width: MediaQuery.of(context).size.width / 2,
-                        child: playlist.name == "Favoritas"
+                        child: playlist.title == "Favoritas"
                             ? Image.asset("assets/images/Favs_cover.jpg")
                             : playListCover(playlist.coverUrls)),
                   ],
@@ -243,10 +243,10 @@ class _PlaylistState extends State<Playlist> {
                           child: isNotOwn ? Text('') : playlistOptionsButton()),
                       Expanded(
                           flex: 2,
-                          child: shuffleButton(playlist.name, songs, context)),
+                          child: shuffleButton(playlist.title, songs, context)),
                       Expanded(
                           flex: 1,
-                          child: playlist.name == "Favoritas" || isNotOwn
+                          child: playlist.title == "Favoritas" || isNotOwn
                               ? Text('')
                               : playlistStatusSwitch())
                     ],
@@ -267,7 +267,7 @@ class _PlaylistState extends State<Playlist> {
                           return new SongItem(
                             songs[index],
                             songs,
-                            playlist.name,
+                            playlist.title,
                             playlist: playlist,
                             isNotOwn: isNotOwn,
                           );
@@ -275,8 +275,8 @@ class _PlaylistState extends State<Playlist> {
                           return new LocalSongItem(
                             localSongs[index - songs.length],
                             songs,
-                            playlist.name,
-                            playlistName: playlist.name,
+                            playlist.title,
+                            playlistName: playlist.title,
                             onDeletedCallBack: () {
                               getSongs();
                             },

@@ -105,10 +105,10 @@ class _SearchPeopleState extends State<SearchPeople> {
       itemCount: users == null ? 0 : users.length,
       itemBuilder: (BuildContext context, int index) {
         return new ListTile(
-          title: Text(users[index]),
+          title: Text(users[index].title),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(
-              builder: (BuildContext context) =>
-                  YourPublicProfile(false, friendUserName: users[index]))),
+              builder: (BuildContext context) => YourPublicProfile(false,
+                  friendUserName: users[index].title))),
         );
       },
     );

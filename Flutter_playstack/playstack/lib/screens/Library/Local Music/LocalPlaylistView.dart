@@ -19,7 +19,7 @@ class LocalPlaylistView extends StatefulWidget {
 }
 
 class _LocalPlaylistViewState extends State<LocalPlaylistView> {
-  final String playlistName;
+  String playlistName;
   // Contiene los nombres de las canciones de la playlist
   List songs = new List();
   bool _loading = true;
@@ -56,20 +56,25 @@ class _LocalPlaylistViewState extends State<LocalPlaylistView> {
     LocalPlaylist tempPlaylist =
         new LocalPlaylist(name: _playlistNameController.text);
 
-    int result = await updateLocalPlaylist(tempPlaylist);
+    int result = await updateLocalPlaylist(tempPlaylist, playlistName);
+    result += await updateLocalPlaylistSongsRelation(
+        playlistName, _playlistNameController.text);
 
     if (result > 0) {
       Toast.show('Lista de reproducción actualizada!', context,
           gravity: Toast.CENTER,
           duration: Toast.LENGTH_LONG,
           backgroundColor: Colors.green);
+      playlistName = _playlistNameController.text;
     } else {
       Toast.show('Error actualizando lista de reproducción', context,
           gravity: Toast.CENTER,
           duration: Toast.LENGTH_LONG,
           backgroundColor: Colors.red);
     }
-    _playlistNameController.clear();
+    setState(() {
+      _playlistNameController.clear();
+    });
   }
 
   Future<void> _showEditPlaylistDialog(BuildContext context) {

@@ -11,6 +11,89 @@ import 'package:playstack/models/user.dart';
 import 'package:playstack/screens/Library/Podcasts.dart';
 import 'package:playstack/shared/common.dart';
 
+Future<List> search(String keyword) async {
+  List allLists = new List();
+  List<Song> songs = new List();
+  List<PlaylistType> playlists = new List();
+  List<Album> albums = new List();
+  List<Podcast> podcasts = new List();
+  List<Artist> artists = new List();
+
+  allLists.add(songs);
+  allLists.add(playlists);
+  allLists.add(albums);
+  allLists.add(podcasts);
+  allLists.add(artists);
+
+  print("Buscando palabra $keyword...");
+
+  dynamic response = await http.get(
+      'https://playstack.azurewebsites.net/search/?KeyWord=$keyword&NombreUsuario=$userName');
+
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("REcuperado de todo con keyword $keyword");
+
+    response
+        .forEach((category, data) => addDataToList(allLists, category, data));
+  } else {
+    print("Statuscode de recuperar cosicas varias  " +
+        response.statusCode.toString());
+    print('Error recuperar cosicas varias, body: ' + response.body.toString());
+  }
+  return allLists;
+}
+
+void addDataToList(List list, String category, dynamic data) {
+  switch (category) {
+    case "Canciones":
+      data.forEach((title, info) => addSongToListFull(
+          list.elementAt(0),
+          title,
+          info['Artistas'],
+          info['url'],
+          info['Albumes'],
+          info['ImagenesAlbum'],
+          info['EsFavorita']));
+      print("Hay ${list.elementAt(0).length.toString()} canciones");
+
+      break;
+
+    case "PlayLists":
+      data.forEach((name, info) => addPlaylistToList(
+          list.elementAt(1), name, info['Fotos'], info['Privado']));
+      print("Hay ${list.elementAt(1).length.toString()} playlists");
+
+      break;
+
+    case "Albumes":
+      data.forEach((name, coverUrl) => addAlbumToList(
+            list.elementAt(2),
+            name,
+            coverUrl,
+          ));
+      print("Hay ${list.elementAt(2).length.toString()} albumes");
+
+      break;
+
+    case "Podcasts":
+      data.forEach((title, coverUrl) =>
+          addPodcastToList(list.elementAt(3), title, coverUrl));
+      print("Hay ${list.elementAt(3).length.toString()} podcasts");
+
+      break;
+    default:
+      // Artistas
+      data.forEach((artista) => addArtistToList(
+            list.elementAt(4),
+            artista["Nombre"],
+            artista["Foto"],
+          ));
+
+      print("Hay ${list.elementAt(4).length.toString()} artistas");
+  }
+}
+
 //TODO: Implementar cuando esté completo en Backend
 List getPodcastsDB() {
   return getExampleList();
@@ -593,6 +676,7 @@ Future<List> getPlaylistSongsDB(String playlistName, {bool isNotOwn}) async {
   return playlistSongs;
 }
 
+/* 
 Future<List> getPublicPlaylists(String user) async {
   List allSongs = new List();
   dynamic response = await http.get(
@@ -608,7 +692,7 @@ Future<List> getPublicPlaylists(String user) async {
   }
   return allSongs;
 }
-
+ */
 Future<bool> createFolderDB(String folderName, String playlistName) async {
   print("Creando carpeta $folderName con playlist $playlistName");
   dynamic data = {
@@ -635,6 +719,7 @@ Future<bool> createFolderDB(String folderName, String playlistName) async {
 }
 
 Future<List> getAllSongs() async {
+  print("Recuperando todas las canciones");
   List allSongs = new List();
   dynamic response =
       await http.get('https://playstack.azurewebsites.net/get/allsongs');
@@ -642,8 +727,7 @@ Future<List> getAllSongs() async {
   print("Codigo recuperando canciones: " + response.statusCode.toString());
   if (response.statusCode == 200) {
     response = jsonDecode(response.body);
-    print("REspuesta:");
-    response.forEach((title, info) => print(title + info.toString()));
+    //response.forEach((title, info) => print(title + info.toString()));
     response.forEach((title, info) => addSongToList(
         allSongs,
         title,
@@ -652,7 +736,7 @@ Future<List> getAllSongs() async {
         info['ImagenesAlbums'],
         info['url']));
   } else {
-    print('Error buscando usuarios');
+    print('Error recuperando todas las canciones');
   }
   return allSongs;
 }
@@ -800,7 +884,12 @@ Future<List> getUsers(String keyword) async {
   if (response.statusCode == 200) {
     response = jsonDecode(response.body);
     print("Response " + response.toString());
-    List users = response['Usuarios'];
+    List users = new List();
+    response.forEach((title, profilePhoto) => addUserToList(
+          users,
+          title,
+          profilePhoto,
+        ));
     users.remove(userName);
     return users;
   } else {
@@ -880,7 +969,7 @@ addPlaylistToList(List playlists, String name, dynamic covers, bool isPrivate) {
     }
   }
   PlaylistType newPlaylist =
-      PlaylistType(name: name, coverUrls: covers, isPrivate: isPrivate);
+      PlaylistType(title: name, coverUrls: covers, isPrivate: isPrivate);
   playlists.add(newPlaylist);
 }
 

@@ -125,6 +125,8 @@ class _LocalMusicState extends State<LocalMusic> {
                 builder: (BuildContext context) =>
                     LocalPlaylistView(playlist.name)))
             .then((val) {
+          _getPlaylists();
+
           _getSongs();
         });
       },
@@ -390,7 +392,7 @@ class _LocalMusicState extends State<LocalMusic> {
                               icon: Icon(Icons.add), onPressed: _saveSong))
                     ],
                   ),
-                  localSongsList.isNotEmpty ? localSongs() : Text("")
+                  localSongsList.isNotEmpty ? localSongs() : Text(""),
                 ],
               ),
             ),

@@ -1,5 +1,5 @@
 class User {
-  String name;
+  String title;
   String photoUrl;
-  User(this.name, this.photoUrl);
+  User(this.title, this.photoUrl);
 }

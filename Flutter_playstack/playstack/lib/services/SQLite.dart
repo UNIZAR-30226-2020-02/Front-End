@@ -226,7 +226,7 @@ Future<int> deleteSongFromPlaylist(String songName, String playlistName) async {
   return deleted;
 }
 
-Future<int> updateLocalPlaylist(LocalPlaylist playlist) async {
+Future<int> updateLocalPlaylist(LocalPlaylist playlist, String oldName) async {
   // Obtiene una referencia de la base de datos
   final db = await database;
   int updated = 0;
@@ -237,13 +237,63 @@ Future<int> updateLocalPlaylist(LocalPlaylist playlist) async {
       'Playlists',
       playlist.toMap(),
       // Aseguúrate de que solo actualizarás el Dog con el id coincidente
-      where: "id = ?",
+      where: "name = ?",
       // Pasa el id Dog a través de whereArg para prevenir SQL injection
-      whereArgs: [playlist.name],
+      whereArgs: [oldName],
     );
   } catch (e) {
     print(e.toString());
   }
+  if (updated > 0)
+    print("Playist actualizada");
+  else
+    print("No se ha actualizado la playlist");
+  return updated;
+}
+
+Future<int> updateLocalRelation(
+    LocalSongsPlaylists relation, String oldId) async {
+  // Obtiene una referencia de la base de datos
+  final db = await database;
+  int updated = 0;
+
+  try {
+    // Actualiza el Dog dado
+    updated = await db.update(
+      'SongsInPlaylists',
+      relation.toMap(),
+      // Aseguúrate de que solo actualizarás el Dog con el id coincidente
+      where: "id = ?",
+      // Pasa el id Dog a través de whereArg para prevenir SQL injection
+      whereArgs: [oldId],
+    );
+  } catch (e) {
+    print(e.toString());
+  }
+
+  return updated;
+}
+
+Future<int> updateLocalPlaylistSongsRelation(
+    String oldPlaylistName, String newPlaylistName) async {
+  int updated = 0;
+  List songsInPlaylist = new List();
+  List<LocalSongsPlaylists> _tmpList = await getSongsInPlaylists();
+
+  for (var item in _tmpList) {
+    if (item.playlistName == oldPlaylistName) songsInPlaylist.add(item);
+  }
+  for (var relation in songsInPlaylist) {
+    LocalSongsPlaylists newRelation = new LocalSongsPlaylists(
+        id: "${relation.songName}$newPlaylistName",
+        songName: relation.songName,
+        playlistName: newPlaylistName);
+
+    updated += await updateLocalRelation(
+        newRelation, "${relation.songName}$oldPlaylistName");
+  }
+  print(
+      "actualizadas $updated canciones de la vieja playlist $oldPlaylistName ahora llamada $newPlaylistName");
 
   return updated;
 }

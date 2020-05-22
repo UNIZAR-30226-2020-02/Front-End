@@ -1,28 +1,28 @@
 import 'package:playstack/services/database.dart';
 
 class PlaylistType {
-  String name;
+  String title;
   List coverUrls;
   bool isPrivate;
-  PlaylistType({this.name, this.coverUrls, this.isPrivate});
+  PlaylistType({this.title, this.coverUrls, this.isPrivate});
 
   Future<void> changePlaylistStatus() async {
     bool updated =
-        await updatePlaylistDB(this.name, this.name, !this.isPrivate);
+        await updatePlaylistDB(this.title, this.title, !this.isPrivate);
     if (updated) {
       this.isPrivate = !this.isPrivate;
     }
   }
 
   Future<bool> changePlaylistName(String newName) async {
-    bool updated = await updatePlaylistDB(this.name, newName, this.isPrivate);
+    bool updated = await updatePlaylistDB(this.title, newName, this.isPrivate);
     if (updated) {
-      this.name = newName;
+      this.title = newName;
     }
     return updated;
   }
 
   Future<void> updateCovers() async {
-    this.coverUrls = await updatePlaylistCoversDB(this.name);
+    this.coverUrls = await updatePlaylistCoversDB(this.title);
   }
 }

@@ -7,8 +7,9 @@ import 'package:flutter/foundation.dart';
 import 'package:playstack/models/Audio.dart';
 import 'package:playstack/models/LocalSongsPlaylists.dart';
 import 'package:playstack/models/Podcast.dart';
+import 'package:playstack/models/user.dart';
+import 'package:playstack/screens/Homescreen/PublicProfile.dart';
 import 'package:playstack/screens/Library/Folder.dart';
-import 'package:playstack/screens/Library/Local%20Music/LocalPlaylistView.dart';
 import 'package:playstack/screens/Player/PlayerWidget.dart';
 import 'package:playstack/screens/MainScreen.dart';
 import 'package:playstack/models/FolderType.dart';
@@ -78,17 +79,26 @@ List<Widget> mainScreens = [
   PlayingNowScreen()
 ];
 
+enum PlayerState { stopped, playing, paused }
+
 // Para canciones de assets
 AudioCache audioCache = AudioCache();
 //Para canciones online SOLO HTTPS no HTTP
 AudioPlayer advancedPlayer = AudioPlayer();
+AudioPlayerState audioPlayerState;
 
-AudioPlayerState audioPlayerState = AudioPlayerState.STOPPED;
+PlayerState playerState = PlayerState.stopped;
+
+PlayerMode mode = PlayerMode.MEDIA_PLAYER;
+
+Duration position;
+
 Duration duration;
 bool playerActive = false;
 
 List<Audio> allAudios = [];
 bool onPlayerScreen = false;
+bool shuffleEnabled;
 
 PlayingRouteState playingRouteState = PlayingRouteState.SPEAKERS;
 StreamSubscription durationSubscription;
@@ -97,14 +107,10 @@ StreamSubscription playerCompleteSubscription;
 StreamSubscription playerErrorSubscription;
 StreamSubscription playerStateSubscription;
 
-get isPlaying => audioPlayerState == AudioPlayerState.PLAYING;
-get isPaused => audioPlayerState == AudioPlayerState.PAUSED;
+get isPlaying => playerState == PlayerState.playing;
+get isPaused => playerState == PlayerState.paused;
 get durationText => duration?.toString()?.split('.')?.first ?? '';
-final ValueNotifier<Duration> position =
-    ValueNotifier<Duration>(Duration(seconds: 0));
-get positionText => position.value?.toString()?.split('.')?.first ?? '';
-
-PlayerMode mode = PlayerMode.MEDIA_PLAYER;
+get positionText => position?.toString()?.split('.')?.first ?? '';
 
 Widget player;
 
@@ -229,6 +235,11 @@ void setShuffleQueue(String songsListName, List songsList, Song firstSong) {
   songsNextUpName = songsListName;
   currentAudio = firstSong;
   songsNextUp = tmpList;
+  allAudios.clear();
+  allAudios.add(currentAudio);
+  for (var item in songsNextUp) {
+    allAudios.add(item);
+  }
   firstSong.markAsListened();
 }
 
@@ -253,6 +264,8 @@ Widget shuffleButton(
     child: RaisedButton(
       onPressed: () {
         onPlayerScreen = true;
+        shuffleEnabled = true;
+
         setShuffleQueue(songsListName, songslist, song);
         if (player == null) player = PlayerWidget();
         Navigator.of(context).push(MaterialPageRoute(
@@ -401,6 +414,21 @@ Future<void> showAddingSongToPlaylistDialog(
   );
 }
 
+void setQueue(List songsList, Song song, String songsListName) {
+  List tmpList = new List();
+  tmpList.addAll(songsList);
+  tmpList.remove(song);
+  songsNextUpName = songsListName;
+  currentAudio = song;
+  songsNextUp = tmpList;
+  allAudios.clear();
+  allAudios.add(currentAudio);
+  for (var item in songsNextUp) {
+    allAudios.add(item);
+  }
+  song.markAsListened();
+}
+
 class SongItem extends StatelessWidget {
   final String songsListName;
   final List songsList;
@@ -411,22 +439,11 @@ class SongItem extends StatelessWidget {
   SongItem(this.song, this.songsList, this.songsListName,
       {this.playlist, @required this.isNotOwn});
 
-  void setQueue(List songsList) {
-    List tmpList = new List();
-    tmpList.addAll(songsList);
-    tmpList.remove(song);
-    songsNextUpName = songsListName;
-    currentAudio = song;
-    songsNextUp = tmpList;
-    print("Tocada se marcara como escuchada");
-    song.markAsListened();
-  }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        setQueue(songsList);
+        setQueue(songsList, song, songsListName);
         onPlayerScreen = true;
         if (player == null) player = PlayerWidget();
         Navigator.of(context).push(MaterialPageRoute(
@@ -468,12 +485,17 @@ class SongItem extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(
-                    song.title,
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: MediaQuery.of(context).size.height / 40),
+                  Container(
+                    width: MediaQuery.of(context).size.width / 2.2,
+                    child: Text(
+                      song.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.fade,
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: MediaQuery.of(context).size.height / 45),
+                    ),
                   ),
                   SizedBox(height: 5),
                   song.isLocal
@@ -512,7 +534,7 @@ class SongItem extends StatelessWidget {
                         if (song.isLocal) {
                         } else {
                           await removeSongFromPlaylistDB(
-                              song.title, playlist.name);
+                              song.title, playlist.title);
                           await playlist.updateCovers();
                         }
 
@@ -678,22 +700,11 @@ class LocalSongItem extends StatelessWidget {
   LocalSongItem(this.song, this.songsList, this.songsListName,
       {this.playlistName, @required this.onDeletedCallBack});
 
-  void setQueue(List songsList) {
-    List tmpList = new List();
-    tmpList.addAll(songsList);
-    tmpList.remove(song);
-    songsNextUpName = songsListName;
-    currentAudio = song;
-    songsNextUp = tmpList;
-    print("Tocada se marcara como escuchada");
-    song.markAsListened();
-  }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        setQueue(songsList);
+        setQueue(songsList, song, songsListName);
         onPlayerScreen = true;
         if (player == null) player = PlayerWidget();
         Navigator.of(context).push(MaterialPageRoute(
@@ -942,7 +953,14 @@ Widget playListCover(List insideCoverUrls) {
       );
       break;
     case 1:
-      return Image.network(insideCoverUrls.elementAt(0));
+      return Container(
+        decoration: new BoxDecoration(
+          image: new DecorationImage(
+              fit: BoxFit.cover,
+              alignment: FractionalOffset.topCenter,
+              image: NetworkImage(insideCoverUrls.elementAt(0))),
+        ),
+      );
       break;
     case 2:
       return Row(
@@ -1372,7 +1390,7 @@ class PlaylistItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    playlist.name,
+                    playlist.title,
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -1397,9 +1415,9 @@ class PlaylistItem extends StatelessWidget {
                                 ),
                                 backgroundColor: Colors.grey[700]));
                             bool deleted =
-                                await deletePlaylistDB(playlist.name);
+                                await deletePlaylistDB(playlist.title);
                             //Borra la referencia local
-                            deleteLocalPlaylist(playlist.name);
+                            deleteLocalPlaylist(playlist.title);
 
                             if (deleted) {
                               Scaffold.of(context).showSnackBar(SnackBar(
@@ -1574,6 +1592,34 @@ class PodcastEpisodes extends StatelessWidget {
   }
 }
 
+class PodcastTile extends StatelessWidget {
+  final Podcast podcast;
+
+  PodcastTile(
+    this.podcast,
+  );
+  // Navigator.of(context).push(MaterialPageRoute(
+  //           builder: (BuildContext context) => PodcastEpisodes(podcast)));
+
+  @override
+  Widget build(BuildContext context) {
+    List cover = new List();
+    cover.add(podcast.coverUrl);
+    return ListTile(
+      leading: Container(
+        height: MediaQuery.of(context).size.height / 13,
+        width: MediaQuery.of(context).size.width / 5.8,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8.0),
+          child: playListCover(cover),
+        ),
+      ),
+      title: Text(podcast.title),
+      subtitle: Text("Podcast"),
+    );
+  }
+}
+
 class PodcastItem extends StatelessWidget {
   final Podcast podcast;
 
@@ -1607,6 +1653,29 @@ class PodcastItem extends StatelessWidget {
             ),
           )
         ],
+      ),
+    );
+  }
+}
+
+class UserTile extends StatelessWidget {
+  final User user;
+  UserTile({@required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
+      child: ListTile(
+        leading: CircleAvatar(
+            radius: 30, backgroundImage: NetworkImage(user.photoUrl)),
+        title: Text(user.title),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (BuildContext context) => YourPublicProfile(
+                  false,
+                  friendUserName: user.title,
+                  otherUser: user,
+                ))),
       ),
     );
   }

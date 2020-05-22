@@ -67,7 +67,7 @@ class _SocialState extends State<Social> {
                 setState(() {
                   _applying = true;
                 });
-                bool res = await follow(user.name);
+                bool res = await follow(user.title);
                 if (res) {
                   Toast.show("Solicitud aceptada correctamente", context,
                       gravity: Toast.CENTER,
@@ -99,7 +99,7 @@ class _SocialState extends State<Social> {
                 setState(() {
                   _applying = true;
                 });
-                bool res = await rejectFollowRequest(user.name);
+                bool res = await rejectFollowRequest(user.title);
                 if (res) {
                   Toast.show("Solicitud rechazada correctamente", context,
                       gravity: Toast.CENTER,
@@ -131,13 +131,13 @@ class _SocialState extends State<Social> {
       child: ListTile(
         leading: CircleAvatar(
             radius: 30, backgroundImage: NetworkImage(user.photoUrl)),
-        title: Text(user.name),
+        title: Text(user.title),
         trailing:
             tab == "Requests" ? followRequestButtons(user, context) : Text(''),
         onTap: () => Navigator.of(context).push(MaterialPageRoute(
             builder: (BuildContext context) => YourPublicProfile(
                   false,
-                  friendUserName: user.name,
+                  friendUserName: user.title,
                   otherUser: user,
                 ))),
       ),

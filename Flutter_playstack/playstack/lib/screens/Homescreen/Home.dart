@@ -52,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
             scrollDirection: Axis.horizontal,
             itemBuilder: (BuildContext context, int index) {
               return ArtistItem(
-                  artistsList[index].name, artistsList[index].photo);
+                  artistsList[index].title, artistsList[index].photo);
             },
           ),
         )

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:playstack/screens/Homescreen/Account.dart';
 import 'package:playstack/screens/Homescreen/PublicProfile.dart';
 import 'package:playstack/screens/authentication/AccessScreen.dart';
+import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:playstack/shared/common.dart';

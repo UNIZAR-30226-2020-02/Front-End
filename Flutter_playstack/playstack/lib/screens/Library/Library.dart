@@ -184,7 +184,7 @@ class _LibraryState extends State<Library> {
 
   Future<void> showCreatingFolderDialog(BuildContext context) {
     bool _validate = false;
-    dropdownItem = playlists.elementAt(0).name;
+    dropdownItem = playlists.elementAt(0).title;
     return showDialog(
       barrierDismissible: true,
       context: context,
@@ -436,7 +436,7 @@ class _LibraryState extends State<Library> {
           subtitle: Text('Canciones favoritas'),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(
               builder: (BuildContext context) =>
-                  Playlist(new PlaylistType(name: "Favoritas")))),
+                  Playlist(new PlaylistType(title: "Favoritas")))),
         ),
         _loading
             ? LoadingSongs()
