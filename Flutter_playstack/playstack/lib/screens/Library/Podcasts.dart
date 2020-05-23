@@ -630,7 +630,7 @@ class _PodcasterFeaturedInState extends State<PodcasterFeaturedIn> {
   _PodcasterFeaturedInState({this.podcaster});
 
   void getPodcasts() async {
-    collPodcasts = await getCollaboratorPodcastsDB(podcaster.name);
+    collPodcasts = await getCollaboratorPodcastsDB(podcaster.title);
     setState(() {
       _loading = false;
     });
@@ -665,7 +665,7 @@ class _PodcasterFeaturedInState extends State<PodcasterFeaturedIn> {
                       podcastIndex.value = 1;
                     },
                   ),
-                  title: Text(podcaster.name),
+                  title: Text(podcaster.title),
                   shape: RoundedRectangleBorder(
                     borderRadius: new BorderRadius.circular(10.0),
                   ),
@@ -712,7 +712,7 @@ class _PodcasterFeaturedInState extends State<PodcasterFeaturedIn> {
                         collPodcasts.isNotEmpty
                             ? Padding(
                                 padding: const EdgeInsets.only(top: 8.0),
-                                child: Text("Podcasts de " + podcaster.name,
+                                child: Text("Podcasts de " + podcaster.title,
                                     style: TextStyle(fontSize: 20)),
                               )
                             : Text(""),
