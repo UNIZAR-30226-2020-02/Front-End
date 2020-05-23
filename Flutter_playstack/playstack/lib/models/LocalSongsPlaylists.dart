@@ -13,4 +13,9 @@ class LocalSongsPlaylists {
       'playlistName': playlistName,
     };
   }
+
+  @override
+  String toString() {
+    return '''Id: $id, Song: $songName, Playlist: $playlistName''';
+  }
 }

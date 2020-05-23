@@ -1,16 +1,17 @@
-import 'package:bot_toast/bot_toast.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:playstack/models/Album.dart';
 import 'package:playstack/models/Artist.dart';
+import 'package:playstack/models/LocalPlaylist.dart';
 import 'package:playstack/models/PlaylistType.dart';
-import 'package:playstack/screens/Library/LocalMusic.dart';
+import 'package:playstack/screens/Library/Local%20Music/LocalMusic.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
 import 'package:playstack/screens/Library/Podcasts.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
 import 'package:toast/toast.dart';
+import 'package:playstack/services/SQLite.dart';
 
 class Library extends StatefulWidget {
   @override
@@ -183,7 +184,7 @@ class _LibraryState extends State<Library> {
 
   Future<void> showCreatingFolderDialog(BuildContext context) {
     bool _validate = false;
-    dropdownItem = playlists.elementAt(0).name;
+    dropdownItem = playlists.elementAt(0).title;
     return showDialog(
       barrierDismissible: true,
       context: context,
@@ -314,6 +315,12 @@ class _LibraryState extends State<Library> {
                                   _validate = false;
                                   Navigator.pop(context);
                                   createPlaylist(_isPrivate);
+                                  if (accountType == "Premium") {
+                                    LocalPlaylist newLocalPlaylist =
+                                        new LocalPlaylist(
+                                            name: newPLaylistController.text);
+                                    insertPlaylist(newLocalPlaylist);
+                                  }
                                 }
                               });
                             },
@@ -429,7 +436,7 @@ class _LibraryState extends State<Library> {
           subtitle: Text('Canciones favoritas'),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(
               builder: (BuildContext context) =>
-                  Playlist(new PlaylistType(name: "Favoritas")))),
+                  Playlist(new PlaylistType(title: "Favoritas")))),
         ),
         _loading
             ? LoadingSongs()

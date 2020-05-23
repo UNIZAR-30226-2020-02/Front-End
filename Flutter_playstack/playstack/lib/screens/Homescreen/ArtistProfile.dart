@@ -30,11 +30,11 @@ class _ArtistProfileState extends State<ArtistProfile> {
   }
 
   void _getArtistSongs() async {
-    songs = await getArtistSongsDB(artist.name);
+    songs = await getArtistSongsDB(artist.title);
   }
 
   void _getArtisAlbums() async {
-    albums = await getArtistAlbumsDB(artist.name);
+    albums = await getArtistAlbumsDB(artist.title);
     setState(() {
       _loading = false;
     });
@@ -61,7 +61,7 @@ class _ArtistProfileState extends State<ArtistProfile> {
                       Navigator.of(context).pop();
                     },
                   ),
-                  title: Text(artist.name),
+                  title: Text(artist.title),
                   shape: RoundedRectangleBorder(
                     borderRadius: new BorderRadius.circular(10.0),
                   ),
@@ -88,7 +88,7 @@ class _ArtistProfileState extends State<ArtistProfile> {
                         Padding(
                           padding: const EdgeInsets.only(top: 10.0, bottom: 10),
                           child: Text(
-                            "Canciones de " + artist.name,
+                            "Canciones de " + artist.title,
                             style: TextStyle(fontSize: 20),
                           ),
                         ),
@@ -100,7 +100,7 @@ class _ArtistProfileState extends State<ArtistProfile> {
                             return new SongItem(
                               songs[index],
                               songs,
-                              artist.name,
+                              artist.title,
                               isNotOwn: true,
                             );
                           },
@@ -108,7 +108,7 @@ class _ArtistProfileState extends State<ArtistProfile> {
                         albums.isNotEmpty
                             ? Padding(
                                 padding: const EdgeInsets.only(top: 8.0),
-                                child: Text("Álbumes de " + artist.name,
+                                child: Text("Álbumes de " + artist.title,
                                     style: TextStyle(fontSize: 20)),
                               )
                             : Text(""),

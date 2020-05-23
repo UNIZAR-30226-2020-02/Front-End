@@ -6,16 +6,8 @@ import 'package:playstack/screens/Homescreen/Settings.dart';
 import 'package:playstack/screens/Homescreen/Social/Social.dart';
 import 'package:playstack/screens/Library/ArtistSongs.dart';
 import 'package:playstack/services/database.dart';
+import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
-List<String> imageurl = [
-  'assets/images/Artists/Macklemore.jpg',
-  'assets/images/Artists/Eminem.jpg',
-  'assets/images/Artists/datweekaz.jpg',
-  'assets/images/Artists/timmytrumpet.jpg'
-];
-List<String> artists = ['Macklemore', 'Eminem', 'Da Tweekaz', 'Timmy Trumpet'];
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -23,14 +15,31 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  SharedPreferences sharedPreferences;
+  List artistsList = new List();
+  List podcastsList = new List();
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _getData();
+  }
+
+  void _getData() async {
+    podcastsList = await getAllPodcastsDB();
+    artistsList = await getAllArtistsDB();
+    if (mounted)
+      setState(() {
+        _loading = false;
+      });
+  }
 
   Widget artistsCards() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Padding(
-          padding: const EdgeInsets.fromLTRB(10, 0, 0, 10),
+          padding: const EdgeInsets.fromLTRB(10, 10, 0, 10),
           child: Text(
             "Artistas",
             style: TextStyle(fontFamily: 'Circular', fontSize: 22),
@@ -39,10 +48,11 @@ class _HomeScreenState extends State<HomeScreen> {
         Container(
           height: 165.0,
           child: ListView.builder(
-            itemCount: imageurl.length,
+            itemCount: artistsList.length,
             scrollDirection: Axis.horizontal,
             itemBuilder: (BuildContext context, int index) {
-              return ArtistItem(artists[index], imageurl[index]);
+              return ArtistItem(
+                  artistsList[index].title, artistsList[index].photo);
             },
           ),
         )
@@ -50,50 +60,85 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget startHome() {
-    return Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [
-            Color.fromRGBO(80, 20, 20, 4.0),
-            Color(0xFF191414),
-          ], begin: Alignment.topLeft, end: FractionalOffset(0.3, 0.3)),
+  Widget recommendedPodcasts() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Text(
+            "Podcasts Recomendados",
+            style: TextStyle(fontFamily: 'Circular', fontSize: 22.0),
+          ),
         ),
-        child: Scaffold(
-            appBar: AppBar(
-              automaticallyImplyLeading: false,
-              backgroundColor: Colors.transparent,
-              centerTitle: true,
-              leading: IconButton(
-                icon: Icon(CupertinoIcons.group_solid),
-                onPressed: () {
-                  homeIndex.value = 1;
-                },
-              ),
-              title: Container(
-                  height: 40,
-                  width: 40,
-                  child: Image.asset('lib/assets/Photos/logo.png')),
-              shape: RoundedRectangleBorder(
-                borderRadius: new BorderRadius.circular(10.0),
-              ),
-              actions: <Widget>[
-                IconButton(
-                    icon: Icon(CupertinoIcons.settings),
-                    onPressed: () => homeIndex.value = 2)
-              ],
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8.0, 0, 8, 0),
+          child: Container(
+            height: MediaQuery.of(context).size.height / 4,
+            width: MediaQuery.of(context).size.height / 3,
+            child: ListView.builder(
+              itemCount: podcastsList.length,
+              scrollDirection: Axis.horizontal,
+              itemBuilder: (BuildContext context, int index) {
+                return PodcastItem(podcastsList[index]);
+              },
             ),
-            backgroundColor: Colors.transparent,
-            body: ListView(
-              children: <Widget>[
-                SingleChildScrollView(
-                  scrollDirection: Axis.vertical,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[genres(), artistsCards()],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget startHome() {
+    return _loading
+        ? Loading()
+        : Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [
+                Color.fromRGBO(80, 20, 20, 4.0),
+                Color(0xFF191414),
+              ], begin: Alignment.topLeft, end: FractionalOffset(0.3, 0.3)),
+            ),
+            child: Scaffold(
+                appBar: AppBar(
+                  automaticallyImplyLeading: false,
+                  backgroundColor: Colors.transparent,
+                  centerTitle: true,
+                  leading: IconButton(
+                    icon: Icon(CupertinoIcons.group_solid),
+                    onPressed: () {
+                      homeIndex.value = 1;
+                    },
                   ),
-                )
-              ],
-            )));
+                  title: Container(
+                      height: 40,
+                      width: 40,
+                      child: Image.asset('lib/assets/Photos/logo.png')),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: new BorderRadius.circular(10.0),
+                  ),
+                  actions: <Widget>[
+                    IconButton(
+                        icon: Icon(CupertinoIcons.settings),
+                        onPressed: () => homeIndex.value = 2)
+                  ],
+                ),
+                backgroundColor: Colors.transparent,
+                body: ListView(
+                  children: <Widget>[
+                    SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          artistsCards(),
+                          genres(),
+                          recommendedPodcasts()
+                        ],
+                      ),
+                    )
+                  ],
+                )));
   }
 
   Widget showHome(int index) {

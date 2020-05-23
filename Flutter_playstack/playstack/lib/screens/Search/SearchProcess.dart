@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
+import 'package:playstack/models/Album.dart';
+import 'package:playstack/models/Artist.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/common.dart';
 
@@ -11,7 +14,9 @@ class SearchProcess extends StatefulWidget {
 
 class _SearchProcessState extends State<SearchProcess> {
   final TextEditingController _filter = new TextEditingController();
-  final dio = new Dio();
+
+  Timer searchOnStoppedTyping;
+
   String _searchText = "";
   List names = new List();
   List filteredNames = new List();
@@ -19,22 +24,62 @@ class _SearchProcessState extends State<SearchProcess> {
   _SearchProcessState() {
     _filter.addListener(() {
       if (_filter.text.isEmpty) {
-        setState(() {
-          _searchText = "";
-          filteredNames = names;
-        });
+        if (mounted)
+          setState(() {
+            _searchText = "";
+            if (names.isNotEmpty)
+              filteredNames = names;
+            else
+              for (var i = 0; i < 5; i++) {
+                List newList = new List();
+                filteredNames.add(newList);
+              }
+          });
       } else {
-        setState(() {
-          _searchText = _filter.text;
-        });
+        if (mounted)
+          setState(() {
+            _searchText = _filter.text;
+          });
       }
     });
+  }
+
+  _onChangeHandler(value) {
+    const duration = Duration(
+        seconds: 2); // set the duration that you want call search() after that.
+    if (searchOnStoppedTyping != null) {
+      if (mounted)
+        setState(() => searchOnStoppedTyping.cancel()); // clear timer
+    }
+    if (mounted)
+      setState(() => searchOnStoppedTyping = new Timer(duration, () async {
+            if (_filter.text != "") names = await search(value);
+            if (mounted)
+              setState(() {
+                filteredNames = names;
+              });
+          }));
   }
 
   @override
   void initState() {
     this._getSongs();
+
+    for (var i = 0; i < 5; i++) {
+      List newList = new List();
+      filteredNames.add(newList);
+    }
     super.initState();
+  }
+
+  void _getSongs() async {
+    List allsongs = await getAllSongs();
+    if (mounted)
+      setState(() {
+        allsongs.shuffle();
+        filteredNames.insert(0, allsongs);
+        names.add(allsongs);
+      });
   }
 
   @override
@@ -64,10 +109,11 @@ class _SearchProcessState extends State<SearchProcess> {
             Expanded(
               child: TextField(
                   autofocus: true,
+                  onChanged: _onChangeHandler,
                   controller: _filter,
                   decoration: new InputDecoration(
                       prefixIcon: new Icon(CupertinoIcons.search),
-                      hintText: 'Search...',
+                      hintText: 'Buscar...',
                       hintStyle: TextStyle(color: Colors.white))),
             ),
           ],
@@ -83,37 +129,83 @@ class _SearchProcessState extends State<SearchProcess> {
     //Dejar esto asi aunque de warning, no pasa nada
     if (!(_searchText.isEmpty)) {
       List tempList = new List();
+      for (var i = 0; i < 5; i++) {
+        List newList = new List();
+        tempList.add(newList);
+      }
       for (int i = 0; i < filteredNames.length; i++) {
-        if (filteredNames[i]
-            .title
-            .toLowerCase()
-            .contains(_searchText.toLowerCase())) {
-          tempList.add(filteredNames[i]);
+        for (var j = 0; j < filteredNames.elementAt(i).length; j++) {
+          if (filteredNames
+              .elementAt(i)
+              .elementAt(j)
+              .title
+              .toLowerCase()
+              .contains(_searchText.toLowerCase())) {
+            tempList.elementAt(i).add(filteredNames.elementAt(i).elementAt(j));
+          }
         }
       }
       filteredNames = tempList;
     }
+    if (filteredNames.length < 5) {
+      for (var i = 0; i < 5; i++) {
+        List newList = new List();
+        filteredNames.add(newList);
+      }
+    }
+    List _songs = filteredNames.elementAt(0);
+    List _playlists = filteredNames.elementAt(1);
+    List _albums = filteredNames.elementAt(2);
+    List _podcasts = filteredNames.elementAt(3);
+    List _artists = filteredNames.elementAt(4);
     return ListView.builder(
+      physics: AlwaysScrollableScrollPhysics(),
       scrollDirection: Axis.vertical,
       shrinkWrap: true,
-      itemCount: names == null ? 0 : filteredNames.length,
+      itemCount: (names.length == 0)
+          ? 0
+          : (_songs.length +
+              _playlists.length +
+              _albums.length +
+              _podcasts.length +
+              _artists.length),
       itemBuilder: (BuildContext context, int index) {
-        return new SongItem(
-          filteredNames[index],
-          new List(),
-          filteredNames[index].title,
-          isNotOwn: true,
-        );
+        if (index < _songs.length) {
+          return new SongItem(
+            _songs.elementAt(index),
+            new List(),
+            _songs.elementAt(index).title,
+            isNotOwn: true,
+          );
+        } else if (index < (_songs.length + _playlists.length)) {
+          return new PlaylistItem(
+            _playlists.elementAt(index - _songs.length),
+            false,
+          );
+        } else if (index <
+            (_songs.length + _playlists.length + _albums.length)) {
+          return new AlbumTile(
+              _albums[index - (_songs.length + _playlists.length)]);
+        } else if (index <
+            (_songs.length +
+                _playlists.length +
+                _albums.length +
+                _podcasts.length)) {
+          return new PodcastTile(_podcasts[
+              index - (_songs.length + _playlists.length + _albums.length)]);
+        } else if (index <
+            (_songs.length +
+                _playlists.length +
+                _albums.length +
+                _podcasts.length +
+                _artists.length)) {
+          return new ArtistTile(_artists[index -
+              (_songs.length +
+                  _playlists.length +
+                  _albums.length +
+                  _podcasts.length)]);
+        }
       },
     );
-  }
-
-  void _getSongs() async {
-    List allsongs = await getAllSongs();
-    setState(() {
-      names = allsongs;
-      names.shuffle();
-      filteredNames = names;
-    });
   }
 }

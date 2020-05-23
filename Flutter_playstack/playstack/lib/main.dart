@@ -19,6 +19,7 @@ class MyApp extends StatelessWidget {
         navigatorObservers: [BotToastNavigatorObserver()],
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
+            accentColor: Colors.deepOrange,
             brightness: Brightness.dark,
             fontFamily: 'Poppins',
             textTheme: TextTheme(title: TextStyle(fontFamily: 'Circular'))),

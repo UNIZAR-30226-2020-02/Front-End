@@ -1,11 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:playstack/models/LocalSongsPlaylists.dart';
 import 'package:playstack/models/PlaylistType.dart';
+import 'package:playstack/models/Song.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
 import 'dart:ui' as ui;
+import 'package:playstack/services/SQLite.dart';
 
 import 'package:toast/toast.dart';
 
@@ -25,6 +28,7 @@ class _PlaylistState extends State<Playlist> {
       new TextEditingController();
 
   List songs = new List();
+  List localSongs = new List();
   bool _loading = true;
 
   _PlaylistState(this.playlist, this.isNotOwn);
@@ -39,16 +43,30 @@ class _PlaylistState extends State<Playlist> {
   }
 
   void getSongs() async {
-    if (playlist.name == "Favoritas") {
+    if (playlist.title == "Favoritas") {
       songs = await getFavoriteSongs();
     } else {
       isNotOwn
-          ? songs = await getPlaylistSongsDB(playlist.name, isNotOwn: true)
-          : songs = await getPlaylistSongsDB(playlist.name);
+          ? songs = await getPlaylistSongsDB(playlist.title, isNotOwn: true)
+          : songs = await getPlaylistSongsDB(playlist.title);
     }
-    setState(() {
-      _loading = false;
-    });
+
+    if (accountType == "Premium") {
+      List<LocalSongsPlaylists> _tempList = await getSongsInPlaylists();
+      localSongs.clear();
+      for (var item in _tempList) {
+        if (item.playlistName == playlist.title) {
+          Song newSong = new Song(title: item.songName, isLocal: true);
+          localSongs.add(newSong);
+        }
+      }
+      print(
+          "Hay ${localSongs.length.toString()} canciones en la playlist local");
+    }
+    if (mounted)
+      setState(() {
+        _loading = false;
+      });
   }
 
   Widget playlistStatusSwitch() {
@@ -171,7 +189,7 @@ class _PlaylistState extends State<Playlist> {
         child: Scaffold(
           appBar: AppBar(
             title: Text(
-              playlist.name,
+              playlist.title,
               style: TextStyle(fontSize: 25, fontFamily: 'Circular'),
             ),
             backgroundColor: Colors.transparent,
@@ -188,7 +206,7 @@ class _PlaylistState extends State<Playlist> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: <Widget>[
-                    playlist.name == "Favoritas"
+                    playlist.title == "Favoritas"
                         ? Image.asset("assets/images/Favs_cover.jpg")
                         : SizedBox(
                             height: MediaQuery.of(context).size.height / 4,
@@ -206,7 +224,7 @@ class _PlaylistState extends State<Playlist> {
                     SizedBox(
                         height: MediaQuery.of(context).size.height / 4,
                         width: MediaQuery.of(context).size.width / 2,
-                        child: playlist.name == "Favoritas"
+                        child: playlist.title == "Favoritas"
                             ? Image.asset("assets/images/Favs_cover.jpg")
                             : playListCover(playlist.coverUrls)),
                   ],
@@ -225,10 +243,10 @@ class _PlaylistState extends State<Playlist> {
                           child: isNotOwn ? Text('') : playlistOptionsButton()),
                       Expanded(
                           flex: 2,
-                          child: shuffleButton(playlist.name, songs, context)),
+                          child: shuffleButton(playlist.title, songs, context)),
                       Expanded(
                           flex: 1,
-                          child: playlist.name == "Favoritas" || isNotOwn
+                          child: playlist.title == "Favoritas" || isNotOwn
                               ? Text('')
                               : playlistStatusSwitch())
                     ],
@@ -241,15 +259,29 @@ class _PlaylistState extends State<Playlist> {
                   : ListView.builder(
                       scrollDirection: Axis.vertical,
                       shrinkWrap: true,
-                      itemCount: songs.isEmpty ? 0 : songs.length,
+                      itemCount: (songs.isEmpty && localSongs.isEmpty)
+                          ? 0
+                          : (songs.length + localSongs.length),
                       itemBuilder: (BuildContext context, int index) {
-                        return new SongItem(
-                          songs[index],
-                          songs,
-                          playlist.name,
-                          playlist: playlist,
-                          isNotOwn: isNotOwn,
-                        );
+                        if (index < songs.length) {
+                          return new SongItem(
+                            songs[index],
+                            songs,
+                            playlist.title,
+                            playlist: playlist,
+                            isNotOwn: isNotOwn,
+                          );
+                        } else {
+                          return new LocalSongItem(
+                            localSongs[index - songs.length],
+                            songs,
+                            playlist.title,
+                            playlistName: playlist.title,
+                            onDeletedCallBack: () {
+                              getSongs();
+                            },
+                          );
+                        }
                       },
                     )
             ],
