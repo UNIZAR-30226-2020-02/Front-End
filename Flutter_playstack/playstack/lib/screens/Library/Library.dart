@@ -4,7 +4,7 @@ import 'package:playstack/models/Album.dart';
 import 'package:playstack/models/Artist.dart';
 import 'package:playstack/models/LocalPlaylist.dart';
 import 'package:playstack/models/PlaylistType.dart';
-import 'package:playstack/screens/Library/Local%20Music/LocalMusic.dart';
+import 'package:playstack/screens/Library/Local Music/LocalMusic.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
 import 'package:playstack/screens/Library/Podcasts.dart';
 import 'package:playstack/services/database.dart';

@@ -2,21 +2,21 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:bot_toast/bot_toast.dart';
 import 'package:dio/dio.dart';
 import 'package:playstack/models/Artist.dart';
 import 'package:flutter/foundation.dart';
 import 'package:playstack/models/Audio.dart';
+import 'package:playstack/models/LocalSongsPlaylists.dart';
 import 'package:playstack/models/Podcast.dart';
+import 'package:playstack/models/user.dart';
+import 'package:playstack/screens/Homescreen/PublicProfile.dart';
 import 'package:playstack/screens/Library/Folder.dart';
 import 'package:playstack/screens/Player/PlayerWidget.dart';
 import 'package:playstack/screens/MainScreen.dart';
 import 'package:playstack/models/FolderType.dart';
 import 'package:playstack/models/PlaylistType.dart';
 import 'package:playstack/models/Song.dart';
-import 'package:playstack/models/user.dart';
 import 'package:playstack/screens/Homescreen/Home.dart';
-import 'package:playstack/screens/Homescreen/PublicProfile.dart';
 import 'package:playstack/screens/Library/Library.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
 import 'package:playstack/screens/Player/PlayingNow.dart';
@@ -28,6 +28,7 @@ import 'package:audioplayers/audio_cache.dart';
 import 'package:playstack/services/database.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:toast/toast.dart';
+import 'package:playstack/services/SQLite.dart';
 
 //////////////////////////////////////////////////////////////////////////////////
 /////                   SHARED VARIABLES DO NOT TOUCH                       //////
@@ -69,6 +70,7 @@ List songsNextUp = new List();
 List songsPlayed = new List();
 List following = new List();
 List followers = new List();
+List localPlaylistList = new List();
 
 List playlists = new List();
 
@@ -79,17 +81,26 @@ List<Widget> mainScreens = [
   PlayingNowScreen()
 ];
 
+enum PlayerState { stopped, playing, paused }
+
 // Para canciones de assets
 AudioCache audioCache = AudioCache();
 //Para canciones online SOLO HTTPS no HTTP
 AudioPlayer advancedPlayer = AudioPlayer();
+AudioPlayerState audioPlayerState;
 
-AudioPlayerState audioPlayerState = AudioPlayerState.STOPPED;
+PlayerState playerState = PlayerState.stopped;
+
+PlayerMode mode = PlayerMode.MEDIA_PLAYER;
+
+Duration position;
+
 Duration duration;
 bool playerActive = false;
 
 List<Audio> allAudios = [];
 bool onPlayerScreen = false;
+bool shuffleEnabled;
 
 PlayingRouteState playingRouteState = PlayingRouteState.SPEAKERS;
 StreamSubscription durationSubscription;
@@ -98,14 +109,10 @@ StreamSubscription playerCompleteSubscription;
 StreamSubscription playerErrorSubscription;
 StreamSubscription playerStateSubscription;
 
-get isPlaying => audioPlayerState == AudioPlayerState.PLAYING;
-get isPaused => audioPlayerState == AudioPlayerState.PAUSED;
+get isPlaying => playerState == PlayerState.playing;
+get isPaused => playerState == PlayerState.paused;
 get durationText => duration?.toString()?.split('.')?.first ?? '';
-final ValueNotifier<Duration> position =
-    ValueNotifier<Duration>(Duration(seconds: 0));
-get positionText => position.value?.toString()?.split('.')?.first ?? '';
-
-PlayerMode mode = PlayerMode.MEDIA_PLAYER;
+get positionText => position?.toString()?.split('.')?.first ?? '';
 
 Widget player;
 
@@ -230,6 +237,11 @@ void setShuffleQueue(String songsListName, List songsList, Song firstSong) {
   songsNextUpName = songsListName;
   currentAudio = firstSong;
   songsNextUp = tmpList;
+  allAudios.clear();
+  allAudios.add(currentAudio);
+  for (var item in songsNextUp) {
+    allAudios.add(item);
+  }
   firstSong.markAsListened();
 }
 
@@ -254,6 +266,8 @@ Widget shuffleButton(
     child: RaisedButton(
       onPressed: () {
         onPlayerScreen = true;
+        shuffleEnabled = true;
+
         setShuffleQueue(songsListName, songslist, song);
         if (player == null) player = PlayerWidget();
         Navigator.of(context).push(MaterialPageRoute(
@@ -402,6 +416,21 @@ Future<void> showAddingSongToPlaylistDialog(
   );
 }
 
+void setQueue(List songsList, Song song, String songsListName) {
+  List tmpList = new List();
+  tmpList.addAll(songsList);
+  tmpList.remove(song);
+  songsNextUpName = songsListName;
+  currentAudio = song;
+  songsNextUp = tmpList;
+  allAudios.clear();
+  allAudios.add(currentAudio);
+  for (var item in songsNextUp) {
+    allAudios.add(item);
+  }
+  song.markAsListened();
+}
+
 class SongItem extends StatelessWidget {
   final String songsListName;
   final List songsList;
@@ -412,22 +441,11 @@ class SongItem extends StatelessWidget {
   SongItem(this.song, this.songsList, this.songsListName,
       {this.playlist, @required this.isNotOwn});
 
-  void setQueue(List songsList) {
-    List tmpList = new List();
-    tmpList.addAll(songsList);
-    tmpList.remove(song);
-    songsNextUpName = songsListName;
-    currentAudio = song;
-    songsNextUp = tmpList;
-    print("Tocada se marcara como escuchada");
-    song.markAsListened();
-  }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        setQueue(songsList);
+        setQueue(songsList, song, songsListName);
         onPlayerScreen = true;
         if (player == null) player = PlayerWidget();
         Navigator.of(context).push(MaterialPageRoute(
@@ -469,12 +487,17 @@ class SongItem extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(
-                    song.title,
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: MediaQuery.of(context).size.height / 40),
+                  Container(
+                    width: MediaQuery.of(context).size.width / 2.2,
+                    child: Text(
+                      song.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.fade,
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: MediaQuery.of(context).size.height / 45),
+                    ),
                   ),
                   SizedBox(height: 5),
                   song.isLocal
@@ -510,9 +533,13 @@ class SongItem extends StatelessWidget {
 
                         break;
                       case "removeFromPlaylist":
-                        await removeSongFromPlaylistDB(
-                            song.title, playlist.name);
-                        await playlist.updateCovers();
+                        if (song.isLocal) {
+                        } else {
+                          await removeSongFromPlaylistDB(
+                              song.title, playlist.title);
+                          await playlist.updateCovers();
+                        }
+
                         Navigator.of(context).pushReplacement(MaterialPageRoute(
                             builder: (BuildContext context) =>
                                 Playlist(playlist)));
@@ -567,6 +594,229 @@ class SongItem extends StatelessWidget {
   }
 }
 
+List<DropdownMenuItem> _listLocalPlaylistNames() {
+  List<DropdownMenuItem> items = new List();
+  if (accountType == "Premium") {
+    for (var pl in playlists) {
+      DropdownMenuItem newItem =
+          new DropdownMenuItem<String>(value: pl.name, child: Text(pl.name));
+      items.add(newItem);
+    }
+  }
+  for (var pl in localPlaylistList) {
+    DropdownMenuItem newItem =
+        new DropdownMenuItem<String>(value: pl.name, child: Text(pl.name));
+    items.add(newItem);
+  }
+  return items;
+}
+
+Future<void> _showAddingSongToPlaylistDialog(
+    String songName, BuildContext context) async {
+  var dropdownItem = localPlaylistList.elementAt(0).name;
+  return showDialog(
+    barrierDismissible: true,
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(builder: (context, setState) {
+        return AlertDialog(
+          title: Text("Añadir a playlist"),
+          elevation: 100.0,
+          backgroundColor: Colors.grey[900],
+          actions: <Widget>[
+            Container(
+              width: MediaQuery.of(context).size.width,
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    flex: 1,
+                    child: DropdownButton(
+                      isExpanded: true,
+                      value: dropdownItem,
+                      items: _listLocalPlaylistNames(),
+                      onChanged: (val) {
+                        setState(() {
+                          dropdownItem = val;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Builder(
+              builder: (context) => Container(
+                width: MediaQuery.of(context).size.width,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Expanded(
+                        flex: 1,
+                        child: FlatButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text("Cancelar"))),
+                    Expanded(
+                        flex: 1,
+                        child: FlatButton(
+                            onPressed: () async {
+                              LocalSongsPlaylists newEntry =
+                                  new LocalSongsPlaylists(
+                                      id: "$songName$dropdownItem",
+                                      songName: songName,
+                                      playlistName: dropdownItem);
+
+                              int inserted =
+                                  await insertSongToPlaylist(newEntry);
+                              if (inserted > 0)
+                                Toast.show('Añadida!', context,
+                                    gravity: Toast.CENTER,
+                                    duration: Toast.LENGTH_LONG,
+                                    backgroundColor: Colors.green);
+                              else
+                                Toast.show(
+                                    'Error añadiendo cancion a lista', context,
+                                    gravity: Toast.CENTER,
+                                    duration: Toast.LENGTH_LONG,
+                                    backgroundColor: Colors.red);
+                              Navigator.of(context).pop();
+                            },
+                            child: Text("Añadir")))
+                  ],
+                ),
+              ),
+            )
+          ],
+        );
+      });
+    },
+  );
+}
+
+class LocalSongItem extends StatelessWidget {
+  final Song song;
+  final List songsList;
+  final String songsListName;
+  final String playlistName;
+  final onDeletedCallBack;
+
+  LocalSongItem(this.song, this.songsList, this.songsListName,
+      {this.playlistName, @required this.onDeletedCallBack});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        setQueue(songsList, song, songsListName);
+        onPlayerScreen = true;
+        if (player == null) player = PlayerWidget();
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (BuildContext context) => PlayingNowScreen()));
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Container(
+          height: MediaQuery.of(context).size.height / 13,
+          width: MediaQuery.of(context).size.width,
+          child: Row(
+            children: <Widget>[
+              Stack(
+                children: <Widget>[
+                  Container(
+                    height: MediaQuery.of(context).size.height / 13,
+                    width: MediaQuery.of(context).size.width / 5.8,
+                    child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8.0),
+                        child: Image.asset(defaultCover, fit: BoxFit.cover)),
+                  ),
+                  Container(
+                      height: MediaQuery.of(context).size.height / 13,
+                      width: 80.0,
+                      child: Icon(
+                        Icons.play_circle_filled,
+                        color: Colors.white.withOpacity(0.7),
+                        size: 42.0,
+                      ))
+                ],
+              ),
+              SizedBox(width: 16.0),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    song.title,
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: MediaQuery.of(context).size.height / 40),
+                  ),
+                  SizedBox(height: 5),
+                ],
+              ),
+              Spacer(),
+              PopupMenuButton<String>(
+                  icon: Icon(Icons.more_horiz),
+                  color: Colors.grey[800],
+                  onSelected: (val) async {
+                    switch (val) {
+                      case "Remove":
+                        await deleteLocalSongFromEveryWhere(song, context);
+                        onDeletedCallBack();
+
+                        break;
+
+                      case "AddToPlaylist":
+                        _showAddingSongToPlaylistDialog(song.title, context);
+                        break;
+                      case "removeFromPlaylist":
+                        int deleted = await deleteSongFromPlaylist(
+                            song.title, playlistName);
+                        if (deleted > 0) {
+                          Toast.show('Canción eliminada de la lista', context,
+                              gravity: Toast.CENTER,
+                              duration: Toast.LENGTH_LONG,
+                              backgroundColor: Colors.green);
+                          onDeletedCallBack();
+                        } else {
+                          Toast.show(
+                              'Error eliminando canción de lista', context,
+                              gravity: Toast.CENTER,
+                              duration: Toast.LENGTH_LONG,
+                              backgroundColor: Colors.red);
+                        }
+                        break;
+                      default:
+                        null;
+                    }
+                  },
+                  itemBuilder: (context) => [
+                        PopupMenuItem(
+                            value: "Remove",
+                            child: ListTile(
+                              leading: Icon(CupertinoIcons.delete),
+                              title: Text("Eliminar canción de la aplicación"),
+                            )),
+                        PopupMenuItem(
+                            value: "AddToPlaylist",
+                            child: ListTile(
+                              leading: Icon(CupertinoIcons.add),
+                              title: Text("Añadir canción a playlist"),
+                            )),
+                        if (playlistName != null)
+                          PopupMenuItem(
+                              value: "removeFromPlaylist",
+                              child: ListTile(
+                                leading: Icon(CupertinoIcons.delete),
+                                title: Text("Eliminar canción de lista"),
+                              ))
+                      ])
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 Future<void> showSharableLink(BuildContext context, String url) {
   return showDialog(
     barrierDismissible: true,
@@ -603,7 +853,7 @@ class ArtistItem extends StatelessWidget {
           SizedBox(
             height: 130.0,
             width: 140.0,
-            child: Image.asset(
+            child: Image.network(
               image,
               fit: BoxFit.fitHeight,
             ),
@@ -700,54 +950,154 @@ Widget playListCover(List insideCoverUrls) {
   switch (insideCoverUrls.length) {
     case 0:
       return Image.asset(
-        'assets/images/defaultCover.png',
+        defaultCover,
         fit: BoxFit.cover,
       );
       break;
     case 1:
-      return Image.network(insideCoverUrls.elementAt(0));
+      return Container(
+        decoration: new BoxDecoration(
+          image: new DecorationImage(
+              fit: BoxFit.cover,
+              alignment: FractionalOffset.topCenter,
+              image: NetworkImage(insideCoverUrls.elementAt(0))),
+        ),
+      );
       break;
     case 2:
       return Row(
         children: <Widget>[
-          Expanded(flex: 1, child: Image.network(insideCoverUrls.elementAt(0))),
-          Expanded(flex: 1, child: Image.network(insideCoverUrls.elementAt(1))),
+          Flexible(
+            flex: 1,
+            child: Container(
+              decoration: new BoxDecoration(
+                image: new DecorationImage(
+                    fit: BoxFit.cover,
+                    alignment: FractionalOffset.topCenter,
+                    image: NetworkImage(insideCoverUrls.elementAt(0))),
+              ),
+            ),
+          ),
+          Flexible(
+            flex: 1,
+            child: Container(
+              decoration: new BoxDecoration(
+                image: new DecorationImage(
+                    fit: BoxFit.cover,
+                    alignment: FractionalOffset.topCenter,
+                    image: NetworkImage(insideCoverUrls.elementAt(1))),
+              ),
+            ),
+          ),
         ],
       );
       break;
     case 3:
       return Column(
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                  flex: 1, child: Image.network(insideCoverUrls.elementAt(0))),
-              Expanded(
-                  flex: 1, child: Image.network(insideCoverUrls.elementAt(1))),
-            ],
+          Flexible(
+            flex: 5,
+            child: Row(
+              children: <Widget>[
+                Flexible(
+                  flex: 1,
+                  child: Container(
+                    decoration: new BoxDecoration(
+                      image: new DecorationImage(
+                          fit: BoxFit.cover,
+                          alignment: FractionalOffset.topCenter,
+                          image: NetworkImage(insideCoverUrls.elementAt(0))),
+                    ),
+                  ),
+                ),
+                Flexible(
+                  flex: 1,
+                  child: Container(
+                    decoration: new BoxDecoration(
+                      image: new DecorationImage(
+                          fit: BoxFit.cover,
+                          alignment: FractionalOffset.topCenter,
+                          image: NetworkImage(insideCoverUrls.elementAt(1))),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          Expanded(flex: 1, child: Image.network(insideCoverUrls.elementAt(2)))
+          Flexible(
+            flex: 5,
+            child: Container(
+              decoration: new BoxDecoration(
+                image: new DecorationImage(
+                    fit: BoxFit.cover,
+                    alignment: FractionalOffset.center,
+                    image: NetworkImage(insideCoverUrls.elementAt(2))),
+              ),
+            ),
+          ),
         ],
       );
       break;
     case 4:
       return Column(
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                  flex: 1, child: Image.network(insideCoverUrls.elementAt(0))),
-              Expanded(
-                  flex: 1, child: Image.network(insideCoverUrls.elementAt(1))),
-            ],
+          Flexible(
+            flex: 5,
+            child: Row(
+              children: <Widget>[
+                Flexible(
+                  flex: 1,
+                  child: Container(
+                    decoration: new BoxDecoration(
+                      image: new DecorationImage(
+                          fit: BoxFit.cover,
+                          alignment: FractionalOffset.topCenter,
+                          image: NetworkImage(insideCoverUrls.elementAt(0))),
+                    ),
+                  ),
+                ),
+                Flexible(
+                  flex: 1,
+                  child: Container(
+                    decoration: new BoxDecoration(
+                      image: new DecorationImage(
+                          fit: BoxFit.cover,
+                          alignment: FractionalOffset.topCenter,
+                          image: NetworkImage(insideCoverUrls.elementAt(1))),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          Row(
-            children: <Widget>[
-              Expanded(
-                  flex: 1, child: Image.network(insideCoverUrls.elementAt(2))),
-              Expanded(
-                  flex: 1, child: Image.network(insideCoverUrls.elementAt(3))),
-            ],
+          Flexible(
+            flex: 5,
+            child: Row(
+              children: <Widget>[
+                Flexible(
+                  flex: 1,
+                  child: Container(
+                    decoration: new BoxDecoration(
+                      image: new DecorationImage(
+                          fit: BoxFit.cover,
+                          alignment: FractionalOffset.topCenter,
+                          image: NetworkImage(insideCoverUrls.elementAt(2))),
+                    ),
+                  ),
+                ),
+                Flexible(
+                  flex: 1,
+                  child: Container(
+                    decoration: new BoxDecoration(
+                      image: new DecorationImage(
+                          fit: BoxFit.cover,
+                          alignment: FractionalOffset.topCenter,
+                          image: NetworkImage(insideCoverUrls.elementAt(3))),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       );
@@ -1042,7 +1392,7 @@ class PlaylistItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    playlist.name,
+                    playlist.title,
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -1067,7 +1417,10 @@ class PlaylistItem extends StatelessWidget {
                                 ),
                                 backgroundColor: Colors.grey[700]));
                             bool deleted =
-                                await deletePlaylistDB(playlist.name);
+                                await deletePlaylistDB(playlist.title);
+                            //Borra la referencia local
+                            deleteLocalPlaylist(playlist.title);
+
                             if (deleted) {
                               Scaffold.of(context).showSnackBar(SnackBar(
                                   content: Text(
@@ -1075,7 +1428,7 @@ class PlaylistItem extends StatelessWidget {
                                     style: TextStyle(color: Colors.white),
                                   ),
                                   backgroundColor: Colors.grey[700]));
-                              //TODO: por ahora lo dejo asi aunque estaria bn buscar una alternativa
+                              // TODO: por ahora lo dejo asi aunque estaria bn buscar una alternativa
                               Navigator.of(context).push(MaterialPageRoute(
                                   builder: (BuildContext context) =>
                                       MainScreen()));
@@ -1104,6 +1457,227 @@ class PlaylistItem extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class PodcastEpisodes extends StatelessWidget {
+  final Podcast podcast;
+
+  PodcastEpisodes(this.podcast);
+
+  @override
+  Widget build(BuildContext context) {
+    double width = MediaQuery.of(context).size.width;
+    double height = MediaQuery.of(context).size.height;
+    return Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          leading: IconButton(
+              icon: Icon(Icons.arrow_back_ios),
+              onPressed: () => Navigator.of(context).pop()),
+          centerTitle: true,
+          title: Text(podcast.title,
+              style: TextStyle(
+                  fontFamily: 'Circular',
+                  fontSize: MediaQuery.of(context).size.width / 18)),
+        ),
+        body: ListView.builder(
+            physics: BouncingScrollPhysics(),
+            itemCount: podcast.episodes.length,
+            scrollDirection: Axis.vertical,
+            itemBuilder: (context, int index) {
+              return GestureDetector(
+                  onTap: () {
+                    currentAudio = podcast.episodes[index];
+                    homeIndex.value = 3;
+                  },
+                  child: SizedBox(
+                      height: height / 5,
+                      width: width,
+                      child: Container(
+                          decoration: BoxDecoration(
+                              border: Border(
+                                  top: BorderSide(
+                                      width: 0.2,
+                                      color: Colors.white.withOpacity(0.7)),
+                                  bottom: BorderSide(
+                                      width: 0.2,
+                                      color: Colors.white.withOpacity(0.7)))),
+                          child: Padding(
+                              padding: EdgeInsets.fromLTRB(width / 20,
+                                  width / 20, width / 20, width / 20),
+                              child: Row(children: <Widget>[
+                                Container(
+                                    width: width / 5,
+                                    height: width / 5,
+                                    child: Stack(children: <Widget>[
+                                      Container(
+                                          width: width / 6,
+                                          child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(8.0),
+                                              child: Image.asset(
+                                                podcast.coverUrl,
+                                                fit: BoxFit.cover,
+                                              ))),
+                                      Align(
+                                          alignment: Alignment.bottomRight,
+                                          child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(2.0),
+                                              child: Container(
+                                                  width: width / 10,
+                                                  height: width / 15,
+                                                  color: Colors.white,
+                                                  child: Text(
+                                                      (index + 1).toString(),
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: TextStyle(
+                                                          fontSize: width / 20,
+                                                          color:
+                                                              Colors.black)))))
+                                    ])),
+                                Expanded(
+                                    child: Container(
+                                        child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: <Widget>[
+                                      Expanded(
+                                          flex: 2,
+                                          child: Text(
+                                              languageStrings['released'] +
+                                                  " " +
+                                                  podcast.episodes[index].date,
+                                              textAlign: TextAlign.left,
+                                              style: TextStyle(
+                                                  fontSize: width / 30,
+                                                  color: Colors.white
+                                                      .withOpacity(0.7)))),
+                                      Expanded(
+                                          flex: 5,
+                                          child: Padding(
+                                              padding: EdgeInsets.fromLTRB(
+                                                  width / 20, 0, 0, 0),
+                                              child: Text(
+                                                  podcast.episodes[index].title,
+                                                  textAlign: TextAlign.left,
+                                                  style: TextStyle(
+                                                      fontSize: width / 15,
+                                                      fontWeight:
+                                                          FontWeight.w500)))),
+                                      Expanded(
+                                          flex: 2,
+                                          child: Row(children: <Widget>[
+                                            Spacer(),
+                                            Container(
+                                                alignment:
+                                                    Alignment.bottomRight,
+                                                width: width / 20,
+                                                child: Text(
+                                                    //TODO: Hay que mejorar
+                                                    podcast.episodes[index]
+                                                        .duration
+                                                        .toString(),
+                                                    textAlign: TextAlign.right,
+                                                    style: TextStyle(
+                                                        fontSize: width / 23.5,
+                                                        color: Colors.white
+                                                            .withOpacity(0.7))))
+                                          ]))
+                                    ])))
+                              ])))));
+            }));
+  }
+}
+
+class PodcastTile extends StatelessWidget {
+  final Podcast podcast;
+
+  PodcastTile(
+    this.podcast,
+  );
+  // Navigator.of(context).push(MaterialPageRoute(
+  //           builder: (BuildContext context) => PodcastEpisodes(podcast)));
+
+  @override
+  Widget build(BuildContext context) {
+    List cover = new List();
+    cover.add(podcast.coverUrl);
+    return ListTile(
+      leading: Container(
+        height: MediaQuery.of(context).size.height / 13,
+        width: MediaQuery.of(context).size.width / 5.8,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8.0),
+          child: playListCover(cover),
+        ),
+      ),
+      title: Text(podcast.title),
+      subtitle: Text("Podcast"),
+    );
+  }
+}
+
+class PodcastItem extends StatelessWidget {
+  final Podcast podcast;
+
+  PodcastItem(
+    this.podcast,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (BuildContext context) => PodcastEpisodes(podcast)));
+      },
+      child: Column(
+        children: <Widget>[
+          SizedBox(
+            height: 130.0,
+            width: 140.0,
+            child: Image.network(
+              podcast.coverUrl,
+              fit: BoxFit.fitHeight,
+            ),
+          ),
+          Padding(padding: EdgeInsets.all(5.0)),
+          Text(
+            podcast.title,
+            style: TextStyle(
+              color: Colors.white.withOpacity(1.0),
+              fontSize: 15.0,
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class UserTile extends StatelessWidget {
+  final User user;
+  UserTile({@required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
+      child: ListTile(
+        leading: CircleAvatar(
+            radius: 30, backgroundImage: NetworkImage(user.photoUrl)),
+        title: Text(user.title),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (BuildContext context) => YourPublicProfile(
+                  false,
+                  friendUserName: user.title,
+                  otherUser: user,
+                ))),
       ),
     );
   }

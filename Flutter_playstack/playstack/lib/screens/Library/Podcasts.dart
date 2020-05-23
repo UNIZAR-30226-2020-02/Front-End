@@ -7,7 +7,6 @@ import 'package:playstack/screens/Library/Language.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
-import 'package:lipsum/lipsum.dart' as lipsum;
 
 final int asciiCodeA = 'A'.codeUnitAt(0);
 final int asciiCodeZ = 'Z'.codeUnitAt(0);
