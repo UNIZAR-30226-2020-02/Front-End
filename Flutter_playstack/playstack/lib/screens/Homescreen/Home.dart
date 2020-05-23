@@ -1,10 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:playstack/models/Genre.dart';
 import 'package:playstack/screens/GenresSongs.dart';
 import 'package:playstack/screens/Homescreen/HomeScreenElements.dart';
+import 'package:playstack/screens/Homescreen/PublicProfile.dart';
 import 'package:playstack/screens/Homescreen/Settings.dart';
+import 'package:playstack/screens/Homescreen/Social/SearchPeople.dart';
 import 'package:playstack/screens/Homescreen/Social/Social.dart';
 import 'package:playstack/screens/Library/ArtistSongs.dart';
+import 'package:playstack/screens/Library/Playlist.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
@@ -17,6 +21,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   List artistsList = new List();
   List podcastsList = new List();
+  List<Genre> genresList = new List();
   bool _loading = true;
 
   @override
@@ -28,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _getData() async {
     podcastsList = await getAllPodcastsDB();
     artistsList = await getAllArtistsDB();
+    genresList = await getAllGenres(onlyFirtstFour: true);
     if (mounted)
       setState(() {
         _loading = false;
@@ -86,6 +92,47 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget genres() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          SizedBox(height: 15.0),
+          Text(
+            'Géneros que te pueden gustar',
+            style: TextStyle(fontFamily: 'Circular', fontSize: 22.0),
+          ),
+          SizedBox(height: 16.0),
+          Row(
+            children: <Widget>[
+              ItemCard(genresList.elementAt(0)),
+              SizedBox(
+                width: 16.0,
+              ),
+              ItemCard(genresList.elementAt(1)),
+            ],
+          ),
+          SizedBox(
+            height: 32.0,
+          ),
+          Row(
+            children: <Widget>[
+              ItemCard(genresList.elementAt(2)),
+              SizedBox(
+                width: 16.0,
+              ),
+              ItemCard(genresList.elementAt(3)),
+            ],
+          ),
+          SizedBox(
+            height: 32.0,
+          ),
+        ],
+      ),
     );
   }
 
@@ -154,10 +201,22 @@ class _HomeScreenState extends State<HomeScreen> {
         result = Settings();
         break;
       case 3:
-        result = GenresSongs(genre: currentGenre, image: currentGenreImage);
+        result = GenresSongs();
         break;
       case 4:
         result = ArtistsSongs(currentArtist, currentArtistImage);
+        break;
+      case 5:
+        result = Playlist(
+          currentPlaylist,
+          isNotOwn: currentPlaylistInNotOwn,
+        );
+        break;
+      case 6:
+        result = YourPublicProfile();
+        break;
+      case 7:
+        result = SearchPeople();
         break;
     }
     return result;

@@ -264,13 +264,23 @@ class _PlaylistState extends State<Playlist> {
                           : (songs.length + localSongs.length),
                       itemBuilder: (BuildContext context, int index) {
                         if (index < songs.length) {
-                          return new SongItem(
-                            songs[index],
-                            songs,
-                            playlist.title,
-                            playlist: playlist,
-                            isNotOwn: isNotOwn,
-                          );
+                          if (playlist.title == "Favoritas")
+                            return new SongItem(
+                              songs[index],
+                              songs,
+                              playlist.title,
+                              playlist: playlist,
+                              isNotOwn: isNotOwn,
+                              onRemovedFromFavsCallBack: () => getSongs(),
+                            );
+                          else
+                            return new SongItem(
+                              songs[index],
+                              songs,
+                              playlist.title,
+                              playlist: playlist,
+                              isNotOwn: isNotOwn,
+                            );
                         } else {
                           return new LocalSongItem(
                             localSongs[index - songs.length],

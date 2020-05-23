@@ -1,11 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:playstack/models/Audio.dart';
 import 'package:playstack/models/Song.dart';
 import 'package:playstack/shared/Loading.dart';
-import 'dart:convert';
 import 'dart:ui' as ui;
+import 'package:playstack/services/database.dart';
 
 import 'package:playstack/shared/common.dart';
 
@@ -13,84 +12,43 @@ var martinGarrix =
     'https://c1.staticflickr.com/2/1841/44200429922_d0cbbf22ba_b.jpg';
 
 class GenresSongs extends StatefulWidget {
-  final genre;
-  final image;
-  GenresSongs({Key key, @required this.genre, @required this.image})
-      : super(key: key);
+  GenresSongs({
+    Key key,
+  }) : super(key: key);
   @override
-  _GenresSongsState createState() => _GenresSongsState(genre, image);
+  _GenresSongsState createState() => _GenresSongsState();
 }
 
 class _GenresSongsState extends State<GenresSongs> {
-  String genre;
-  var image;
   bool _loading = true;
-
-  List<Audio> songs = new List();
-
-  _GenresSongsState(this.genre, this.image);
+  List<Song> songsInGenre = new List();
 
   @override
   void initState() {
     super.initState();
-    print("Se van a cargar las canciones de $genre");
-    getSongsByGenre(genre);
+    _getSongs();
   }
 
-  void addSong(String title, List artists, String url, List albunes,
-      dynamic urlAlbums, bool isFavorite) {
-    if (urlAlbums is String) {
-      urlAlbums = urlAlbums.toList();
-    }
-    Song newSong = new Song(
-      title: title,
-      artists: artists,
-      url: url,
-      albums: albunes,
-      albumCoverUrls: urlAlbums,
-      isFav: isFavorite,
-    );
-
-    songs.add(newSong);
-  }
-
-  Future<void> getSongsByGenre(String genre) async {
-    print("Recopilando genero $genre...");
-    dynamic response = await http.get(
-      "https://playstack.azurewebsites.net/get/song/bygenre?NombreGenero=$genre&Usuario=$userName",
-      headers: {"Content-Type": "application/json"},
-    );
-    print("Statuscode " + response.statusCode.toString());
-    //print("Body:" + response.body.toString());
-    if (response.statusCode == 200) {
-      response = jsonDecode(response.body);
-      //response.forEach((title, info) => print(title + info.toString()));
-      response.forEach((title, info) => addSong(
-          title,
-          info['Artistas'],
-          info['url'],
-          info['Albumes'],
-          info['ImagenesAlbum'],
-          info['EsFavorita']));
+  void _getSongs() async {
+    songsInGenre = await getSongsByGenre(currentGenre.name);
+    if (mounted)
       setState(() {
         _loading = false;
       });
-    } else {
-      print(response.body);
-    }
-    print("Hay " + songs.length.toString() + " canciones de este genero");
   }
 
   Widget _buildList() {
+    print(
+        "Va a buildear la lista con ${songsInGenre.length.toString()} elementos");
     return ListView.builder(
       scrollDirection: Axis.vertical,
       shrinkWrap: true,
-      itemCount: songs.isEmpty ? 0 : songs.length,
+      itemCount: songsInGenre.isEmpty ? 0 : songsInGenre.length,
       itemBuilder: (BuildContext context, int index) {
         return new SongItem(
-          songs[index],
-          songs,
-          genre,
+          songsInGenre[index],
+          songsInGenre,
+          currentGenre.name,
           isNotOwn: false,
         );
       },
@@ -103,9 +61,9 @@ class _GenresSongsState extends State<GenresSongs> {
       appBar: AppBar(
         leading: IconButton(
             icon: Icon(Icons.arrow_back_ios),
-            onPressed: () => homeIndex.value = 0),
+            onPressed: () => homeIndex.value = previousIndex),
         centerTitle: true,
-        title: Text(genre,
+        title: Text(currentGenre.name,
             style: TextStyle(
                 fontFamily: 'Circular',
                 fontSize: MediaQuery.of(context).size.width / 18)),
@@ -118,7 +76,7 @@ class _GenresSongsState extends State<GenresSongs> {
             child: Stack(
               alignment: Alignment.center,
               children: <Widget>[
-                Image.asset(image),
+                Image.network(currentGenre.photoUrl),
                 BackdropFilter(
                   filter: ui.ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                   child: Container(
@@ -130,7 +88,7 @@ class _GenresSongsState extends State<GenresSongs> {
                 ),
                 SizedBox(
                     height: MediaQuery.of(context).size.height / 4,
-                    child: Image.asset(image)),
+                    child: Image.network(currentGenre.photoUrl)),
               ],
             ),
           ),
@@ -139,7 +97,7 @@ class _GenresSongsState extends State<GenresSongs> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                shuffleButton(genre, songs, context),
+                shuffleButton(currentGenre.name, songsInGenre, context),
               ],
             ),
           ),

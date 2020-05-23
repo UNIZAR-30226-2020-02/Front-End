@@ -37,7 +37,7 @@ class Song extends Audio {
 
   @override
   void setInfo(String title, List artists, String url, List albums,
-      dynamic albumCovers, List genres) {
+      dynamic albumCovers, List genres, bool isFav) {
     if (albumCovers is String) {
       albumCovers = albumCovers.toList();
     }
@@ -47,6 +47,7 @@ class Song extends Audio {
     this.albums = albums;
     this.albumCoverUrls = albumCovers;
     this.genres = genres;
+    this.isFav = isFav;
   }
 
   String getAlbumCover() {
@@ -57,22 +58,27 @@ class Song extends Audio {
   }
 
   @override
-  Future setAsFav() async {
+  Future<bool> setAsFav() async {
     if (!isLocal) {
       bool added = await toggleFav(this.title, true);
       if (added) {
         this.isFav = true;
+        return true;
+      } else {
+        return false;
       }
     }
   }
 
   @override
-  Future removeFromFavs() async {
+  Future<bool> removeFromFavs() async {
     if (!isLocal) {
       bool removed = await toggleFav(this.title, false);
       if (removed) {
         this.isFav = false;
-      }
+        return true;
+      } else
+        return false;
     }
   }
 

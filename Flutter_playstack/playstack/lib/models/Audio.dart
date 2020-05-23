@@ -27,7 +27,15 @@ class Audio {
 
   //TODO: esto hay que mejorarlo
   void setInfo(String title, List artists, String url, List albums,
-      dynamic albumCovers, List genres) {}
+      dynamic albumCovers, List genres, bool isFav) {
+    this.title = title;
+    this.artists = artists;
+    this.url = url;
+    this.albums = albums;
+    this.albumCoverUrls = albumCoverUrls;
+    this.genres = genres;
+    this.isFav = isFav;
+  }
 
   Future setAsFav() async {
     bool added = await toggleFav(this.title, true);
