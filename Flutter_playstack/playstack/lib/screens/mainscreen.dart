@@ -38,14 +38,15 @@ class MainScreenState extends State<MainScreen> {
   }
 
   void getUserData() async {
-    bool _res1 = false, _res2 = false;
+    bool _res1 = false,
+        _res2 = true; //MUST BE SET TO FALSE, TEMPORARY WORKAROUND
     if (imagePath == null) {
       _res1 = await getProfilePhoto();
     }
-    if (currentAudio == null) {
+    /*if (currentAudio == null) {
       print("Va a setear la ultima cancion");
       _res2 = await setLastSongAsCurrent();
-    }
+    }*/
     if (_res1 && _res2) {
       setState(() {
         loadingUserData = false;

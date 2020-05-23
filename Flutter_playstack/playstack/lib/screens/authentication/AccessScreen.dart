@@ -98,7 +98,7 @@ class _AccessScreenState extends State<AccessScreen> {
             icon: Icon(Icons.lock),
             labelText: languageStrings['pass']),
         validator: (val) {
-          if (passwordIsSafe(val)) {
+          if (val != null) {
             return null;
           } else {
             return languageStrings['passErr1'];

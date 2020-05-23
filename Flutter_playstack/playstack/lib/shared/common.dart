@@ -62,6 +62,7 @@ var rng = new Random();
 final ValueNotifier<int> podcastIndex = ValueNotifier<int>(0);
 Podcast currentPodcast;
 Artist currentPodcaster;
+String currentTopic;
 
 Map<String, dynamic> languageStrings = new Map<String, dynamic>();
 

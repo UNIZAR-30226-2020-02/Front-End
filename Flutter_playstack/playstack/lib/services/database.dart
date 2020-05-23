@@ -1208,6 +1208,14 @@ Future<List> getCollaboratorsDB() async {
   return collaborators;
 }
 
+List hostList(List maps) {
+  List result = new List();
+  for (int i = 0; i < maps.length; i++) {
+    result.add(Artist(maps[i].keys.first, maps[i].values.first));
+  }
+  return result;
+}
+
 Future<List> getCollaboratorPodcastsDB(String collaborator) async {
   print("Recuperando podcasts con la presencia de $collaborator");
 
@@ -1223,7 +1231,7 @@ Future<List> getCollaboratorPodcastsDB(String collaborator) async {
         title: title,
         coverUrl: info['Foto'],
         language: Language(info['Idioma']),
-        hosts: info['Interlocutores'],
+        hosts: hostList(info['Interlocutores']),
         desc: info['Descripcion'])));
   } else {
     print("Statuscode de podcasts con la colaboración de $collaborator" +
@@ -1233,6 +1241,54 @@ Future<List> getCollaboratorPodcastsDB(String collaborator) async {
   }
   print("Ha colaborado en " + podcasts.length.toString() + " podcasts");
   return podcasts;
+}
+
+Future<List> getPodcastsByTopicDB(String topic) async {
+  print("Recuperando podcasts de tema $topic");
+
+  List podcasts = new List();
+  dynamic response = await http.get(
+      'https://playstack.azurewebsites.net/get/podcast/bytema?NombreTema=$topic');
+
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("Podcasts de tema $topic recuperados");
+
+    response.forEach((title, info) => podcasts.add(Podcast(
+        title: title,
+        coverUrl: info['Foto'],
+        language: Language(info['Idioma']),
+        hosts: hostList(info['Interlocutores']),
+        desc: info['Descripcion'])));
+  } else {
+    print("Statuscode de podcasts de tema $topic" +
+        response.statusCode.toString());
+    print('Error buscando podcasts de tema $topic, body: ' +
+        response.body.toString());
+  }
+  print("Hay " + podcasts.length.toString() + " temas");
+  return podcasts;
+}
+
+Future<List> getPodcastThemesDB() async {
+  print("Recuperando temas de podcasts");
+
+  List temas = new List();
+  dynamic response =
+      await http.get('https://playstack.azurewebsites.net/get/alltematics');
+
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("Temas de podcasts recuperados");
+
+    response.forEach((title, info) => temas.add(title));
+  } else {
+    print("Statuscode de temas de podcasts" + response.statusCode.toString());
+    print(
+        'Error buscando temas de podcasts, body: ' + response.body.toString());
+  }
+  print("Hay " + temas.length.toString() + " temas");
+  return temas;
 }
 
 Future<List<Podcast>> getFollowedPodcastsDB() async {
@@ -1250,7 +1306,7 @@ Future<List<Podcast>> getFollowedPodcastsDB() async {
         title: title,
         coverUrl: info['Foto'],
         language: Language(info['Idioma']),
-        hosts: info['Interlocutores'],
+        hosts: hostList(info['Interlocutores']),
         desc: info['Descripcion'])));
   } else {
     print("Statuscode de podcasts suscritos de $userName" +
@@ -1276,7 +1332,8 @@ Future<List> getPodcastEpisodesDB(String podcast) async {
     for (Map episodeMap in response['capitulos']) {
       episodes.add(Episode(
           number: episodeMap['numChapter'],
-          artists: response['Interlocutores'],
+          artists: response[
+              'Interlocutores'], //this function does not return the artists' pictures
           title: episodeMap['nombre'],
           albumCoverUrls: [response['Foto']],
           date: episodeMap['fecha'],

@@ -12,6 +12,7 @@ final int asciiCodeA = 'A'.codeUnitAt(0);
 final int asciiCodeZ = 'Z'.codeUnitAt(0);
 final int asciiCodea = 'a'.codeUnitAt(0);
 final int asciiCodez = 'z'.codeUnitAt(0);
+
 /*
 List<String> imageurl = [
   'assets/images/Artists/Macklemore.jpg',
@@ -100,6 +101,7 @@ void setPodcastQueue(String podcastName, List episodes, int currentIndex) {
 }
 
 Color colorFromName(String name) {
+  int brightestColorAllowed = 0x00ff4a4a;
   int acum = 0;
   int max = name.length * asciiCodez;
   int asciiCode = 0;
@@ -114,19 +116,20 @@ Color colorFromName(String name) {
       acum += asciiCode;
     }
   }
-  return Color((acum / max).round() * 0xFFFFFF);
+  return Color(((acum / max) * brightestColorAllowed).round() + 0xFF000000);
 }
 
-Widget topicButton(topic, width) {
-  return Padding(
-      padding:
-          EdgeInsets.fromLTRB(width / 10, width / 10, width / 10, width / 10),
-      child: Container(
-        color: colorFromName(topic.name),
-        child: Text(topic.name,
+Widget topicButton(topic, width, height) {
+  return Container(
+    width: width * 0.6,
+    height: height / 10,
+    color: colorFromName(topic),
+    child: Center(
+        child: Text(topic,
+            textAlign: TextAlign.center,
             style:
-                TextStyle(fontSize: width / 15, fontWeight: FontWeight.w500)),
-      ));
+                TextStyle(fontSize: width / 20, fontWeight: FontWeight.w500))),
+  );
 }
 
 Widget noPodcastsFoundWidget(int type, double width, double height) {
@@ -156,7 +159,7 @@ Widget noPodcastsFoundWidget(int type, double width, double height) {
   );
 }
 
-Widget podcastTile(width, height, podcast) {
+Widget podcastTile(width, height, Podcast podcast) {
   return GestureDetector(
       onTap: () {
         currentPodcast = podcast;
@@ -277,9 +280,11 @@ class _FavPodcastsState extends State<FavPodcasts> {
 
   void getFollowed() async {
     favPodcastList = await getFollowedPodcastsDB();
-    setState(() {
-      _loading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _loading = false;
+      });
+    }
   }
 
   @override
@@ -317,9 +322,11 @@ class _PodcastCollaboratorsState extends State<PodcastCollaborators> {
 
   void getCollaborators() async {
     collaboratorsList = await getCollaboratorsDB();
-    setState(() {
-      _loading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _loading = false;
+      });
+    }
   }
 
   @override
@@ -342,8 +349,7 @@ class _PodcastCollaboratorsState extends State<PodcastCollaborators> {
                 itemBuilder: (context, int index) {
                   return GestureDetector(
                       onTap: () {
-                        currentPodcaster = Artist(collaboratorsList[index],
-                            'https://www.nomadfoods.com/wp-content/uploads/2018/08/placeholder-1-e1533569576673-960x960.png');
+                        currentPodcaster = collaboratorsList[index];
                         podcastIndex.value = 2;
                       },
                       child: SizedBox(
@@ -362,20 +368,19 @@ class _PodcastCollaboratorsState extends State<PodcastCollaborators> {
                                 padding: EdgeInsets.fromLTRB(width / 20,
                                     width / 20, width / 20, width / 20),
                                 child: Row(children: <Widget>[
-                                  //TODO: SE NECESITA FUNCION DE BACKEND
-                                  /*ClipRRect(
+                                  ClipRRect(
                                       borderRadius: BorderRadius.circular(8.0),
                                       child: Image.network(
                                         collaboratorsList[index].photo,
                                         fit: BoxFit.cover,
-                                      )),*/
+                                      )),
                                   Expanded(
                                       flex: 4,
                                       child: Padding(
                                           padding: EdgeInsets.fromLTRB(
                                               width / 10, 0, 0, 0),
-                                          child: Text(collaboratorsList[index],
-                                              //.name,
+                                          child: Text(
+                                              collaboratorsList[index].title,
                                               style: TextStyle(
                                                   fontSize: width / 15,
                                                   fontWeight:
@@ -393,34 +398,77 @@ class TopicsTab extends StatefulWidget {
 }
 
 class _TopicsTabState extends State<TopicsTab> {
+  bool _loading = true;
   List topicList = new List();
+
+  void getTopics() async {
+    topicList = await getPodcastThemesDB();
+    if (mounted) {
+      setState(() => _loading = false);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getTopics();
+  }
+
   @override
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
     double height = MediaQuery.of(context).size.height;
-    return ListView.builder(
-        physics: BouncingScrollPhysics(),
-        itemCount: (topicList.length / 2).ceil(),
-        scrollDirection: Axis.vertical,
-        itemBuilder: (context, int index) {
-          return GestureDetector(
-              child: Container(
+    return _loading
+        ? Loading()
+        : ListView.builder(
+            itemCount: (topicList.length / 2).ceil(),
+            scrollDirection: Axis.vertical,
+            itemBuilder: (context, int index) {
+              return Container(
                   width: width,
-                  height: height / 20,
-                  child: topicList[2 * index + 1] < topicList.length
+                  height: height / 7.5,
+                  child: 2 * index + 1 < topicList.length
                       ? Row(
                           children: <Widget>[
                             Expanded(
-                              child: topicButton(topicList[2 * index], width),
-                            ),
+                                child: Padding(
+                                    padding: EdgeInsets.fromLTRB(width / 30,
+                                        width / 60, width / 30, width / 60),
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        currentTopic = topicList[2 * index];
+                                        podcastIndex.value = 3;
+                                      },
+                                      child: topicButton(
+                                          topicList[2 * index], width, height),
+                                    ))),
                             Expanded(
-                              child:
-                                  topicButton(topicList[2 * index + 1], width),
-                            )
+                                child: Padding(
+                                    padding: EdgeInsets.fromLTRB(width / 30,
+                                        width / 60, width / 30, width / 60),
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        currentTopic = topicList[2 * index + 1];
+                                        podcastIndex.value = 3;
+                                      },
+                                      child: topicButton(
+                                          topicList[2 * index + 1],
+                                          width,
+                                          height),
+                                    )))
                           ],
                         )
-                      : topicButton(topicList[2 * index], width)));
-        });
+                      : Padding(
+                          padding: EdgeInsets.fromLTRB(
+                              width / 30, width / 60, width / 30, width / 60),
+                          child: GestureDetector(
+                              onTap: () {
+                                currentTopic = topicList[2 * index];
+                                podcastIndex.value = 3;
+                              },
+                              child: topicButton(
+                                  topicList[2 * index], width, height))));
+            });
   }
 }
 
@@ -662,7 +710,7 @@ class _PodcasterFeaturedInState extends State<PodcasterFeaturedIn> {
                   leading: IconButton(
                     icon: Icon(Icons.arrow_back_ios),
                     onPressed: () {
-                      podcastIndex.value = 1;
+                      podcastIndex.value = 0;
                     },
                   ),
                   title: Text(podcaster.title),
@@ -671,68 +719,102 @@ class _PodcasterFeaturedInState extends State<PodcasterFeaturedIn> {
                   ),
                 ),
                 backgroundColor: Colors.transparent,
-                body: ListView(children: <Widget>[
-                  Padding(
-                    padding: const EdgeInsets.only(top: 15),
-                    child: Center(
-                        child: Column(
-                      children: <Widget>[
-                        SizedBox(height: 10),
-                        CircleAvatar(
-                            radius: 70,
-                            backgroundImage: NetworkImage(podcaster.photo)),
-                      ],
-                    )),
+                body: ListView.builder(
+                    scrollDirection: Axis.vertical,
+                    shrinkWrap: true,
+                    itemCount: collPodcasts.length + 2,
+                    itemBuilder: (BuildContext context, int index) {
+                      return index == 0
+                          ? Padding(
+                              padding: const EdgeInsets.only(top: 15),
+                              child: Center(
+                                  child: Column(
+                                children: <Widget>[
+                                  SizedBox(height: 10),
+                                  CircleAvatar(
+                                      radius: 70,
+                                      backgroundImage:
+                                          NetworkImage(podcaster.photo)),
+                                ],
+                              )),
+                            )
+                          : index == 1
+                              ? Padding(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(15, 20, 15, 0),
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: Text("Aperece en " + podcaster.title,
+                                        style: TextStyle(fontSize: 20)),
+                                  ))
+                              : podcastTile(
+                                  width, height, collPodcasts[index - 2]);
+                    })));
+  }
+}
+
+class PodcastsOfTopic extends StatefulWidget {
+  final String topic;
+  PodcastsOfTopic({this.topic});
+  @override
+  _PodcastsOfTopicState createState() => _PodcastsOfTopicState(topic: topic);
+}
+
+class _PodcastsOfTopicState extends State<PodcastsOfTopic> {
+  final String topic;
+  List podcasts = new List();
+  bool _loading = true;
+  _PodcastsOfTopicState({this.topic});
+
+  void getPodcasts() async {
+    podcasts = await getPodcastsByTopicDB(topic);
+    setState(() {
+      _loading = false;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getPodcasts();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    double width = MediaQuery.of(context).size.width;
+    double height = MediaQuery.of(context).size.height;
+    return _loading
+        ? Loading()
+        : Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [
+                Color.fromRGBO(80, 20, 20, 4.0),
+                Color(0xFF191414),
+              ], begin: Alignment.topLeft, end: FractionalOffset(0.3, 0.3)),
+            ),
+            child: Scaffold(
+                appBar: AppBar(
+                  backgroundColor: Colors.transparent,
+                  centerTitle: true,
+                  leading: IconButton(
+                    icon: Icon(Icons.arrow_back_ios),
+                    onPressed: () {
+                      podcastIndex.value = 0;
+                    },
                   ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(15, 20, 15, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        //              Padding(
-                        //                padding: const EdgeInsets.only(top: 10.0, bottom: 10),
-                        //                child: Text(
-                        //                  "Canciones de " + podcaster.name,
-                        //                  style: TextStyle(fontSize: 20),
-                        //                ),
-                        //              ),
-                        //              ListView.builder(
-                        //                scrollDirection: Axis.vertical,
-                        //                shrinkWrap: true,
-                        //                itemCount: collPodcasts.isEmpty ? 0 : collPodcasts.length,
-                        //                itemBuilder: (BuildContext context, int index) {
-                        //                  return new SongItem(
-                        //                    collPodcasts[index],
-                        //                    collPodcasts,
-                        //                    podcaster.name,
-                        //                    isNotOwn: true,
-                        //                  );
-                        //                },
-                        //              ),
-                        collPodcasts.isNotEmpty
-                            ? Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: Text("Podcasts de " + podcaster.title,
-                                    style: TextStyle(fontSize: 20)),
-                              )
-                            : Text(""),
-                        collPodcasts.isNotEmpty
-                            ? ListView.builder(
-                                scrollDirection: Axis.vertical,
-                                shrinkWrap: true,
-                                itemCount: collPodcasts.isEmpty
-                                    ? 0
-                                    : collPodcasts.length,
-                                itemBuilder: (BuildContext context, int index) {
-                                  return podcastTile(
-                                      width, height, collPodcasts[index]);
-                                },
-                              )
-                            : Text("")
-                      ],
-                    ),
-                  )
-                ])));
+                  title: Text(topic),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: new BorderRadius.circular(10.0),
+                  ),
+                ),
+                backgroundColor: Colors.transparent,
+                body: ListView.builder(
+                    scrollDirection: Axis.vertical,
+                    shrinkWrap: true,
+                    itemCount: podcasts.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return podcastTile(width, height, podcasts[index]);
+                    })));
   }
 }
 
@@ -800,6 +882,10 @@ class _PodcastsTabState extends State<PodcastsTab> {
         break;
       case 2:
         result = PodcasterFeaturedIn(podcaster: currentPodcaster);
+        break;
+      case 3:
+        result = PodcastsOfTopic(topic: currentTopic);
+        break;
     }
     return result;
   }
