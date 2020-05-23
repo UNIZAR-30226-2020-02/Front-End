@@ -5,7 +5,7 @@ class Podcast {
   String coverUrl;
   String title;
   String desc;
-  List hosts;
+  List hosts = new List();
 
   Language language;
   List episodes;

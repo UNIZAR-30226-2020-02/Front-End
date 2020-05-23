@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:bot_toast/bot_toast.dart';
 import 'package:dio/dio.dart';
+import 'package:playstack/models/Artist.dart';
 import 'package:flutter/foundation.dart';
 import 'package:playstack/models/Audio.dart';
 import 'package:playstack/models/Podcast.dart';
@@ -59,6 +60,7 @@ var rng = new Random();
 
 final ValueNotifier<int> podcastIndex = ValueNotifier<int>(0);
 Podcast currentPodcast;
+Artist currentPodcaster;
 
 Map<String, dynamic> languageStrings = new Map<String, dynamic>();
 
@@ -620,16 +622,16 @@ class ArtistItem extends StatelessWidget {
   }
 }
 
-class GenericSongItem extends StatelessWidget {
-  final Song song;
-  GenericSongItem(this.song);
+class GenericAudioItem extends StatelessWidget {
+  final Audio audio;
+  GenericAudioItem(this.audio);
   @override
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
     return GestureDetector(
       onTap: () {
-        currentAudio = song;
+        currentAudio = audio;
         songsNextUp.remove(currentAudio);
         // Se notifica que la canción se escucha
         currentAudio.markAsListened();
@@ -653,7 +655,7 @@ class GenericSongItem extends StatelessWidget {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8.0),
                       child: Image.network(
-                        song.albumCoverUrls.elementAt(0),
+                        audio.albumCoverUrls.elementAt(0),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -665,7 +667,7 @@ class GenericSongItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    song.title,
+                    audio.title,
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -673,7 +675,7 @@ class GenericSongItem extends StatelessWidget {
                   ),
                   SizedBox(height: 5),
                   Text(
-                    getSongArtists(song.artists),
+                    getSongArtists(audio.artists),
                     style: TextStyle(
                         color: Colors.white.withOpacity(0.5),
                         fontSize: height / 50),

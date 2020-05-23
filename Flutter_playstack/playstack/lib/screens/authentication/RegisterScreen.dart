@@ -104,11 +104,12 @@ class RegisterState extends State<RegisterScreen> {
   }
 
   void usernameNotTaken(String username) async {
+    setState(() => _loading = true);
     List matches = await getUsers(username);
     if (matches != null) {
       taken = matches.contains(username);
     }
-
+    setState(() => _loading = false);
     checked = true;
   }
 

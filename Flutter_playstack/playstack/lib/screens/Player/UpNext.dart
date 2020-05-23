@@ -34,7 +34,7 @@ class _UpNextState extends State<UpNext> {
                 style: TextStyle(fontSize: 20, fontFamily: 'Circular'),
               ),
             ),
-            GenericSongItem(currentAudio),
+            GenericAudioItem(currentAudio),
             Padding(
               padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
               child: Text("A continuación en $songsNextUpName",
@@ -45,7 +45,7 @@ class _UpNextState extends State<UpNext> {
               shrinkWrap: true,
               itemCount: songsNextUp.isEmpty ? 0 : songsNextUp.length,
               itemBuilder: (BuildContext context, int index) {
-                return new GenericSongItem(songsNextUp[index]);
+                return new GenericAudioItem(songsNextUp[index]);
               },
             )
           ],

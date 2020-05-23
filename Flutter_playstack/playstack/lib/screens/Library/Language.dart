@@ -39,10 +39,10 @@ class Language {
   factory Language(String lang) {
     Language result;
     switch (lang) {
-      case 'es':
+      case 'Español':
         result = _spanish;
         break;
-      case 'en':
+      case 'English':
         result = _english;
         break;
       case 'de':

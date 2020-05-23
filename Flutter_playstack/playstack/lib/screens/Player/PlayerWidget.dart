@@ -162,9 +162,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
         }
       });
       initAnim();
-      if (audioPlayerState != AudioPlayerState.PLAYING && !playerActive) {
-        togglePlayPause();
-      }
       playerActive = true;
     } else {
       Navigator.of(context).pop();
@@ -691,30 +688,34 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
   Widget extendedBottomBarControls(context) {
     double height = MediaQuery.of(context).size.height * 0.15;
-    return Row(children: <Widget>[
-      songImage(currentAudio, height),
-      Align(
-          alignment: Alignment.centerRight,
-          child: Row(children: <Widget>[
-            backButton(height * 2),
-            playPauseButton(height * 2),
-            backButton(height * 2)
-          ])),
-      Expanded(
-          child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: height * 0.005),
-              child: Material(
-                  color: Colors.transparent,
-                  child: slidingText(
-                    condicion: true,
-                    texto: currentAudio.isLocal
-                        ? '${currentAudio.title}'
-                        : '${currentAudio.title} - ${getSongArtists(currentAudio.artists)}',
-                    estilo: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
-                        fontSize: height / 6),
-                  ))))
-    ]);
+    return Container(
+        color: Colors.black87,
+        child: Padding(
+            padding: EdgeInsets.fromLTRB(height / 30, height / 30, 0, 0),
+            child: Row(children: <Widget>[
+              songImage(currentAudio, height),
+              Align(
+                  alignment: Alignment.centerRight,
+                  child: Row(children: <Widget>[
+                    backButton(height * 2),
+                    playPauseButton(height * 2),
+                    skipNextButton(height * 2)
+                  ])),
+              Expanded(
+                  child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: height * 0.005),
+                      child: Material(
+                          color: Colors.transparent,
+                          child: slidingText(
+                            condicion: true,
+                            texto: currentAudio.isLocal
+                                ? '${currentAudio.title}'
+                                : '${currentAudio.title} - ${getSongArtists(currentAudio.artists)}',
+                            estilo: TextStyle(
+                                color: Colors.white.withOpacity(0.8),
+                                fontSize: height / 6),
+                          ))))
+            ])));
   }
 
   @override

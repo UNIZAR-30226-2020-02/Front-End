@@ -5,19 +5,20 @@ import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/common.dart';
 
 class Episode extends Audio {
+  int number;
   String title;
   List artists;
   List topics;
   String date;
   //List topics;
   int duration;
-  bool isFav = false; //podcast is fav
   String url;
   List albumCoverUrls;
   String podcastUrl;
 
   Episode(
-      {this.title,
+      {this.number,
+      this.title,
       this.artists,
       this.url,
       this.topics,
@@ -34,7 +35,6 @@ class Episode extends Audio {
       "artists": artists,
       "albumCoverUrls": albumCoverUrls,
       "date": date,
-      "duration": duration
     };
     return songInfo;
   }
@@ -43,7 +43,6 @@ class Episode extends Audio {
   void setInfo(String title, List artists, String url, List albums,
       dynamic albumCovers, List genres) {}
 
-//TODO: Hay que mejorar
   void setEInfo(String title, List artists, String url, List albums,
       dynamic albumCovers, List genres, String date, int duration) {
     if (albumCovers is String) {
@@ -61,13 +60,5 @@ class Episode extends Audio {
 
   String getCover() {
     return albumCoverUrls.elementAt(0);
-  }
-
-  Future setAsFav() async {
-    return true;
-  }
-
-  Future removeFromFavs() async {
-    return true;
   }
 }

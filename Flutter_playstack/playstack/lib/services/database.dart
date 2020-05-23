@@ -3,17 +3,15 @@ import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
 import 'package:playstack/models/Album.dart';
 import 'package:playstack/models/Artist.dart';
+import 'package:playstack/models/Episode.dart';
 import 'package:playstack/models/FolderType.dart';
 import 'package:playstack/models/PlaylistType.dart';
+import 'package:playstack/models/Podcast.dart';
 import 'package:playstack/models/Song.dart';
 import 'package:playstack/models/user.dart';
+import 'package:playstack/screens/Library/Language.dart';
 import 'package:playstack/screens/Library/Podcasts.dart';
 import 'package:playstack/shared/common.dart';
-
-//TODO: Implementar cuando esté completo en Backend
-List getPodcastsDB() {
-  return getExampleList();
-}
 
 void addSongToListFull(List songs, String title, List artists, String url,
     List albunes, dynamic urlAlbums, bool isFavorite) {
@@ -1078,4 +1076,97 @@ Future<bool> getProfilePhoto() async {
     print("Status code not 200, body: " + response.body);
     return false;
   }
+}
+
+Future<List> getCollaboratorsDB() async {
+  List collaborators = new List();
+  List<Podcast> podcasts;
+  podcasts = await getFollowedPodcastsDB();
+  podcasts.forEach((Podcast p) => p.hosts.forEach((h) => collaborators.add(h)));
+  return collaborators;
+}
+
+Future<List> getCollaboratorPodcastsDB(String collaborator) async {
+  print("Recuperando podcasts con la presencia de $collaborator");
+
+  List podcasts = new List();
+  dynamic response = await http.get(
+      'https://playstack.azurewebsites.net/get/podcast/byinterlocutor?NombreInterlocutor=$collaborator');
+
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("Podcasts con la presencia de $collaborator recuperados");
+
+    response.forEach((title, info) => podcasts.add(Podcast(
+        title: title,
+        coverUrl: info['Foto'],
+        language: Language(info['Idioma']),
+        hosts: info['Interlocutores'],
+        desc: info['Descripcion'])));
+  } else {
+    print("Statuscode de podcasts con la colaboración de $collaborator" +
+        response.statusCode.toString());
+    print('Error buscando podcasts con colaboración de $collaborator, body: ' +
+        response.body.toString());
+  }
+  print("Ha colaborado en " + podcasts.length.toString() + " podcasts");
+  return podcasts;
+}
+
+Future<List<Podcast>> getFollowedPodcastsDB() async {
+  print("Recuperando podcasts seguidos por $userName");
+
+  List<Podcast> followed = new List();
+  dynamic response = await http.get(
+      'https://playstack.azurewebsites.net/get/podcast/followed?NombreUsuario=$userName');
+
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("Podcasts suscritos de $userName recuperados");
+
+    response.forEach((title, info) => followed.add(Podcast(
+        title: title,
+        coverUrl: info['Foto'],
+        language: Language(info['Idioma']),
+        hosts: info['Interlocutores'],
+        desc: info['Descripcion'])));
+  } else {
+    print("Statuscode de podcasts suscritos de $userName" +
+        response.statusCode.toString());
+    print('Error buscando podcasts suscritos de $userName, body: ' +
+        response.body.toString());
+  }
+  print("Sigue " + followed.length.toString() + " podcasts");
+  return followed;
+}
+
+Future<List> getPodcastEpisodesDB(String podcast) async {
+  print("Recuperando episodios de $podcast");
+
+  List<Episode> episodes = new List();
+  dynamic response = await http.get(
+      'https://playstack.azurewebsites.net/get/podcast/all?NombrePodcast=$podcast');
+
+  if (response.statusCode == 200) {
+    response = jsonDecode(response.body);
+    print("Episodios de $podcast recuperados");
+
+    for (Map episodeMap in response['capitulos']) {
+      episodes.add(Episode(
+          number: episodeMap['numChapter'],
+          artists: response['Interlocutores'],
+          title: episodeMap['nombre'],
+          albumCoverUrls: [response['Foto']],
+          date: episodeMap['fecha'],
+          duration: 0,
+          url: episodeMap['url']));
+    }
+  } else {
+    print(
+        "Statuscode de episodios de $podcast" + response.statusCode.toString());
+    print('Error buscando episodios de $podcast, body: ' +
+        response.body.toString());
+  }
+  print("El podcast tiene " + episodes.length.toString() + " episodios");
+  return episodes;
 }
