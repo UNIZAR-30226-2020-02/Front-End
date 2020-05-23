@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -14,50 +15,129 @@ class SearchPeople extends StatefulWidget {
 }
 
 class _SearchPeopleState extends State<SearchPeople> {
-  final TextEditingController _searchController = new TextEditingController();
-
-  String _searchText = "";
-
-  bool _searched = false;
-  bool _loading = true;
-
-  List users = new List();
-
   @override
   void initState() {
     super.initState();
-    getAllUsers();
   }
 
-  void getAllUsers() async {
-    users = await getUsers("");
-    print("Recopilados todos los usuarios");
-    if (mounted) {
-      setState(() {});
-    }
-  }
+  final TextEditingController _searchController = new TextEditingController();
+
+  Timer searchOnStoppedTyping;
+
+  String _searchText = "";
+  List names = new List();
+  List filteredNames = new List();
 
   _SearchPeopleState() {
     _searchController.addListener(() {
       if (_searchController.text.isEmpty) {
-        if (mounted) {
+        if (mounted)
           setState(() {
-            _searched = false;
             _searchText = "";
+            if (names.isNotEmpty) filteredNames = names;
           });
-        }
       } else {
-        if (mounted) {
+        if (mounted)
           setState(() {
-            _searched = false;
             _searchText = _searchController.text;
           });
-        }
       }
     });
   }
 
+  _onChangeHandler(value) {
+    const duration = Duration(
+        seconds: 1); // set the duration that you want call search() after that.
+    if (searchOnStoppedTyping != null) {
+      if (mounted)
+        setState(() => searchOnStoppedTyping.cancel()); // clear timer
+    }
+    if (mounted)
+      setState(() => searchOnStoppedTyping = new Timer(duration, () async {
+            if (_searchController.text != "") names = await getUsers(value);
+            if (mounted)
+              setState(() {
+                filteredNames = names;
+              });
+          }));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Color(0xFF191414),
+      //appBar: _buildBar(context),
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 20, 15, 0),
+        child: ListView(
+          children: <Widget>[
+            _searchBar(context),
+            _buildList(),
+          ],
+        ),
+      ),
+      resizeToAvoidBottomPadding: false,
+    );
+  }
+
   Widget _searchBar(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        Expanded(
+            child: Row(
+          children: <Widget>[
+            Expanded(
+              child: TextField(
+                  autofocus: true,
+                  onChanged: _onChangeHandler,
+                  controller: _searchController,
+                  decoration: new InputDecoration(
+                      prefixIcon: new Icon(CupertinoIcons.search),
+                      hintText: 'Buscar...',
+                      hintStyle: TextStyle(color: Colors.white))),
+            ),
+          ],
+        )),
+        IconButton(
+          icon: Icon(Icons.cancel),
+          onPressed: () {
+            previousIndex = homeIndex.value;
+            homeIndex.value = 1; // Social
+          },
+        )
+      ],
+    );
+  }
+
+  Widget _buildList() {
+    //Dejar esto asi aunque de warning, no pasa nada
+    if (!(_searchText.isEmpty)) {
+      List tempList = new List();
+      for (int i = 0; i < filteredNames.length; i++) {
+        if (filteredNames
+            .elementAt(i)
+            .title
+            .toLowerCase()
+            .contains(_searchText.toLowerCase())) {
+          tempList.add(filteredNames.elementAt(i));
+        }
+      }
+      filteredNames = tempList;
+    }
+
+    return ListView.builder(
+      physics: AlwaysScrollableScrollPhysics(),
+      scrollDirection: Axis.vertical,
+      shrinkWrap: true,
+      itemCount: (names.length == 0) ? 0 : filteredNames.length,
+      itemBuilder: (BuildContext context, int index) {
+        return UserTile(user: filteredNames[index]);
+      },
+    );
+  }
+
+////////////////////////////////////////////////////////////////////////////
+  /*  Widget _searchBar(BuildContext context) {
     return Row(
       children: <Widget>[
         Expanded(
@@ -106,29 +186,15 @@ class _SearchPeopleState extends State<SearchPeople> {
       itemBuilder: (BuildContext context, int index) {
         return new ListTile(
           title: Text(users[index].title),
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(
-              builder: (BuildContext context) => YourPublicProfile(false,
-                  friendUserName: users[index].title))),
+          onTap: () {
+            viewingOwnPublicProfile = false;
+            friendUserName = users[index].title;
+            previousIndex = homeIndex.value;
+            homeIndex.value = 6; // Perfil
+          },
         );
       },
     );
-  }
+  } */
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xFF191414),
-      //appBar: _buildBar(context),
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 20, 15, 0),
-        child: ListView(
-          children: <Widget>[
-            _searchBar(context),
-            _loading ? LoadingSongs() : _buildList(),
-          ],
-        ),
-      ),
-      resizeToAvoidBottomPadding: false,
-    );
-  }
 }

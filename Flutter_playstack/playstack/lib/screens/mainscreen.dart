@@ -9,16 +9,11 @@ import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:playstack/models/Song.dart';
+import 'package:toast/toast.dart';
 
 //import 'package:playstack/services/auth.dart';
 
 class MainScreen extends StatefulWidget {
-  /* //Singleton
-  static final MainScreen _mainScreen = MainScreen._constructor();
-  factory MainScreen() => _mainScreen;
-  MainScreen._constructor();
-
-  final MainScreenState _mainScreenState = MainScreenState(); */
   @override
   MainScreenState createState() => MainScreenState();
 }
@@ -38,19 +33,26 @@ class MainScreenState extends State<MainScreen> {
   }
 
   void getUserData() async {
-    bool _res1 = false,
-        _res2 = true; //MUST BE SET TO FALSE, TEMPORARY WORKAROUND
-    if (imagePath == null) {
-      _res1 = await getProfilePhoto();
-    }
-    /*if (currentAudio == null) {
-      print("Va a setear la ultima cancion");
-      _res2 = await setLastSongAsCurrent();
-    }*/
+    bool _res1 = false, _res2 = false;
+
+    _res1 = await getProfilePhoto();
+
+    _res2 = await setLastSongAsCurrent();
+
+    //TODO:volverlo a cambiar
     if (_res1 && _res2) {
-      setState(() {
-        loadingUserData = false;
-      });
+      if (mounted)
+        setState(() {
+          loadingUserData = false;
+        });
+    } else {
+      Toast.show('Error obteniendo datos del usuario!', context,
+          gravity: Toast.CENTER,
+          duration: Toast.LENGTH_LONG,
+          backgroundColor: Colors.red);
+      Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (BuildContext context) => AccessScreen()),
+          (Route<dynamic> route) => false);
     }
   }
 

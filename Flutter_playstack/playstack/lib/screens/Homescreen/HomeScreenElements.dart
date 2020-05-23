@@ -1,54 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:playstack/models/Genre.dart';
 import 'package:playstack/shared/common.dart';
 
 var blueColor = Color(0xFF090e42);
 var pinkColor = Color(0xFFff6b80);
 
-Widget genres() {
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        SizedBox(height: 15.0),
-        Text(
-          'Géneros',
-          style: TextStyle(fontFamily: 'Circular', fontSize: 22.0),
-        ),
-        SizedBox(height: 16.0),
-        Row(
-          children: <Widget>[
-            ItemCard('assets/images/RapGenre.png', 'Rap'),
-            SizedBox(
-              width: 16.0,
-            ),
-            ItemCard('assets/images/LatinGenre.png', 'Latin'),
-          ],
-        ),
-        SizedBox(
-          height: 32.0,
-        ),
-        Row(
-          children: <Widget>[
-            ItemCard('assets/images/PopGenre.png', 'Pop'),
-            SizedBox(
-              width: 16.0,
-            ),
-            ItemCard('assets/images/TechnoGenre.png', 'Techno'),
-          ],
-        ),
-        SizedBox(
-          height: 32.0,
-        ),
-      ],
-    ),
-  );
-}
-
 class ItemCard extends StatelessWidget {
-  final image;
-  final title;
-  ItemCard(this.image, this.title);
+  final Genre genre;
+  ItemCard(this.genre);
   @override
   Widget build(BuildContext context) {
     return Expanded(
@@ -62,8 +21,8 @@ class ItemCard extends StatelessWidget {
               children: <Widget>[
                 ClipRRect(
                     borderRadius: BorderRadius.circular(8.0),
-                    child: Image.asset(
-                      image,
+                    child: Image.network(
+                      genre.photoUrl,
                       fit: BoxFit.cover,
                       height: 140.0,
                       width: double.infinity,
@@ -74,10 +33,11 @@ class ItemCard extends StatelessWidget {
                   child: FlatButton(
                     color: Colors.transparent,
                     onPressed: () {
-                      print('TITULO: $title');
-                      currentGenre = title;
-                      currentGenreImage = image;
-                      homeIndex.value = 3;
+                      print('TITULO: ${genre.name}');
+
+                      currentGenre = genre;
+                      previousIndex = homeIndex.value;
+                      homeIndex.value = 3; // Generos
                     },
                     child: null,
                   ),
@@ -91,7 +51,7 @@ class ItemCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(left: 4.0),
             child: Text(
-              title,
+              genre.name,
               style: TextStyle(color: Colors.white, fontSize: 20.0),
             ),
           )

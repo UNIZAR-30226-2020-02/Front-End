@@ -41,7 +41,7 @@ class Episode extends Audio {
 
   @override
   void setInfo(String title, List artists, String url, List albums,
-      dynamic albumCovers, List genres) {}
+      dynamic albumCovers, List genres, bool isFav) {}
 
   void setEInfo(String title, List artists, String url, List albums,
       dynamic albumCovers, List genres, String date, int duration) {

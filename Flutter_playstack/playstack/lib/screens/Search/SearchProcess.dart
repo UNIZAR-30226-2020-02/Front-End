@@ -46,7 +46,7 @@ class _SearchProcessState extends State<SearchProcess> {
 
   _onChangeHandler(value) {
     const duration = Duration(
-        seconds: 2); // set the duration that you want call search() after that.
+        seconds: 1); // set the duration that you want call search() after that.
     if (searchOnStoppedTyping != null) {
       if (mounted)
         setState(() => searchOnStoppedTyping.cancel()); // clear timer
@@ -63,23 +63,11 @@ class _SearchProcessState extends State<SearchProcess> {
 
   @override
   void initState() {
-    this._getSongs();
-
     for (var i = 0; i < 5; i++) {
       List newList = new List();
       filteredNames.add(newList);
     }
     super.initState();
-  }
-
-  void _getSongs() async {
-    List allsongs = await getAllSongs();
-    if (mounted)
-      setState(() {
-        allsongs.shuffle();
-        filteredNames.insert(0, allsongs);
-        names.add(allsongs);
-      });
   }
 
   @override

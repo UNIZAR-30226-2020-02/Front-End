@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:playstack/models/Artist.dart';
 import 'package:flutter/foundation.dart';
 import 'package:playstack/models/Audio.dart';
+import 'package:playstack/models/Genre.dart';
 import 'package:playstack/models/LocalSongsPlaylists.dart';
 import 'package:playstack/models/Podcast.dart';
 import 'package:playstack/models/user.dart';
@@ -36,8 +37,23 @@ import 'package:playstack/services/SQLite.dart';
 
 final ValueNotifier<int> homeIndex = ValueNotifier<int>(0);
 
-var currentGenre;
-var currentGenreImage;
+Genre currentGenre;
+
+PlaylistType currentPlaylist;
+bool currentPlaylistInNotOwn;
+
+bool viewingOwnPublicProfile = true;
+
+String friendUserName = '';
+User otherUser = new User('', '');
+
+int previousIndex = 0;
+
+List<Song> recentlyPlayedSongs = new List();
+List<Podcast> recentlyPlayedPodcasts = new List();
+
+List<Song> songsMostListenedTo = new List();
+List<Podcast> podcastsmostListenedTo = new List();
 
 var currentArtist;
 var currentArtistImage;
@@ -331,7 +347,7 @@ List<DropdownMenuItem> listPlaylistNames() {
   List<DropdownMenuItem> items = new List();
   for (var pl in playlists) {
     DropdownMenuItem newItem =
-        new DropdownMenuItem<String>(value: pl.name, child: Text(pl.name));
+        new DropdownMenuItem<String>(value: pl.title, child: Text(pl.title));
     items.add(newItem);
   }
   return items;
@@ -356,7 +372,7 @@ void addingSongToPlaylist(
 
 Future<void> showAddingSongToPlaylistDialog(
     String songName, BuildContext context) async {
-  var dropdownItem = playlists.elementAt(0).name;
+  var dropdownItem = playlists.elementAt(0).title;
   return showDialog(
     barrierDismissible: true,
     context: context,
@@ -438,9 +454,10 @@ class SongItem extends StatelessWidget {
   final Song song;
   final PlaylistType playlist;
   final bool isNotOwn;
+  final onRemovedFromFavsCallBack;
 
   SongItem(this.song, this.songsList, this.songsListName,
-      {this.playlist, @required this.isNotOwn});
+      {this.playlist, @required this.isNotOwn, this.onRemovedFromFavsCallBack});
 
   @override
   Widget build(BuildContext context) {
@@ -519,10 +536,33 @@ class SongItem extends StatelessWidget {
                   onSelected: (val) async {
                     switch (val) {
                       case "Fav":
+                        bool res = false;
                         if (song.isFav) {
-                          song.removeFromFavs();
+                          res = await song.removeFromFavs();
+                          if (res)
+                            Toast.show('Eliminada!', context,
+                                gravity: Toast.CENTER,
+                                duration: Toast.LENGTH_LONG,
+                                backgroundColor: Colors.green);
+                          if (playlist.title == "Favoritas")
+                            onRemovedFromFavsCallBack();
+                          else
+                            Toast.show('Error quitando de favoritas!', context,
+                                gravity: Toast.CENTER,
+                                duration: Toast.LENGTH_LONG,
+                                backgroundColor: Colors.red);
                         } else {
-                          song.setAsFav();
+                          res = await song.setAsFav();
+                          if (res)
+                            Toast.show('Añadida!', context,
+                                gravity: Toast.CENTER,
+                                duration: Toast.LENGTH_LONG,
+                                backgroundColor: Colors.green);
+                          else
+                            Toast.show('Error añadiendo a favoritas', context,
+                                gravity: Toast.CENTER,
+                                duration: Toast.LENGTH_LONG,
+                                backgroundColor: Colors.red);
                         }
                         break;
                       case "AddToPlaylist":
@@ -571,7 +611,9 @@ class SongItem extends StatelessWidget {
                               leading: Icon(CupertinoIcons.add),
                               title: Text("Añadir canción a playlist"),
                             )),
-                        playlist != null && !isNotOwn
+                        playlist != null &&
+                                !isNotOwn &&
+                                playlist.title != "Favoritas"
                             ? PopupMenuItem(
                                 value: "removeFromPlaylist",
                                 child: ListTile(
@@ -600,7 +642,7 @@ List<DropdownMenuItem> _listLocalPlaylistNames() {
   if (accountType == "Premium") {
     for (var pl in playlists) {
       DropdownMenuItem newItem =
-          new DropdownMenuItem<String>(value: pl.name, child: Text(pl.name));
+          new DropdownMenuItem<String>(value: pl.title, child: Text(pl.title));
       items.add(newItem);
     }
   }
@@ -825,7 +867,7 @@ Future<void> showSharableLink(BuildContext context, String url) {
     builder: (BuildContext context) {
       return AlertDialog(
         title: Text("Compartir enlace"),
-        content: Text(url),
+        content: SelectableText(url),
         elevation: 100.0,
         actions: <Widget>[
           FlatButton(
@@ -1116,7 +1158,7 @@ List<DropdownMenuItem> listPlaylistNamesOfPlaylist(List availablePlaylists) {
   List<DropdownMenuItem> items = new List();
   for (var pl in availablePlaylists) {
     DropdownMenuItem newItem =
-        new DropdownMenuItem<String>(value: pl.name, child: Text(pl.name));
+        new DropdownMenuItem<String>(value: pl.title, child: Text(pl.title));
     items.add(newItem);
   }
   return items;
@@ -1156,7 +1198,7 @@ void addingOrRemovingPlaylistToFolder(String playlistName, String folderName,
 
 Future<void> showAddingOrRemovingPlaylistToFolderDialog(FolderType folder,
     List availablePlaylists, bool adding, BuildContext context) async {
-  var dropdownItem = availablePlaylists.elementAt(0).name;
+  var dropdownItem = availablePlaylists.elementAt(0).title;
   return showDialog(
     barrierDismissible: true,
     context: context,
@@ -1224,11 +1266,11 @@ class FolderItem extends StatelessWidget {
   FolderItem(this.folder);
   @override
   Widget build(BuildContext context) {
-    String playlistsInFolder = folder.containedPlaylists.elementAt(0).name;
+    String playlistsInFolder = folder.containedPlaylists.elementAt(0).title;
     for (var i = 1; i < folder.containedPlaylists.length; i++) {
       playlistsInFolder = playlistsInFolder +
           ", " +
-          folder.containedPlaylists.elementAt(i).name;
+          folder.containedPlaylists.elementAt(i).title;
     }
     return ListTile(
       leading: Container(
@@ -1282,7 +1324,7 @@ class FolderItem extends StatelessWidget {
                   int i = 0;
                   while (!found && i < folder.containedPlaylists.length) {
                     if (playlist.name ==
-                        folder.containedPlaylists.elementAt(i).name)
+                        folder.containedPlaylists.elementAt(i).title)
                       found = true;
 
                     i++;
@@ -1632,30 +1674,33 @@ class PodcastItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(MaterialPageRoute(
-            builder: (BuildContext context) => PodcastEpisodes(podcast)));
-      },
-      child: Column(
-        children: <Widget>[
-          SizedBox(
-            height: 130.0,
-            width: 140.0,
-            child: Image.network(
-              podcast.coverUrl,
-              fit: BoxFit.fitHeight,
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (BuildContext context) => PodcastEpisodes(podcast)));
+        },
+        child: Column(
+          children: <Widget>[
+            SizedBox(
+              height: 130.0,
+              width: 140.0,
+              child: Image.network(
+                podcast.coverUrl,
+                fit: BoxFit.fitHeight,
+              ),
             ),
-          ),
-          Padding(padding: EdgeInsets.all(5.0)),
-          Text(
-            podcast.title,
-            style: TextStyle(
-              color: Colors.white.withOpacity(1.0),
-              fontSize: 15.0,
-            ),
-          )
-        ],
+            Padding(padding: EdgeInsets.all(5.0)),
+            Text(
+              podcast.title,
+              style: TextStyle(
+                color: Colors.white.withOpacity(1.0),
+                fontSize: 15.0,
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -1673,12 +1718,145 @@ class UserTile extends StatelessWidget {
         leading: CircleAvatar(
             radius: 30, backgroundImage: NetworkImage(user.photoUrl)),
         title: Text(user.title),
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(
-            builder: (BuildContext context) => YourPublicProfile(
-                  false,
-                  friendUserName: user.title,
-                  otherUser: user,
-                ))),
+        onTap: () {
+          viewingOwnPublicProfile = false;
+          previousIndex = homeIndex.value;
+          friendUserName = user.title;
+          otherUser = user;
+          homeIndex.value = 6;
+        },
+      ),
+    );
+  }
+}
+
+class SongTile extends StatelessWidget {
+  final Song song;
+  final List<Song> songsList;
+  final String songsListName;
+
+  SongTile({
+    @required this.song,
+    @required this.songsList,
+    @required this.songsListName,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    List songCover = new List();
+    songCover.add(song.albumCoverUrls.elementAt(0));
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: GestureDetector(
+        onTap: () {
+          setQueue(songsList, song, songsListName);
+          onPlayerScreen = true;
+          if (player == null) player = PlayerWidget();
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (BuildContext context) => PlayingNowScreen()));
+        },
+        child: Column(
+          children: <Widget>[
+            SizedBox(
+              height: MediaQuery.of(context).size.height / 7,
+              width: 140.0,
+              child: ClipRRect(
+                  borderRadius: BorderRadius.circular(5.0),
+                  child: playListCover(songCover)),
+            ),
+            Padding(padding: EdgeInsets.all(5.0)),
+            Text(
+              song.title,
+              style: TextStyle(
+                color: Colors.white.withOpacity(1.0),
+                fontSize: 15.0,
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class PlaylistTile extends StatelessWidget {
+  final PlaylistType playlist;
+  final bool isOwn;
+
+  PlaylistTile({@required this.playlist, @required this.isOwn});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: GestureDetector(
+        onTap: () {
+          currentPlaylist = playlist;
+          currentPlaylistInNotOwn = isOwn;
+          homeIndex.value = 5;
+        },
+        child: Column(
+          children: <Widget>[
+            SizedBox(
+              height: 130.0,
+              width: 140.0,
+              child: ClipRRect(
+                  borderRadius: BorderRadius.circular(5.0),
+                  child: playListCover(playlist.coverUrls)),
+            ),
+            Padding(padding: EdgeInsets.all(5.0)),
+            Text(
+              playlist.title,
+              style: TextStyle(
+                color: Colors.white.withOpacity(1.0),
+                fontSize: 15.0,
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class GenreTile extends StatelessWidget {
+  final Genre genre;
+
+  GenreTile({
+    @required this.genre,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    List genreCover = new List();
+    genreCover.add(genre.photoUrl);
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: GestureDetector(
+        onTap: () {
+          currentGenre = genre;
+          previousIndex = homeIndex.value;
+          homeIndex.value = 3;
+        },
+        child: Column(
+          children: <Widget>[
+            SizedBox(
+              height: MediaQuery.of(context).size.height / 7,
+              width: 140.0,
+              child: ClipRRect(
+                  borderRadius: BorderRadius.circular(5.0),
+                  child: playListCover(genreCover)),
+            ),
+            Padding(padding: EdgeInsets.all(5.0)),
+            Text(
+              genre.name,
+              style: TextStyle(
+                color: Colors.white.withOpacity(1.0),
+                fontSize: 15.0,
+              ),
+            )
+          ],
+        ),
       ),
     );
   }

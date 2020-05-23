@@ -129,18 +129,19 @@ class _SocialState extends State<Social> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
       child: ListTile(
-        leading: CircleAvatar(
-            radius: 30, backgroundImage: NetworkImage(user.photoUrl)),
-        title: Text(user.title),
-        trailing:
-            tab == "Requests" ? followRequestButtons(user, context) : Text(''),
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(
-            builder: (BuildContext context) => YourPublicProfile(
-                  false,
-                  friendUserName: user.title,
-                  otherUser: user,
-                ))),
-      ),
+          leading: CircleAvatar(
+              radius: 30, backgroundImage: NetworkImage(user.photoUrl)),
+          title: Text(user.title),
+          trailing: tab == "Requests"
+              ? followRequestButtons(user, context)
+              : Text(''),
+          onTap: () {
+            viewingOwnPublicProfile = false;
+            previousIndex = homeIndex.value;
+            friendUserName = user.title;
+            otherUser = user;
+            homeIndex.value = 6;
+          }),
     );
   }
 
@@ -206,8 +207,8 @@ class _SocialState extends State<Social> {
             IconButton(
                 icon: Icon(Icons.search),
                 onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (BuildContext context) => SearchPeople()));
+                  previousIndex = homeIndex.value;
+                  homeIndex.value = 7;
                 })
           ],
           bottom: TabBar(

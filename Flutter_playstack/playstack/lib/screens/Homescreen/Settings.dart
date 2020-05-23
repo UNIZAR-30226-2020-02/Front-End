@@ -35,8 +35,11 @@ class _SettingsState extends State<Settings> {
       height: 35.0,
       width: MediaQuery.of(context).size.width / 3,
       child: RaisedButton(
-        onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-            builder: (BuildContext context) => YourPublicProfile(true))),
+        onPressed: () {
+          viewingOwnPublicProfile = true;
+          previousIndex = 2;
+          homeIndex.value = 6; //Perfil
+        },
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(80.0)),
         padding: EdgeInsets.all(0.0),

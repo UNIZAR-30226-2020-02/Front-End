@@ -13,7 +13,6 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  List lastSongsListenedto = new List();
   List yourPlaylists = new List();
 
   bool _loadingLastSongs = true;
@@ -27,7 +26,9 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void getLastSongs() async {
-    lastSongsListenedto = await getLastSongsListenedToDB(userName);
+    recentlyPlayedPodcasts.clear();
+    recentlyPlayedSongs.clear();
+    await getLastSongsListenedToDB(userName);
     if (mounted)
       setState(() {
         _loadingLastSongs = false;
@@ -59,8 +60,9 @@ class _SearchScreenState extends State<SearchScreen> {
               style: TextStyle(fontFamily: 'Circular', fontSize: 25),
             ),
             _searchBar(context),
-            recentlyPlayedSongs(),
-            yourPlaylistsList()
+            yourPlaylistsList(),
+            recentlyPlayedSongsList(),
+            recentlyPlayedPodcastsList()
           ],
         ),
       ),
@@ -96,11 +98,45 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget recentlyPlayedSongs() {
+  Widget recentlyPlayedPodcastsList() {
     return _loadingLastSongs
-        ? LoadingOthers()
+        ? Center(child: LoadingOthers())
         : Padding(
-            padding: const EdgeInsets.only(top: 5, left: 5, bottom: 10.0),
+            padding: const EdgeInsets.only(top: 5, left: 5, bottom: 5.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10.0),
+                  child: Text(
+                    "Podcasts reproducidos recientemente",
+                    style: TextStyle(fontFamily: 'Circular', fontSize: 25),
+                  ),
+                ),
+                Container(
+                  height: MediaQuery.of(context).size.height / 5,
+                  width: MediaQuery.of(context).size.width,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    shrinkWrap: true,
+                    itemCount: recentlyPlayedPodcasts.isEmpty
+                        ? 0
+                        : recentlyPlayedPodcasts.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return PodcastItem(recentlyPlayedPodcasts[index]);
+                    },
+                  ),
+                )
+              ],
+            ),
+          );
+  }
+
+  Widget recentlyPlayedSongsList() {
+    return _loadingLastSongs
+        ? Center(child: LoadingOthers())
+        : Padding(
+            padding: const EdgeInsets.only(top: 5, left: 5, bottom: 5.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
@@ -112,48 +148,19 @@ class _SearchScreenState extends State<SearchScreen> {
                   ),
                 ),
                 Container(
-                  height: MediaQuery.of(context).size.height / 6,
+                  height: MediaQuery.of(context).size.height / 5,
                   width: MediaQuery.of(context).size.width,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     shrinkWrap: true,
-                    itemCount: lastSongsListenedto.length,
+                    itemCount: recentlyPlayedSongs.isEmpty
+                        ? 0
+                        : recentlyPlayedSongs.length,
                     itemBuilder: (BuildContext context, int index) {
-                      return GestureDetector(
-                        onTap: () {
-                          setQueue(
-                              lastSongsListenedto,
-                              lastSongsListenedto[index],
-                              "Reproducidas recientemente");
-                          onPlayerScreen = true;
-                          if (player == null) player = PlayerWidget();
-                          Navigator.of(context).push(MaterialPageRoute(
-                              builder: (BuildContext context) =>
-                                  PlayingNowScreen()));
-                        },
-                        child: Column(
-                          children: <Widget>[
-                            SizedBox(
-                              height: MediaQuery.of(context).size.height / 8,
-                              width: MediaQuery.of(context).size.width / 3,
-                              child: Image.network(
-                                lastSongsListenedto[index]
-                                    .albumCoverUrls
-                                    .elementAt(0),
-                                fit: BoxFit.fitHeight,
-                              ),
-                            ),
-                            Padding(padding: EdgeInsets.all(5.0)),
-                            Text(
-                              lastSongsListenedto[index].title,
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(1.0),
-                                fontSize: 15.0,
-                              ),
-                            )
-                          ],
-                        ),
-                      );
+                      return SongTile(
+                          song: recentlyPlayedSongs[index],
+                          songsList: recentlyPlayedSongs,
+                          songsListName: "Reproducidas recientemente");
                     },
                   ),
                 )
@@ -164,7 +171,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget yourPlaylistsList() {
     return _loadingYourPlaylists
-        ? LoadingOthers()
+        ? Center(child: LoadingOthers())
         : Padding(
             padding: const EdgeInsets.only(top: 5, left: 5, bottom: 10.0),
             child: Column(
