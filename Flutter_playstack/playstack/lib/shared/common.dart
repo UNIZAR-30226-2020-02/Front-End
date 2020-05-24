@@ -541,6 +541,10 @@ class SongItem extends StatelessWidget {
                   color: Colors.grey[800],
                   onSelected: (val) async {
                     switch (val) {
+                      case "AddToQueue":
+                        songsNextUp.insert(0, song);
+                        break;
+
                       case "Fav":
                         bool res = false;
                         if (song.isFav) {
@@ -832,7 +836,7 @@ class LocalSongItem extends StatelessWidget {
                     switch (val) {
                       case "AddToQueue":
                         songsNextUp.insert(0, song);
-                        songsNextUpName = languageStrings['queue'];
+                        //songsNextUpName = languageStrings['queue'];
                         break;
                       case "Remove":
                         await deleteLocalSongFromEveryWhere(song, context);
@@ -865,6 +869,12 @@ class LocalSongItem extends StatelessWidget {
                     }
                   },
                   itemBuilder: (context) => [
+                        PopupMenuItem(
+                            value: "AddToQueue",
+                            child: ListTile(
+                              leading: Icon(Icons.add_to_queue),
+                              title: Text("Añadir a la cola de reproducción"),
+                            )),
                         PopupMenuItem(
                             value: "Remove",
                             child: ListTile(
