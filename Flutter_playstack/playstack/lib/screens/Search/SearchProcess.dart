@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:playstack/models/Album.dart';
 import 'package:playstack/models/Artist.dart';
 import 'package:playstack/services/database.dart';
+import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
 
 class SearchProcess extends StatefulWidget {
@@ -20,6 +21,7 @@ class _SearchProcessState extends State<SearchProcess> {
   String _searchText = "";
   List names = new List();
   List filteredNames = new List();
+  bool _loading = false;
 
   _SearchProcessState() {
     _filter.addListener(() {
@@ -53,7 +55,15 @@ class _SearchProcessState extends State<SearchProcess> {
     }
     if (mounted)
       setState(() => searchOnStoppedTyping = new Timer(duration, () async {
-            if (_filter.text != "") names = await search(value);
+            if (_filter.text != "") {
+              setState(() {
+                _loading = true;
+              });
+              names = await search(value);
+              setState(() {
+                _loading = false;
+              });
+            }
             if (mounted)
               setState(() {
                 filteredNames = names;
@@ -80,7 +90,7 @@ class _SearchProcessState extends State<SearchProcess> {
         child: ListView(
           children: <Widget>[
             _searchBar(context),
-            _buildList(),
+            _loading ? LoadingSongs() : _buildList(),
           ],
         ),
       ),

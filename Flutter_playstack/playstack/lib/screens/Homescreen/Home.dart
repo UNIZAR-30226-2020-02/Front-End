@@ -33,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _getData() async {
     podcastsList = await getAllPodcastsDB();
     artistsList = await getAllArtistsDB();
-    genresList = await getAllGenres(onlyFirtstFour: true);
+    genresList = await getAllGenres(onlyFirtstFour: false);
     if (mounted)
       setState(() {
         _loading = false;
@@ -81,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.fromLTRB(8.0, 0, 8, 0),
           child: Container(
             height: MediaQuery.of(context).size.height / 4,
-            width: MediaQuery.of(context).size.height / 3,
+            width: MediaQuery.of(context).size.height / 2,
             child: ListView.builder(
               itemCount: podcastsList.length,
               scrollDirection: Axis.horizontal,
@@ -179,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           artistsCards(),
-                          genres(),
+                          allGenres(),
                           recommendedPodcasts()
                         ],
                       ),
@@ -220,6 +220,37 @@ class _HomeScreenState extends State<HomeScreen> {
         break;
     }
     return result;
+  }
+
+  Widget allGenres() {
+    return Column(
+      children: <Widget>[
+        Text(
+          "Géneros",
+          style: TextStyle(fontFamily: 'Circular', fontSize: 25),
+        ),
+        Container(
+          child: GridView.count(
+              shrinkWrap: true,
+              // crossAxisCount is the number of columns
+              crossAxisCount: 2,
+              // This creates two columns with two items in each column
+              children: new List<Widget>.generate(
+                genresList.length,
+                (index) {
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: new GridTile(
+                        child: Flex(
+                      children: <Widget>[ItemCard(genresList[index])],
+                      direction: Axis.vertical,
+                    )),
+                  );
+                },
+              )),
+        ),
+      ],
+    );
   }
 
   @override

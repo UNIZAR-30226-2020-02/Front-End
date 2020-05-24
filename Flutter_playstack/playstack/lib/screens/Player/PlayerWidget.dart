@@ -97,7 +97,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
           // set at least title to see the notification bar on ios.
           advancedPlayer.setNotification(
-              title: 'App Name',
+              title: 'PlayStack',
               artist: 'Artist or blank',
               albumTitle: 'Name or blank',
               imageUrl: 'url or blank',

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:playstack/models/Album.dart';
 import 'package:playstack/models/Artist.dart';
+import 'package:playstack/models/Audio.dart';
 import 'package:playstack/models/Episode.dart';
 import 'package:playstack/models/FolderType.dart';
 import 'package:playstack/models/Genre.dart';
@@ -1041,15 +1042,22 @@ Future<bool> setLastSongAsCurrent() async {
   if (response.statusCode == 200) {
     response = jsonDecode(response.body);
     //response.forEach((title, info) => print(title + info.toString()));
-    currentAudio = new Song();
-    response.forEach((title, info) => currentAudio.setInfo(
-        title,
-        info['Artistas'],
-        info['url'],
-        info['Albumes'],
-        info['ImagenesAlbums'],
-        info['Generos'],
-        info['EsFavorita']));
+    currentAudio = new Audio();
+    response.forEach((title, info) {
+      if (info['Interlocutor'] != null) {
+        currentAudio.setInfo(title, new List(), info['url'], new List(),
+            info['Imagen'], new List(), false);
+      } else {
+        currentAudio.setInfo(
+            title,
+            info['Artistas'],
+            info['url'],
+            info['Albumes'],
+            info['ImagenesAlbums'],
+            info['Generos'],
+            info['EsFavorita']);
+      }
+    });
     print("Ultima cancion seteada");
     return true;
   } else {
@@ -1401,7 +1409,7 @@ Future<List> getPodcastsByTopicDB(String topic) async {
         hosts: hostList(info['Interlocutores']),
         desc: info['Descripcion'])));
   } else {
-    print("Statuscode de podcasts de tema $topic" +
+    print("Statuscode de podcasts de tema $topic " +
         response.statusCode.toString());
     print('Error buscando podcasts de tema $topic, body: ' +
         response.body.toString());

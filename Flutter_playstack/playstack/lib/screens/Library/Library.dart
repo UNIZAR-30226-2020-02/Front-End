@@ -18,7 +18,8 @@ class Library extends StatefulWidget {
   _LibraryState createState() => _LibraryState();
 }
 
-class _LibraryState extends State<Library> {
+class _LibraryState extends State<Library> with TickerProviderStateMixin {
+  TabController libraryTabController;
   final TextEditingController newPLaylistController =
       new TextEditingController();
   final TextEditingController newFolderController = new TextEditingController();
@@ -36,6 +37,11 @@ class _LibraryState extends State<Library> {
   @override
   void initState() {
     super.initState();
+    libraryTabController = TabController(vsync: this, length: 2);
+    if (tappedOnPodcast) {
+      libraryTabController.animateTo(1);
+      tappedOnPodcast = false;
+    }
     getFolders();
     getPlaylists();
     getArtists();
@@ -128,6 +134,7 @@ class _LibraryState extends State<Library> {
 
   void createPlaylist(bool isPrivate) async {
     Scaffold.of(context).showSnackBar(SnackBar(
+        duration: new Duration(seconds: 1),
         content: Text(
           'Creando lista de reproducción...',
           style: TextStyle(color: Colors.white),
@@ -137,6 +144,7 @@ class _LibraryState extends State<Library> {
 
     if (result) {
       Scaffold.of(context).showSnackBar(SnackBar(
+          duration: new Duration(seconds: 1),
           content: Text(
             '¡Lista de reproducción creada!',
             style: TextStyle(color: Colors.white),
@@ -144,6 +152,7 @@ class _LibraryState extends State<Library> {
           backgroundColor: Colors.grey[700]));
     } else {
       Scaffold.of(context).showSnackBar(SnackBar(
+          duration: new Duration(seconds: 1),
           content: Text(
             'No se pudo crear la lista de reproducción',
             style: TextStyle(color: Colors.white),
@@ -156,6 +165,7 @@ class _LibraryState extends State<Library> {
 
   void createFolder() async {
     Scaffold.of(context).showSnackBar(SnackBar(
+        duration: new Duration(seconds: 1),
         content: Text(
           'Creando carpeta...',
           style: TextStyle(color: Colors.white),
@@ -165,6 +175,7 @@ class _LibraryState extends State<Library> {
 
     if (result) {
       Scaffold.of(context).showSnackBar(SnackBar(
+          duration: new Duration(seconds: 1),
           content: Text(
             '¡Carpeta creada!',
             style: TextStyle(color: Colors.white),
@@ -172,6 +183,7 @@ class _LibraryState extends State<Library> {
           backgroundColor: Colors.grey[700]));
     } else {
       Scaffold.of(context).showSnackBar(SnackBar(
+          duration: new Duration(seconds: 1),
           content: Text(
             'No se pudo crear la carpeta',
             style: TextStyle(color: Colors.white),
@@ -448,10 +460,16 @@ class _LibraryState extends State<Library> {
                     : (playlists.length + folders.length),
                 itemBuilder: (BuildContext context, int index) {
                   if (index < folders.length) {
-                    return new FolderItem(folders[index]);
+                    return new FolderItem(folders[index],
+                        onUpdatedCallBack: () {
+                      getFolders();
+                    });
                   } else {
                     return new PlaylistItem(
-                        playlists[index - folders.length], false);
+                      playlists[index - folders.length],
+                      false,
+                      onChangedCallback: () => getPlaylists(),
+                    );
                   }
                 },
               )
@@ -476,6 +494,7 @@ class _LibraryState extends State<Library> {
             actions: <Widget>[
               Expanded(
                 child: TabBar(
+                  controller: libraryTabController,
                   indicatorColor: Colors.red[800],
                   tabs: [
                     Tab(
@@ -496,6 +515,7 @@ class _LibraryState extends State<Library> {
             ],
           ),
           body: TabBarView(
+            controller: libraryTabController,
             children: [
               musicTab(),
               podcastsTab(),

@@ -1,8 +1,7 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:playstack/models/Genre.dart';
+import 'package:playstack/screens/Homescreen/HomeScreenElements.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
-import 'package:playstack/screens/Player/PlayerWidget.dart';
-import 'package:playstack/screens/Player/PlayingNow.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
@@ -14,7 +13,9 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   List yourPlaylists = new List();
+  List<Genre> genresList = new List();
 
+  bool _loadingGenres = true;
   bool _loadingLastSongs = true;
   bool _loadingYourPlaylists = true;
 

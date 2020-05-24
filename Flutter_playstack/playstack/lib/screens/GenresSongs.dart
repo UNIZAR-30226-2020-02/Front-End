@@ -50,6 +50,7 @@ class _GenresSongsState extends State<GenresSongs> {
           songsInGenre,
           currentGenre.name,
           isNotOwn: false,
+          onChangedCallback: () => _getSongs(),
         );
       },
     );

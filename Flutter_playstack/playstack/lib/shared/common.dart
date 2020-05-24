@@ -27,6 +27,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:audioplayers/audio_cache.dart';
 import 'package:playstack/services/database.dart';
+import 'package:playstack/shared/Loading.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:toast/toast.dart';
 import 'package:playstack/services/SQLite.dart';
@@ -36,6 +37,8 @@ import 'package:playstack/services/SQLite.dart';
 //////////////////////////////////////////////////////////////////////////////////
 
 final ValueNotifier<int> homeIndex = ValueNotifier<int>(0);
+
+bool tappedOnPodcast;
 
 Genre currentGenre;
 
@@ -199,6 +202,7 @@ Widget bottomBar(context) {
           ]));
 }
 
+//checkpoint
 Widget show(int index) {
   switch (index) {
     case 0:
@@ -454,10 +458,10 @@ class SongItem extends StatelessWidget {
   final Song song;
   final PlaylistType playlist;
   final bool isNotOwn;
-  final onRemovedFromFavsCallBack;
+  final onChangedCallback;
 
   SongItem(this.song, this.songsList, this.songsListName,
-      {this.playlist, @required this.isNotOwn, this.onRemovedFromFavsCallBack});
+      {this.playlist, @required this.isNotOwn, this.onChangedCallback});
 
   @override
   Widget build(BuildContext context) {
@@ -545,7 +549,7 @@ class SongItem extends StatelessWidget {
                                 duration: Toast.LENGTH_LONG,
                                 backgroundColor: Colors.green);
                           if (playlist.title == "Favoritas")
-                            onRemovedFromFavsCallBack();
+                            onChangedCallback();
                           else
                             Toast.show('Error quitando de favoritas!', context,
                                 gravity: Toast.CENTER,
@@ -574,16 +578,22 @@ class SongItem extends StatelessWidget {
 
                         break;
                       case "removeFromPlaylist":
+                        Toast.show('Eliminando...', context,
+                            gravity: Toast.CENTER,
+                            duration: Toast.LENGTH_LONG,
+                            backgroundColor: Colors.blue);
                         if (song.isLocal) {
                         } else {
                           await removeSongFromPlaylistDB(
                               song.title, playlist.title);
                           await playlist.updateCovers();
                         }
+                        Toast.show('Eliminada!', context,
+                            gravity: Toast.CENTER,
+                            duration: Toast.LENGTH_LONG,
+                            backgroundColor: Colors.green);
 
-                        Navigator.of(context).pushReplacement(MaterialPageRoute(
-                            builder: (BuildContext context) =>
-                                Playlist(playlist)));
+                        onChangedCallback();
                         break;
 
                       default:
@@ -656,7 +666,18 @@ List<DropdownMenuItem> _listLocalPlaylistNames() {
 
 Future<void> _showAddingSongToPlaylistDialog(
     String songName, BuildContext context) async {
-  var dropdownItem = localPlaylistList.elementAt(0).name;
+  var dropdownItem;
+  if (localPlaylistList.length > 0) {
+    dropdownItem = localPlaylistList.elementAt(0).name;
+  } else if (localPlaylistList.isEmpty && accountType != "Premium") {
+    Toast.show('No tienes ninguna lista de reproducción local!', context,
+        gravity: Toast.CENTER,
+        duration: Toast.LENGTH_LONG,
+        backgroundColor: Colors.red);
+    return;
+  } else if (localPlaylistList.isEmpty && accountType == "Premium") {
+    dropdownItem = playlists.elementAt(0).title;
+  }
   return showDialog(
     barrierDismissible: true,
     context: context,
@@ -1165,7 +1186,7 @@ List<DropdownMenuItem> listPlaylistNamesOfPlaylist(List availablePlaylists) {
 }
 
 void addingOrRemovingPlaylistToFolder(String playlistName, String folderName,
-    bool adding, BuildContext context) async {
+    bool adding, BuildContext context, onUpdatedCallBack) async {
   adding
       ? Toast.show('Añadiendo ...', context,
           gravity: Toast.CENTER, backgroundColor: Colors.blue)
@@ -1181,23 +1202,26 @@ void addingOrRemovingPlaylistToFolder(String playlistName, String folderName,
               gravity: Toast.CENTER, backgroundColor: Colors.green)
           : Toast.show('Playlist retirada!', context,
               gravity: Toast.CENTER, backgroundColor: Colors.green);
-      Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (BuildContext context) => MainScreen()));
     } else {
       adding
           ? Toast.show('No se pudo añadir la playlist', context,
               gravity: Toast.CENTER, backgroundColor: Colors.red)
           : Toast.show('No se pudo retirar la playlist', context,
               gravity: Toast.CENTER, backgroundColor: Colors.red);
-      Navigator.of(context).pop();
     }
   } catch (e) {
     print("Exception " + e.toString());
   }
+  Navigator.of(context).pop();
+  onUpdatedCallBack();
 }
 
-Future<void> showAddingOrRemovingPlaylistToFolderDialog(FolderType folder,
-    List availablePlaylists, bool adding, BuildContext context) async {
+Future<void> showAddingOrRemovingPlaylistToFolderDialog(
+    FolderType folder,
+    List availablePlaylists,
+    bool adding,
+    BuildContext context,
+    onUpdatedCallBack) async {
   var dropdownItem = availablePlaylists.elementAt(0).title;
   return showDialog(
     barrierDismissible: true,
@@ -1247,7 +1271,11 @@ Future<void> showAddingOrRemovingPlaylistToFolderDialog(FolderType folder,
                         child: FlatButton(
                             onPressed: () {
                               addingOrRemovingPlaylistToFolder(
-                                  dropdownItem, folder.name, adding, context);
+                                  dropdownItem,
+                                  folder.name,
+                                  adding,
+                                  context,
+                                  onUpdatedCallBack);
                             },
                             child: Text(adding ? "Añadir" : "Retirar")))
                   ],
@@ -1263,7 +1291,8 @@ Future<void> showAddingOrRemovingPlaylistToFolderDialog(FolderType folder,
 
 class FolderItem extends StatelessWidget {
   final FolderType folder;
-  FolderItem(this.folder);
+  final onUpdatedCallBack;
+  FolderItem(this.folder, {@required this.onUpdatedCallBack});
   @override
   Widget build(BuildContext context) {
     String playlistsInFolder = folder.containedPlaylists.elementAt(0).title;
@@ -1291,6 +1320,7 @@ class FolderItem extends StatelessWidget {
             switch (val) {
               case "Delete":
                 Scaffold.of(context).showSnackBar(SnackBar(
+                    duration: new Duration(seconds: 1),
                     content: Text(
                       'Borrando carpeta...',
                       style: TextStyle(color: Colors.white),
@@ -1299,15 +1329,16 @@ class FolderItem extends StatelessWidget {
                 bool deleted = await deleteFolderDB(folder.name);
                 if (deleted) {
                   Scaffold.of(context).showSnackBar(SnackBar(
+                      duration: new Duration(seconds: 1),
                       content: Text(
                         'Carpeta borrada!',
                         style: TextStyle(color: Colors.white),
                       ),
                       backgroundColor: Colors.grey[700]));
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (BuildContext context) => MainScreen()));
+                  onUpdatedCallBack();
                 } else {
                   Scaffold.of(context).showSnackBar(SnackBar(
+                      duration: new Duration(seconds: 1),
                       content: Text(
                         'No se pudo borrar la carpeta',
                         style: TextStyle(color: Colors.white),
@@ -1323,7 +1354,7 @@ class FolderItem extends StatelessWidget {
                   bool found = false;
                   int i = 0;
                   while (!found && i < folder.containedPlaylists.length) {
-                    if (playlist.name ==
+                    if (playlist.title ==
                         folder.containedPlaylists.elementAt(i).title)
                       found = true;
 
@@ -1332,8 +1363,8 @@ class FolderItem extends StatelessWidget {
                   if (!found) availablePlaylists.add(playlist);
                 }
                 if (availablePlaylists.isNotEmpty) {
-                  showAddingOrRemovingPlaylistToFolderDialog(
-                      folder, availablePlaylists, true, context);
+                  showAddingOrRemovingPlaylistToFolderDialog(folder,
+                      availablePlaylists, true, context, onUpdatedCallBack);
                 } else {
                   Toast.show(
                       "No hay listas de reproducción que añadir", context,
@@ -1353,10 +1384,13 @@ class FolderItem extends StatelessWidget {
                       duration: Toast.LENGTH_LONG,
                       gravity: Toast.CENTER,
                       backgroundColor: Colors.red[500]);
-                  Navigator.of(context).pop();
                 } else {
                   showAddingOrRemovingPlaylistToFolderDialog(
-                      folder, folder.containedPlaylists, false, context);
+                      folder,
+                      folder.containedPlaylists,
+                      false,
+                      context,
+                      onUpdatedCallBack);
                 }
 
                 break;
@@ -1394,7 +1428,8 @@ class FolderItem extends StatelessWidget {
 class PlaylistItem extends StatelessWidget {
   final playlist;
   final bool listingInProfile;
-  PlaylistItem(this.playlist, this.listingInProfile);
+  final onChangedCallback;
+  PlaylistItem(this.playlist, this.listingInProfile, {this.onChangedCallback});
 
   @override
   Widget build(BuildContext context) {
@@ -1454,6 +1489,7 @@ class PlaylistItem extends StatelessWidget {
                         switch (val) {
                           case "Delete":
                             Scaffold.of(context).showSnackBar(SnackBar(
+                                duration: new Duration(seconds: 1),
                                 content: Text(
                                   'Borrando lista de reproducción...',
                                   style: TextStyle(color: Colors.white),
@@ -1466,17 +1502,16 @@ class PlaylistItem extends StatelessWidget {
 
                             if (deleted) {
                               Scaffold.of(context).showSnackBar(SnackBar(
+                                  duration: new Duration(seconds: 1),
                                   content: Text(
                                     'Lista de reproducción borrada!',
                                     style: TextStyle(color: Colors.white),
                                   ),
                                   backgroundColor: Colors.grey[700]));
-                              // TODO: por ahora lo dejo asi aunque estaria bn buscar una alternativa
-                              Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (BuildContext context) =>
-                                      MainScreen()));
+                              onChangedCallback();
                             } else {
                               Scaffold.of(context).showSnackBar(SnackBar(
+                                  duration: new Duration(seconds: 1),
                                   content: Text(
                                     'No se pudo borrar la lista de reproducción',
                                     style: TextStyle(color: Colors.white),
@@ -1678,8 +1713,10 @@ class PodcastItem extends StatelessWidget {
       padding: const EdgeInsets.all(8.0),
       child: GestureDetector(
         onTap: () {
-          Navigator.of(context).push(MaterialPageRoute(
-              builder: (BuildContext context) => PodcastEpisodes(podcast)));
+          tappedOnPodcast = true;
+          currentIndex.value = 2; //Library
+          currentPodcast = podcast;
+          podcastIndex.value = 1;
         },
         child: Column(
           children: <Widget>[

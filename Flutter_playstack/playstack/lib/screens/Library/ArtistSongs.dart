@@ -40,6 +40,8 @@ class _ArtistsSongsState extends State<ArtistsSongs> {
 
   @override
   Widget build(BuildContext context) {
+    List artistPhotoList = new List();
+    artistPhotoList.add(artistPhoto);
     return Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(colors: [
@@ -69,8 +71,9 @@ class _ArtistsSongsState extends State<ArtistsSongs> {
                   alignment: Alignment.center,
                   children: <Widget>[
                     SizedBox(
-                        width: MediaQuery.of(context).size.width / 2 + 20,
-                        child: Image.network(artistPhoto)),
+                        height: MediaQuery.of(context).size.height / 4,
+                        width: MediaQuery.of(context).size.width / 2,
+                        child: playListCover(artistPhotoList)),
                     BackdropFilter(
                       filter: ui.ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                       child: Container(
@@ -83,7 +86,7 @@ class _ArtistsSongsState extends State<ArtistsSongs> {
                     SizedBox(
                         height: MediaQuery.of(context).size.height / 4,
                         width: MediaQuery.of(context).size.width / 2,
-                        child: Image.network(artistPhoto))
+                        child: playListCover(artistPhotoList)),
                   ],
                 ),
               ),
