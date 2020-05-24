@@ -628,9 +628,7 @@ class _PodcastEpisodesState extends State<PodcastEpisodes> {
                                                           languageStrings[
                                                                   'released'] +
                                                               " " +
-                                                              episodesList[
-                                                                      index]
-                                                                  .date,
+                                                              "${episodesList[index].date.day}/${episodesList[index].date.month}/${episodesList[index].date.year}",
                                                           textAlign:
                                                               TextAlign.left,
                                                           style: TextStyle(
