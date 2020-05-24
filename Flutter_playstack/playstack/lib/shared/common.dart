@@ -39,6 +39,8 @@ final ValueNotifier<int> musicIndex = ValueNotifier<int>(0);
 
 Genre currentGenre;
 
+FolderType currentFolder;
+
 PlaylistType currentPlaylist;
 bool currentPlaylistInNotOwn;
 
@@ -1424,8 +1426,11 @@ class FolderItem extends StatelessWidget {
                       title: Text("Quitar lista de reproducción"),
                     ))
               ]),
-      onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (BuildContext context) => Folder(folder))),
+      onTap: () {
+        currentFolder = folder;
+        previousIndex = musicIndex.value;
+        musicIndex.value = 2;
+      },
     );
   }
 }
@@ -1441,14 +1446,15 @@ class PlaylistItem extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         if (listingInProfile) {
-          Navigator.of(context).push(MaterialPageRoute(
-              builder: (BuildContext context) => Playlist(
-                    playlist,
-                    isNotOwn: true,
-                  )));
+          previousIndex = musicIndex.value;
+          currentPlaylist = playlist;
+          currentPlaylistInNotOwn = true;
+          musicIndex.value = 1;
         } else {
-          Navigator.of(context).push(MaterialPageRoute(
-              builder: (BuildContext context) => Playlist(playlist)));
+          previousIndex = musicIndex.value;
+          currentPlaylist = playlist;
+          currentPlaylistInNotOwn = false;
+          musicIndex.value = 1; //Playlist
         }
       },
       child: Padding(

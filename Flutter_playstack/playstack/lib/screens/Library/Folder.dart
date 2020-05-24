@@ -21,7 +21,7 @@ class Folder extends StatelessWidget {
             appBar: AppBar(
               leading: IconButton(
                   icon: Icon(Icons.arrow_back_ios),
-                  onPressed: () => Navigator.of(context).pop()),
+                  onPressed: () => musicIndex.value = 0),
               automaticallyImplyLeading: false,
               backgroundColor: Colors.transparent,
               centerTitle: true,

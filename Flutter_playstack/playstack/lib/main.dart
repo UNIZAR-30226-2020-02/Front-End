@@ -29,7 +29,6 @@ class MyApp extends StatelessWidget {
           'mainscreen': (context) => MainScreen(),
           'Register': (_) => RegisterScreen(),
           'Settings': (_) => Settings(),
-          'ProfileSettings': (_) => ProfileSettings(),
         },
       ),
     );

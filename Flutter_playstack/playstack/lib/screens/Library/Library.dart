@@ -4,6 +4,7 @@ import 'package:playstack/models/Album.dart';
 import 'package:playstack/models/Artist.dart';
 import 'package:playstack/models/LocalPlaylist.dart';
 import 'package:playstack/models/PlaylistType.dart';
+import 'package:playstack/screens/Library/Folder.dart';
 import 'package:playstack/screens/Library/Local_Music/LocalMusic.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
 import 'package:playstack/screens/Library/Podcasts.dart';
@@ -104,6 +105,15 @@ class _LibraryState extends State<Library> with TickerProviderStateMixin {
         break;
       case 1:
         result = Playlist(currentPlaylist);
+        break;
+      case 2:
+        result = Folder(currentFolder);
+        break;
+      case 3:
+        result = Playlist(
+          currentPlaylist,
+          isNotOwn: currentPlaylistInNotOwn,
+        );
         break;
       default:
     }
@@ -468,6 +478,7 @@ class _LibraryState extends State<Library> with TickerProviderStateMixin {
                 style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w500)),
             subtitle: Text('Canciones favoritas'),
             onTap: () {
+              previousIndex = musicIndex.value;
               currentPlaylist = new PlaylistType(title: "Favoritas");
               musicIndex.value = 1; // Playlist
             }),

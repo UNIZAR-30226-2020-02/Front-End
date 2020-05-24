@@ -132,13 +132,10 @@ class _SettingsState extends State<Settings> {
         children: <Widget>[
           _profileInfo(context),
           FlatButton(
-              onPressed: () =>
-                  Navigator.of(context).pushNamed('ProfileSettings'),
+              onPressed: () => homeIndex.value = 10,
               child: Text('Perfil de usuario')),
           FlatButton(
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (BuildContext context) => Account())),
-              child: Text('Cuenta')),
+              onPressed: () => homeIndex.value = 9, child: Text('Cuenta')),
         ],
       ),
     );

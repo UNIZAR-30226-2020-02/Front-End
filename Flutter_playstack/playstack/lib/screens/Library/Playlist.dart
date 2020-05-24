@@ -200,7 +200,7 @@ class _PlaylistState extends State<Playlist> {
                   if (currentIndex.value == 1)
                     searchIndex.value = 0;
                   else if (currentIndex.value == 2) // Library
-                    musicIndex.value = 0;
+                    musicIndex.value = previousIndex;
                 }),
           ),
           //bottomNavigationBar: bottomBar(context),

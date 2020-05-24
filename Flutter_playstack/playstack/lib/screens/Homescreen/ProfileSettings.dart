@@ -128,6 +128,9 @@ class _ProfileSettingsState extends State<ProfileSettings> {
         : Scaffold(
             backgroundColor: Color(0xFF191414),
             appBar: AppBar(
+              leading: IconButton(
+                  icon: Icon(Icons.arrow_back_ios),
+                  onPressed: () => homeIndex.value = 2), //Settings
               centerTitle: true,
               title: Text("Configuración"),
             ),
