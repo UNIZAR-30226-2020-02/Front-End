@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:playstack/screens/mainscreen.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
@@ -21,6 +22,7 @@ class RegisterState extends State<RegisterScreen> {
   final _imageKey = GlobalKey<FormState>();
   bool _obscureText = true;
   bool _loading = false;
+  bool _isInAsyncCall = false;
   int _step = 0;
   PageController _pageController = new PageController();
   var image;
@@ -104,13 +106,13 @@ class RegisterState extends State<RegisterScreen> {
   }
 
   void usernameNotTaken(String username) async {
-    setState(() => _loading = true);
+    setState(() => _isInAsyncCall = true);
     List matches = await getUsers(username);
     if (matches != null) {
       taken = matches.contains(username);
     }
-    setState(() => _loading = false);
     checked = true;
+    setState(() => _isInAsyncCall = false);
   }
 
   bool emailNotTaken(String username) {
@@ -556,14 +558,18 @@ class RegisterState extends State<RegisterScreen> {
                 WillPopScope(
                   onWillPop: _onBackPressed,
                   child: Expanded(
-                      child: PageView(
-                          physics: new NeverScrollableScrollPhysics(),
-                          controller: _pageController,
-                          children: <Widget>[
-                        firstPage(),
-                        secondPage(),
-                        thirdPage(),
-                      ])),
+                      child: ModalProgressHUD(
+                    child: PageView(
+                        physics: new NeverScrollableScrollPhysics(),
+                        controller: _pageController,
+                        children: <Widget>[
+                          firstPage(),
+                          secondPage(),
+                          thirdPage(),
+                        ]),
+                    inAsyncCall: _isInAsyncCall,
+                    progressIndicator: CircularProgressIndicator(),
+                  )),
                 ),
                 registerButtons(),
               ]));

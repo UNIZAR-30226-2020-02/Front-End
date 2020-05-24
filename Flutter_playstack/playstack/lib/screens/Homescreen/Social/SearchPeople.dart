@@ -23,6 +23,7 @@ class _SearchPeopleState extends State<SearchPeople> {
   final TextEditingController _searchController = new TextEditingController();
 
   Timer searchOnStoppedTyping;
+  bool _loading = false;
 
   String _searchText = "";
   List names = new List();
@@ -54,7 +55,15 @@ class _SearchPeopleState extends State<SearchPeople> {
     }
     if (mounted)
       setState(() => searchOnStoppedTyping = new Timer(duration, () async {
-            if (_searchController.text != "") names = await getUsers(value);
+            if (_searchController.text != "") {
+              setState(() {
+                _loading = true;
+              });
+              names = await getUsers(value);
+              setState(() {
+                _loading = false;
+              });
+            }
             if (mounted)
               setState(() {
                 filteredNames = names;
@@ -72,7 +81,7 @@ class _SearchPeopleState extends State<SearchPeople> {
         child: ListView(
           children: <Widget>[
             _searchBar(context),
-            _buildList(),
+            _loading ? LoadingSongs() : _buildList(),
           ],
         ),
       ),

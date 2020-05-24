@@ -27,7 +27,6 @@ class MyApp extends StatelessWidget {
         routes: {
           'access': (_) => AccessScreen(),
           'mainscreen': (context) => MainScreen(),
-          'searchProcessScreen': (_) => SearchProcess(),
           'Register': (_) => RegisterScreen(),
           'Settings': (_) => Settings(),
           'ProfileSettings': (_) => ProfileSettings(),

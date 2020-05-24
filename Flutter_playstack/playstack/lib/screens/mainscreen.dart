@@ -39,7 +39,6 @@ class MainScreenState extends State<MainScreen> {
 
     _res2 = await setLastSongAsCurrent();
 
-    //TODO:volverlo a cambiar
     if (_res1 && _res2) {
       if (mounted)
         setState(() {

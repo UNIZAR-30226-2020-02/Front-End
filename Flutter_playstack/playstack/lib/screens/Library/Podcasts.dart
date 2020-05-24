@@ -529,6 +529,8 @@ class _PodcastEpisodesState extends State<PodcastEpisodes> {
             onWillPop: () async {
               if (currentIndex.value == 0)
                 homeIndex.value = 0;
+              else if (currentIndex.value == 1)
+                searchIndex.value = 0;
               else
                 podcastIndex.value = 0;
               return false;

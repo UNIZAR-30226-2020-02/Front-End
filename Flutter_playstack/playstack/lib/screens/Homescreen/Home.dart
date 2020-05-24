@@ -34,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _getData() async {
     podcastsList = await getAllPodcastsDB();
     artistsList = await getAllArtistsDB();
-    genresList = await getAllGenres(onlyFirtstFour: true);
+    genresList = await getAllGenres(onlyFirtstFour: false);
     if (mounted)
       setState(() {
         _loading = false;
@@ -180,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           artistsCards(),
-                          genres(),
+                          allGenres(),
                           recommendedPodcasts()
                         ],
                       ),
@@ -224,6 +224,37 @@ class _HomeScreenState extends State<HomeScreen> {
         break;
     }
     return result;
+  }
+
+  Widget allGenres() {
+    return Column(
+      children: <Widget>[
+        Text(
+          "Géneros",
+          style: TextStyle(fontFamily: 'Circular', fontSize: 25),
+        ),
+        Container(
+          child: GridView.count(
+              shrinkWrap: true,
+              // crossAxisCount is the number of columns
+              crossAxisCount: 2,
+              // This creates two columns with two items in each column
+              children: new List<Widget>.generate(
+                genresList.length,
+                (index) {
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: new GridTile(
+                        child: Flex(
+                      children: <Widget>[ItemCard(genresList[index])],
+                      direction: Axis.vertical,
+                    )),
+                  );
+                },
+              )),
+        ),
+      ],
+    );
   }
 
   @override

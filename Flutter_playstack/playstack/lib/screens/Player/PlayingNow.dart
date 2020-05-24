@@ -1,8 +1,5 @@
 import 'dart:io';
-import 'package:audioplayers/audio_cache.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:playstack/models/Song.dart';
 import 'package:playstack/screens/Player/PlayerWidget.dart';
 import 'package:playstack/shared/common.dart';
 

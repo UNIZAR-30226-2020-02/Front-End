@@ -195,9 +195,12 @@ class _PlaylistState extends State<Playlist> {
             backgroundColor: Colors.transparent,
             leading: IconButton(
                 icon: Icon(CupertinoIcons.back),
-                onPressed: () => Navigator.of(context).pop()),
+                onPressed: () {
+                  if (currentIndex.value == 1) searchIndex.value = 0;
+                  //else if(currentIndex.value == 2) // Library
+                }),
           ),
-          bottomNavigationBar: bottomBar(context),
+          //bottomNavigationBar: bottomBar(context),
           backgroundColor: Colors.transparent,
           body: ListView(
             children: <Widget>[
@@ -207,7 +210,13 @@ class _PlaylistState extends State<Playlist> {
                   alignment: Alignment.center,
                   children: <Widget>[
                     playlist.title == "Favoritas"
-                        ? Image.asset("assets/images/Favs_cover.jpg")
+                        ? SizedBox(
+                            height: MediaQuery.of(context).size.height / 4,
+                            width: MediaQuery.of(context).size.width / 2,
+                            child: Image.asset(
+                              "assets/images/Favs_cover.jpg",
+                              fit: BoxFit.cover,
+                            ))
                         : SizedBox(
                             height: MediaQuery.of(context).size.height / 4,
                             width: MediaQuery.of(context).size.width / 2,
@@ -271,7 +280,7 @@ class _PlaylistState extends State<Playlist> {
                               playlist.title,
                               playlist: playlist,
                               isNotOwn: isNotOwn,
-                              onRemovedFromFavsCallBack: () => getSongs(),
+                              onChangedCallback: () => getSongs(),
                             );
                           else
                             return new SongItem(
@@ -280,6 +289,7 @@ class _PlaylistState extends State<Playlist> {
                               playlist.title,
                               playlist: playlist,
                               isNotOwn: isNotOwn,
+                              onChangedCallback: () => getSongs(),
                             );
                         } else {
                           return new LocalSongItem(
