@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:playstack/models/Album.dart';
 import 'package:playstack/models/Artist.dart';
+import 'package:playstack/screens/Library/Podcasts.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/common.dart';
 
@@ -158,6 +159,8 @@ class _SearchProcessState extends State<SearchProcess> {
               _podcasts.length +
               _artists.length),
       itemBuilder: (BuildContext context, int index) {
+        double width = MediaQuery.of(context).size.width;
+        double height = MediaQuery.of(context).size.height;
         if (index < _songs.length) {
           return new SongItem(
             _songs.elementAt(index),
@@ -179,8 +182,11 @@ class _SearchProcessState extends State<SearchProcess> {
                 _playlists.length +
                 _albums.length +
                 _podcasts.length)) {
-          return new PodcastTile(_podcasts[
-              index - (_songs.length + _playlists.length + _albums.length)]);
+          return podcastTile(
+              width,
+              height,
+              _podcasts[index -
+                  (_songs.length + _playlists.length + _albums.length)]);
         } else if (index <
             (_songs.length +
                 _playlists.length +
