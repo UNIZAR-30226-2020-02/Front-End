@@ -9,8 +9,7 @@ class Episode extends Audio {
   String title;
   List artists;
   List topics;
-  String date;
-  //List topics;
+  DateTime date;
   int duration;
   String url;
   List albumCoverUrls;
@@ -44,7 +43,7 @@ class Episode extends Audio {
       dynamic albumCovers, List genres, bool isFav) {}
 
   void setEInfo(String title, List artists, String url, List albums,
-      dynamic albumCovers, List genres, String date, int duration) {
+      dynamic albumCovers, List genres, DateTime date, int duration) {
     if (albumCovers is String) {
       albumCovers = albumCovers.toList();
     }

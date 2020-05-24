@@ -37,24 +37,6 @@ class _GenresSongsState extends State<GenresSongs> {
       });
   }
 
-  Widget _buildList() {
-    print(
-        "Va a buildear la lista con ${songsInGenre.length.toString()} elementos");
-    return ListView.builder(
-      scrollDirection: Axis.vertical,
-      shrinkWrap: true,
-      itemCount: songsInGenre.isEmpty ? 0 : songsInGenre.length,
-      itemBuilder: (BuildContext context, int index) {
-        return new SongItem(
-          songsInGenre[index],
-          songsInGenre,
-          currentGenre.name,
-          isNotOwn: false,
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -69,42 +51,56 @@ class _GenresSongsState extends State<GenresSongs> {
                 fontSize: MediaQuery.of(context).size.width / 18)),
       ),
       backgroundColor: backgroundColor,
-      body: ListView(
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Stack(
-              alignment: Alignment.center,
-              children: <Widget>[
-                Image.network(currentGenre.photoUrl),
-                BackdropFilter(
-                  filter: ui.ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                  child: Container(
-                    height: MediaQuery.of(context).size.height / 3,
-                    width: MediaQuery.of(context).size.width,
-                    decoration: new BoxDecoration(
-                        color: backgroundColor.withOpacity(0.3)),
-                  ),
-                ),
-                SizedBox(
-                    height: MediaQuery.of(context).size.height / 4,
-                    child: Image.network(currentGenre.photoUrl)),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                shuffleButton(currentGenre.name, songsInGenre, context),
-              ],
-            ),
-          ),
-          playlistsDivider(),
-          _loading ? LoadingSongs() : _buildList()
-        ],
-      ),
+      body: ListView.builder(
+          scrollDirection: Axis.vertical,
+          shrinkWrap: true,
+          itemCount: songsInGenre.isEmpty ? 4 : songsInGenre.length + 3,
+          itemBuilder: (BuildContext context, int index) {
+            return index == 0
+                ? Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: <Widget>[
+                        Image.network(currentGenre.photoUrl),
+                        BackdropFilter(
+                          filter:
+                              ui.ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                          child: Container(
+                            height: MediaQuery.of(context).size.height / 3,
+                            width: MediaQuery.of(context).size.width,
+                            decoration: new BoxDecoration(
+                                color: backgroundColor.withOpacity(0.3)),
+                          ),
+                        ),
+                        SizedBox(
+                            height: MediaQuery.of(context).size.height / 4,
+                            child: Image.network(currentGenre.photoUrl)),
+                      ],
+                    ),
+                  )
+                : index == 1
+                    ? Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            shuffleButton(
+                                currentGenre.name, songsInGenre, context),
+                          ],
+                        ),
+                      )
+                    : index == 2
+                        ? playlistsDivider()
+                        : _loading
+                            ? LoadingSongs()
+                            : new SongItem(
+                                songsInGenre[index - 3],
+                                songsInGenre,
+                                currentGenre.name,
+                                isNotOwn: false,
+                              );
+          }),
     );
   }
 }

@@ -727,7 +727,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                     onWillPop: () async {
                       onPlayerScreen = false;
                       if (currentIndex.value == 3) currentIndex.value = 0;
-                      return true;
+                      return false;
                     },
                     child: Stack(children: <Widget>[
                       Container(

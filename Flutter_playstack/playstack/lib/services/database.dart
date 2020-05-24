@@ -1476,7 +1476,7 @@ Future<List> getPodcastEpisodesDB(String podcast) async {
               'Interlocutores'], //this function does not return the artists' pictures
           title: episodeMap['nombre'],
           albumCoverUrls: [response['Foto']],
-          date: episodeMap['fecha'],
+          date: DateTime.parse(episodeMap['fecha']),
           duration: 0,
           url: episodeMap['url']));
     }
