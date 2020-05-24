@@ -12,6 +12,7 @@ import 'package:playstack/screens/Library/Playlist.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
+import 'package:playstack/screens/Library/Podcasts.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -81,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.fromLTRB(8.0, 0, 8, 0),
           child: Container(
             height: MediaQuery.of(context).size.height / 4,
-            width: MediaQuery.of(context).size.height / 2,
+            width: MediaQuery.of(context).size.width,
             child: ListView.builder(
               itemCount: podcastsList.length,
               scrollDirection: Axis.horizontal,
@@ -217,6 +218,9 @@ class _HomeScreenState extends State<HomeScreen> {
         break;
       case 7:
         result = SearchPeople();
+        break;
+      case 8:
+        result = PodcastEpisodes(podcast: currentPodcast);
         break;
     }
     return result;

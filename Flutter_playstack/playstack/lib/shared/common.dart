@@ -10,16 +10,14 @@ import 'package:playstack/models/Genre.dart';
 import 'package:playstack/models/LocalSongsPlaylists.dart';
 import 'package:playstack/models/Podcast.dart';
 import 'package:playstack/models/user.dart';
-import 'package:playstack/screens/Homescreen/PublicProfile.dart';
-import 'package:playstack/screens/Library/Folder.dart';
-import 'package:playstack/screens/Player/PlayerWidget.dart';
-import 'package:playstack/screens/MainScreen.dart';
 import 'package:playstack/models/FolderType.dart';
 import 'package:playstack/models/PlaylistType.dart';
 import 'package:playstack/models/Song.dart';
 import 'package:playstack/screens/Homescreen/Home.dart';
+import 'package:playstack/screens/Library/Folder.dart';
 import 'package:playstack/screens/Library/Library.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
+import 'package:playstack/screens/Player/PlayerWidget.dart';
 import 'package:playstack/screens/Player/PlayingNow.dart';
 import 'package:playstack/screens/Search/SearchScreen.dart';
 import 'package:flutter/cupertino.dart';
@@ -27,7 +25,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:audioplayers/audio_cache.dart';
 import 'package:playstack/services/database.dart';
-import 'package:playstack/shared/Loading.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:toast/toast.dart';
 import 'package:playstack/services/SQLite.dart';
@@ -37,8 +34,8 @@ import 'package:playstack/services/SQLite.dart';
 //////////////////////////////////////////////////////////////////////////////////
 
 final ValueNotifier<int> homeIndex = ValueNotifier<int>(0);
-
-bool tappedOnPodcast;
+final ValueNotifier<int> searchIndex = ValueNotifier<int>(0);
+final ValueNotifier<int> musicIndex = ValueNotifier<int>(0);
 
 Genre currentGenre;
 
@@ -980,20 +977,28 @@ class GenericAudioItem extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(
-                    audio.title,
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: height / 40),
-                  ),
+                  Container(
+                      width: width * 0.6,
+                      child: Text(
+                        audio.title,
+                        overflow: TextOverflow.fade,
+                        maxLines: 1,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: height / 40),
+                      )),
                   SizedBox(height: 5),
-                  Text(
-                    getSongArtists(audio.artists),
-                    style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
-                        fontSize: height / 50),
-                  ),
+                  Container(
+                      width: width * 0.6,
+                      child: Text(
+                        getSongArtists(audio.artists),
+                        overflow: TextOverflow.fade,
+                        maxLines: 1,
+                        style: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                            fontSize: height / 50),
+                      )),
                 ],
               ),
               Spacer(),
@@ -1540,166 +1545,6 @@ class PlaylistItem extends StatelessWidget {
   }
 }
 
-class PodcastEpisodes extends StatelessWidget {
-  final Podcast podcast;
-
-  PodcastEpisodes(this.podcast);
-
-  @override
-  Widget build(BuildContext context) {
-    double width = MediaQuery.of(context).size.width;
-    double height = MediaQuery.of(context).size.height;
-    return Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          leading: IconButton(
-              icon: Icon(Icons.arrow_back_ios),
-              onPressed: () => Navigator.of(context).pop()),
-          centerTitle: true,
-          title: Text(podcast.title,
-              style: TextStyle(
-                  fontFamily: 'Circular',
-                  fontSize: MediaQuery.of(context).size.width / 18)),
-        ),
-        body: ListView.builder(
-            physics: BouncingScrollPhysics(),
-            itemCount: podcast.episodes.length,
-            scrollDirection: Axis.vertical,
-            itemBuilder: (context, int index) {
-              return GestureDetector(
-                  onTap: () {
-                    currentAudio = podcast.episodes[index];
-                    homeIndex.value = 3;
-                  },
-                  child: SizedBox(
-                      height: height / 5,
-                      width: width,
-                      child: Container(
-                          decoration: BoxDecoration(
-                              border: Border(
-                                  top: BorderSide(
-                                      width: 0.2,
-                                      color: Colors.white.withOpacity(0.7)),
-                                  bottom: BorderSide(
-                                      width: 0.2,
-                                      color: Colors.white.withOpacity(0.7)))),
-                          child: Padding(
-                              padding: EdgeInsets.fromLTRB(width / 20,
-                                  width / 20, width / 20, width / 20),
-                              child: Row(children: <Widget>[
-                                Container(
-                                    width: width / 5,
-                                    height: width / 5,
-                                    child: Stack(children: <Widget>[
-                                      Container(
-                                          width: width / 6,
-                                          child: ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(8.0),
-                                              child: Image.asset(
-                                                podcast.coverUrl,
-                                                fit: BoxFit.cover,
-                                              ))),
-                                      Align(
-                                          alignment: Alignment.bottomRight,
-                                          child: ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(2.0),
-                                              child: Container(
-                                                  width: width / 10,
-                                                  height: width / 15,
-                                                  color: Colors.white,
-                                                  child: Text(
-                                                      (index + 1).toString(),
-                                                      textAlign:
-                                                          TextAlign.center,
-                                                      style: TextStyle(
-                                                          fontSize: width / 20,
-                                                          color:
-                                                              Colors.black)))))
-                                    ])),
-                                Expanded(
-                                    child: Container(
-                                        child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: <Widget>[
-                                      Expanded(
-                                          flex: 2,
-                                          child: Text(
-                                              languageStrings['released'] +
-                                                  " " +
-                                                  podcast.episodes[index].date,
-                                              textAlign: TextAlign.left,
-                                              style: TextStyle(
-                                                  fontSize: width / 30,
-                                                  color: Colors.white
-                                                      .withOpacity(0.7)))),
-                                      Expanded(
-                                          flex: 5,
-                                          child: Padding(
-                                              padding: EdgeInsets.fromLTRB(
-                                                  width / 20, 0, 0, 0),
-                                              child: Text(
-                                                  podcast.episodes[index].title,
-                                                  textAlign: TextAlign.left,
-                                                  style: TextStyle(
-                                                      fontSize: width / 15,
-                                                      fontWeight:
-                                                          FontWeight.w500)))),
-                                      Expanded(
-                                          flex: 2,
-                                          child: Row(children: <Widget>[
-                                            Spacer(),
-                                            Container(
-                                                alignment:
-                                                    Alignment.bottomRight,
-                                                width: width / 20,
-                                                child: Text(
-                                                    //TODO: Hay que mejorar
-                                                    podcast.episodes[index]
-                                                        .duration
-                                                        .toString(),
-                                                    textAlign: TextAlign.right,
-                                                    style: TextStyle(
-                                                        fontSize: width / 23.5,
-                                                        color: Colors.white
-                                                            .withOpacity(0.7))))
-                                          ]))
-                                    ])))
-                              ])))));
-            }));
-  }
-}
-
-class PodcastTile extends StatelessWidget {
-  final Podcast podcast;
-
-  PodcastTile(
-    this.podcast,
-  );
-  // Navigator.of(context).push(MaterialPageRoute(
-  //           builder: (BuildContext context) => PodcastEpisodes(podcast)));
-
-  @override
-  Widget build(BuildContext context) {
-    List cover = new List();
-    cover.add(podcast.coverUrl);
-    return ListTile(
-      leading: Container(
-        height: MediaQuery.of(context).size.height / 13,
-        width: MediaQuery.of(context).size.width / 5.8,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8.0),
-          child: playListCover(cover),
-        ),
-      ),
-      title: Text(podcast.title),
-      subtitle: Text("Podcast"),
-    );
-  }
-}
-
 class PodcastItem extends StatelessWidget {
   final Podcast podcast;
 
@@ -1713,10 +1558,19 @@ class PodcastItem extends StatelessWidget {
       padding: const EdgeInsets.all(8.0),
       child: GestureDetector(
         onTap: () {
+          /* 
           tappedOnPodcast = true;
           currentIndex.value = 2; //Library
           currentPodcast = podcast;
-          podcastIndex.value = 1;
+          podcastIndex.value = 1; */
+          currentPodcast = podcast;
+
+          if (currentIndex.value == 1) {
+            //SearchScreen
+            searchIndex.value = 2; //Podcasts
+          } else {
+            homeIndex.value = 8;
+          }
         },
         child: Column(
           children: <Widget>[

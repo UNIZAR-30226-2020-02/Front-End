@@ -88,7 +88,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
       advancedPlayer.mode = mode;
 
       durationSubscription = advancedPlayer.onDurationChanged.listen((value) {
-        setState(() => duration = value);
+        if (mounted) setState(() => duration = value);
 
         // Para que aparezca en la barra de notificaciones la reproducción, sólo implementado para iOS
         if (Theme.of(context).platform == TargetPlatform.iOS) {
@@ -111,10 +111,12 @@ class _PlayerWidgetState extends State<PlayerWidget>
       });
 
       // Listener para actualizar la posición de la canción
-      positionSubscription =
-          advancedPlayer.onAudioPositionChanged.listen((p) => setState(() {
-                position = p;
-              }));
+      positionSubscription = advancedPlayer.onAudioPositionChanged.listen((p) {
+        if (mounted)
+          setState(() {
+            position = p;
+          });
+      });
 
       // Listener para cuando acabe
       playerCompleteSubscription =
