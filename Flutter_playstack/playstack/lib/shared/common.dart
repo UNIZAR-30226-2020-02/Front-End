@@ -603,6 +603,12 @@ class SongItem extends StatelessWidget {
                     }
                   },
                   itemBuilder: (context) => [
+                        PopupMenuItem(
+                            value: "AddToQueue",
+                            child: ListTile(
+                              leading: Icon(Icons.add_to_queue),
+                              title: Text("Añadir a la cola de reproducción"),
+                            )),
                         if (!song.isLocal)
                           PopupMenuItem(
                               value: "Fav",
@@ -824,6 +830,10 @@ class LocalSongItem extends StatelessWidget {
                   color: Colors.grey[800],
                   onSelected: (val) async {
                     switch (val) {
+                      case "AddToQueue":
+                        songsNextUp.insert(0, song);
+                        songsNextUpName = languageStrings['queue'];
+                        break;
                       case "Remove":
                         await deleteLocalSongFromEveryWhere(song, context);
                         onDeletedCallBack();
@@ -1556,10 +1566,10 @@ class PlaylistItem extends StatelessWidget {
 
 class PodcastItem extends StatelessWidget {
   final Podcast podcast;
+  final double width;
+  final double height;
 
-  PodcastItem(
-    this.podcast,
-  );
+  PodcastItem(this.podcast, this.width, this.height);
 
   @override
   Widget build(BuildContext context) {
@@ -1584,8 +1594,8 @@ class PodcastItem extends StatelessWidget {
         child: Column(
           children: <Widget>[
             SizedBox(
-              height: 130.0,
-              width: 140.0,
+              height: width / 4,
+              width: width / 3.5,
               child: Image.network(
                 podcast.coverUrl,
                 fit: BoxFit.fitHeight,
@@ -1658,8 +1668,8 @@ class SongTile extends StatelessWidget {
         child: Column(
           children: <Widget>[
             SizedBox(
-              height: MediaQuery.of(context).size.height / 7,
-              width: 140.0,
+              height: MediaQuery.of(context).size.width / 4,
+              width: MediaQuery.of(context).size.width / 3.5,
               child: ClipRRect(
                   borderRadius: BorderRadius.circular(5.0),
                   child: playListCover(songCover)),
@@ -1682,8 +1692,11 @@ class SongTile extends StatelessWidget {
 class PlaylistTile extends StatelessWidget {
   final PlaylistType playlist;
   final bool isOwn;
+  final double width;
+  final double height;
 
-  PlaylistTile({@required this.playlist, @required this.isOwn});
+  PlaylistTile(
+      {@required this.playlist, @required this.isOwn, this.width, this.height});
 
   @override
   Widget build(BuildContext context) {
@@ -1698,8 +1711,8 @@ class PlaylistTile extends StatelessWidget {
         child: Column(
           children: <Widget>[
             SizedBox(
-              height: 130.0,
-              width: 140.0,
+              height: width / 4,
+              width: width / 3.5,
               child: ClipRRect(
                   borderRadius: BorderRadius.circular(5.0),
                   child: playListCover(playlist.coverUrls)),
@@ -1743,8 +1756,8 @@ class GenreTile extends StatelessWidget {
         child: Column(
           children: <Widget>[
             SizedBox(
-              height: MediaQuery.of(context).size.height / 7,
-              width: 140.0,
+              height: MediaQuery.of(context).size.width / 4,
+              width: MediaQuery.of(context).size.width / 3.5,
               child: ClipRRect(
                   borderRadius: BorderRadius.circular(5.0),
                   child: playListCover(genreCover)),

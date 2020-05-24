@@ -130,6 +130,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget recentlyPlayedPodcastsList() {
+    var size = MediaQuery.of(context).size;
     return _loadingLastSongs
         ? Center(child: LoadingOthers())
         : Padding(
@@ -154,7 +155,8 @@ class _SearchScreenState extends State<SearchScreen> {
                         ? 0
                         : recentlyPlayedPodcasts.length,
                     itemBuilder: (BuildContext context, int index) {
-                      return PodcastItem(recentlyPlayedPodcasts[index]);
+                      return PodcastItem(recentlyPlayedPodcasts[index],
+                          size.width, size.height);
                     },
                   ),
                 )
