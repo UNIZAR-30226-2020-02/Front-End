@@ -196,8 +196,11 @@ class _PlaylistState extends State<Playlist> {
             leading: IconButton(
                 icon: Icon(CupertinoIcons.back),
                 onPressed: () {
-                  if (currentIndex.value == 1) searchIndex.value = 0;
-                  //else if(currentIndex.value == 2) // Library
+                  // Search screen
+                  if (currentIndex.value == 1)
+                    searchIndex.value = 0;
+                  else if (currentIndex.value == 2) // Library
+                    musicIndex.value = 0;
                 }),
           ),
           //bottomNavigationBar: bottomBar(context),

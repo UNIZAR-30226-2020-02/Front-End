@@ -84,6 +84,33 @@ class _LibraryState extends State<Library> with TickerProviderStateMixin {
   }
 
   Widget musicTab() {
+    return ValueListenableBuilder(
+        valueListenable: musicIndex,
+        builder: (BuildContext context, int value, Widget child) {
+          return WillPopScope(
+              onWillPop: () async {
+                currentIndex.value = 0;
+                return false;
+              },
+              child: showMusic(musicIndex.value));
+        });
+  }
+
+  Widget showMusic(int index) {
+    Widget result;
+    switch (index) {
+      case 0:
+        result = mainMusic();
+        break;
+      case 1:
+        result = Playlist(currentPlaylist);
+        break;
+      default:
+    }
+    return result;
+  }
+
+  Widget mainMusic() {
     return DefaultTabController(
         length: 3,
         child: Scaffold(
@@ -426,24 +453,24 @@ class _LibraryState extends State<Library> with TickerProviderStateMixin {
               builder: (BuildContext context) => LocalMusic())),
         ),
         ListTile(
-          leading: Container(
-            height: MediaQuery.of(context).size.height / 13,
-            width: MediaQuery.of(context).size.width / 6.5,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8.0),
-              child: Image.asset(
-                'assets/images/Favs_cover.jpg',
-                fit: BoxFit.cover,
+            leading: Container(
+              height: MediaQuery.of(context).size.height / 13,
+              width: MediaQuery.of(context).size.width / 6.5,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8.0),
+                child: Image.asset(
+                  'assets/images/Favs_cover.jpg',
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
-          ),
-          title: Text('Favoritas',
-              style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w500)),
-          subtitle: Text('Canciones favoritas'),
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(
-              builder: (BuildContext context) =>
-                  Playlist(new PlaylistType(title: "Favoritas")))),
-        ),
+            title: Text('Favoritas',
+                style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w500)),
+            subtitle: Text('Canciones favoritas'),
+            onTap: () {
+              currentPlaylist = new PlaylistType(title: "Favoritas");
+              musicIndex.value = 1; // Playlist
+            }),
         _loading
             ? LoadingSongs()
             : ListView.builder(
