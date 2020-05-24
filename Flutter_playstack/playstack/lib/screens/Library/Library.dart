@@ -4,6 +4,7 @@ import 'package:playstack/models/Album.dart';
 import 'package:playstack/models/Artist.dart';
 import 'package:playstack/models/LocalPlaylist.dart';
 import 'package:playstack/models/PlaylistType.dart';
+import 'package:playstack/screens/Homescreen/ArtistProfile.dart';
 import 'package:playstack/screens/Library/Folder.dart';
 import 'package:playstack/screens/Library/Local_Music/LocalMusic.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
@@ -98,6 +99,7 @@ class _LibraryState extends State<Library> with TickerProviderStateMixin {
   }
 
   Widget showMusic(int index) {
+    print("Showmusic con numero ${index.toString()}");
     Widget result;
     switch (index) {
       case 0:
@@ -114,6 +116,9 @@ class _LibraryState extends State<Library> with TickerProviderStateMixin {
           currentPlaylist,
           isNotOwn: currentPlaylistInNotOwn,
         );
+        break;
+      case 4:
+        result = ArtistProfile(currentArtist);
         break;
       default:
     }

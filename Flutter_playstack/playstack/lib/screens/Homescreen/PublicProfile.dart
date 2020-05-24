@@ -140,7 +140,8 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
                       ? "Más escuchadas de $userName"
                       : "Más escuchadas de $friendName");
             } else {
-              Podcast tempSongPodcast = podcastsmostListenedTo[index];
+              Podcast tempSongPodcast =
+                  podcastsmostListenedTo[index - songsMostListenedTo.length];
               return PodcastItem(tempSongPodcast);
             }
           },
@@ -357,12 +358,21 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
                 leading: IconButton(
                     icon: Icon(Icons.arrow_back_ios),
                     onPressed: () {
-                      int temp = homeIndex.value;
-                      homeIndex.value = previousIndex;
-                      previousIndex = temp;
+                      if (enteredThroughProfile && !viewingOwnPublicProfile) {
+                        homeIndex.value = 1;
+                        enteredThroughProfile = false;
+                      } else if (enteredThroughProfile &&
+                          viewingOwnPublicProfile) {
+                        homeIndex.value = 2;
+                        enteredThroughProfile = false;
+                      } else {
+                        int temp = homeIndex.value;
+                        homeIndex.value = previousIndex;
+                        previousIndex = temp;
+                      }
                     }),
                 centerTitle: true,
-                title: Text('Tu perfil')),
+                title: Text('Perfil')),
             body: ListView(
               children: <Widget>[
                 photoAndButtons(),

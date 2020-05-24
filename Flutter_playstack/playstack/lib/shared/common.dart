@@ -41,6 +41,8 @@ Genre currentGenre;
 
 FolderType currentFolder;
 
+bool enteredThroughProfile = false;
+
 PlaylistType currentPlaylist;
 bool currentPlaylistInNotOwn;
 
@@ -50,6 +52,7 @@ String friendUserName = '';
 User otherUser = new User('', '');
 
 int previousIndex = 0;
+int previousPreviousIndex;
 
 List<Song> recentlyPlayedSongs = new List();
 List<Podcast> recentlyPlayedPodcasts = new List();
@@ -105,7 +108,7 @@ enum PlayerState { stopped, playing, paused }
 // Para canciones de assets
 AudioCache audioCache = AudioCache();
 //Para canciones online SOLO HTTPS no HTTP
-AudioPlayer advancedPlayer = AudioPlayer();
+AudioPlayer advancedPlayer = AudioPlayer(mode: PlayerMode.LOW_LATENCY);
 AudioPlayerState audioPlayerState;
 
 PlayerState playerState = PlayerState.stopped;
@@ -1731,6 +1734,8 @@ class GenreTile extends StatelessWidget {
       padding: const EdgeInsets.all(8.0),
       child: GestureDetector(
         onTap: () {
+          enteredThroughProfile = true;
+          previousPreviousIndex = previousIndex;
           currentGenre = genre;
           previousIndex = homeIndex.value;
           homeIndex.value = 3;

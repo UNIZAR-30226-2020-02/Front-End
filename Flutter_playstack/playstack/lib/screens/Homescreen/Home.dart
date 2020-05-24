@@ -157,6 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   leading: IconButton(
                     icon: Icon(CupertinoIcons.group_solid),
                     onPressed: () {
+                      previousIndex = 0;
                       homeIndex.value = 1;
                     },
                   ),

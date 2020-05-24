@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:playstack/models/Genre.dart';
+import 'package:playstack/screens/Homescreen/ArtistProfile.dart';
 import 'package:playstack/screens/Homescreen/HomeScreenElements.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
 import 'package:playstack/screens/Library/Podcasts.dart';
@@ -80,6 +81,9 @@ class _SearchScreenState extends State<SearchScreen> {
         break;
       case 3:
         result = Playlist(currentPlaylist);
+        break;
+      case 4:
+        result = ArtistProfile(currentArtist);
         break;
     }
     return result;

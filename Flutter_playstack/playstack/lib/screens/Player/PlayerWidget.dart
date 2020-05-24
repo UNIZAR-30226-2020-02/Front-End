@@ -773,7 +773,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                                       itemBuilder: (context, int index) =>
                                           infoCancion(allAudios[index]))))),
                       Positioned(
-                          top: width / 20,
+                          top: width / 15,
                           //Equis para cerrar
                           child: Material(
                               color: Colors.transparent,

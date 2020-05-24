@@ -58,7 +58,10 @@ class _ArtistProfileState extends State<ArtistProfile> {
                   leading: IconButton(
                     icon: Icon(Icons.arrow_back_ios),
                     onPressed: () {
-                      Navigator.of(context).pop();
+                      if (currentIndex.value == 1) //Search
+                        searchIndex.value = 1;
+                      else //Library
+                        musicIndex.value = 0;
                     },
                   ),
                   title: Text(artist.title),
