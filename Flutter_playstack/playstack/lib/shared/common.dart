@@ -960,20 +960,28 @@ class GenericAudioItem extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(
-                    audio.title,
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: height / 40),
-                  ),
+                  Container(
+                      width: width * 0.6,
+                      child: Text(
+                        audio.title,
+                        overflow: TextOverflow.fade,
+                        maxLines: 1,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: height / 40),
+                      )),
                   SizedBox(height: 5),
-                  Text(
-                    getSongArtists(audio.artists),
-                    style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
-                        fontSize: height / 50),
-                  ),
+                  Container(
+                      width: width * 0.6,
+                      child: Text(
+                        getSongArtists(audio.artists),
+                        overflow: TextOverflow.fade,
+                        maxLines: 1,
+                        style: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                            fontSize: height / 50),
+                      )),
                 ],
               ),
               Spacer(),
