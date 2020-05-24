@@ -68,6 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget recommendedPodcasts() {
+    var size = MediaQuery.of(context).size;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -87,7 +88,8 @@ class _HomeScreenState extends State<HomeScreen> {
               itemCount: podcastsList.length,
               scrollDirection: Axis.horizontal,
               itemBuilder: (BuildContext context, int index) {
-                return PodcastItem(podcastsList[index]);
+                return PodcastItem(
+                    podcastsList[index], size.width, size.height);
               },
             ),
           ),
@@ -235,6 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         Container(
           child: GridView.count(
+              physics: NeverScrollableScrollPhysics(),
               shrinkWrap: true,
               // crossAxisCount is the number of columns
               crossAxisCount: 2,

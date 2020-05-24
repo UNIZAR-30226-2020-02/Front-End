@@ -121,6 +121,7 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
   }
 
   Widget listItems(String list) {
+    var size = MediaQuery.of(context).size;
     switch (list) {
       case 'mostListenedTo':
         return ListView.builder(
@@ -141,7 +142,7 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
                       : "Más escuchadas de $friendName");
             } else {
               Podcast tempSongPodcast = podcastsmostListenedTo[index];
-              return PodcastItem(tempSongPodcast);
+              return PodcastItem(tempSongPodcast, size.width, size.height);
             }
           },
         );
@@ -166,9 +167,10 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
           itemCount: publicPlaylists.isEmpty ? 0 : publicPlaylists.length,
           itemBuilder: (BuildContext context, int index) {
             return new PlaylistTile(
-              playlist: publicPlaylists[index],
-              isOwn: own,
-            );
+                playlist: publicPlaylists[index],
+                isOwn: own,
+                width: size.width,
+                height: size.height);
           },
         );
         break;
@@ -196,7 +198,8 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
               ? 0
               : recentlyPlayedPodcasts.length,
           itemBuilder: (BuildContext context, int index) {
-            return PodcastItem(recentlyPlayedPodcasts[index]);
+            return PodcastItem(
+                recentlyPlayedPodcasts[index], size.width, size.height);
           },
         );
     }
@@ -415,7 +418,7 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
                                 ? Center(child: LoadingSongs())
                                 : likedGenres.isEmpty
                                     ? Center(
-                                        child: Text("Ninguna género escuchado"))
+                                        child: Text("Ningún género escuchado"))
                                     : Container(
                                         height:
                                             MediaQuery.of(context).size.height /
