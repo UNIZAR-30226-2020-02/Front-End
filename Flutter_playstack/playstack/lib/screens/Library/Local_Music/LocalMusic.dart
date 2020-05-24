@@ -158,9 +158,14 @@ class _LocalMusicState extends State<LocalMusic> {
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 20.0),
+                        fontSize: MediaQuery.of(context).size.width / 22),
                   ),
                   SizedBox(height: 5),
+                  Text(
+                    "Lista de reproducción local",
+                    style: TextStyle(
+                        fontSize: MediaQuery.of(context).size.width / 30),
+                  )
                 ],
               ),
               Spacer(),
@@ -330,8 +335,9 @@ class _LocalMusicState extends State<LocalMusic> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Colors.transparent,
+        backgroundColor: backgroundColor,
         appBar: AppBar(
+          backgroundColor: Colors.transparent,
           title: Text("Música local del dispositivo"),
         ),
         body: ListView(
@@ -349,20 +355,23 @@ class _LocalMusicState extends State<LocalMusic> {
                           padding: const EdgeInsets.only(left: 25.0),
                           child: Text(
                             "Listas de reproduccion",
-                            style: TextStyle(fontSize: 18),
+                            style: TextStyle(fontSize: 20),
                           ),
                         ),
                       ),
                       Expanded(
                           flex: 1,
-                          child: IconButton(
-                              icon: Icon(Icons.add),
-                              onPressed: () async {
-                                await _showCreatingPlaylistDialog(context);
-                                _getPlaylists();
-                              }))
+                          child: FlatButton.icon(
+                            icon: Icon(Icons.add),
+                            onPressed: () async {
+                              await _showCreatingPlaylistDialog(context);
+                              _getPlaylists();
+                            },
+                            label: Text("Añadir"),
+                          ))
                     ],
                   ),
+                  playlistsDivider(),
                   localPlaylistList.isNotEmpty
                       ? Padding(
                           padding: const EdgeInsets.only(left: 10.0),
@@ -388,10 +397,13 @@ class _LocalMusicState extends State<LocalMusic> {
                           )),
                       Expanded(
                           flex: 1,
-                          child: IconButton(
-                              icon: Icon(Icons.add), onPressed: _saveSong))
+                          child: FlatButton.icon(
+                              label: Text("Añadir"),
+                              icon: Icon(Icons.add),
+                              onPressed: _saveSong))
                     ],
                   ),
+                  playlistsDivider(),
                   localSongsList.isNotEmpty ? localSongs() : Text(""),
                 ],
               ),

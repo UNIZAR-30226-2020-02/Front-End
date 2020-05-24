@@ -520,7 +520,7 @@ class SongItem extends StatelessWidget {
                       style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: MediaQuery.of(context).size.height / 45),
+                          fontSize: MediaQuery.of(context).size.height / 48),
                     ),
                   ),
                   SizedBox(height: 5),
@@ -531,7 +531,7 @@ class SongItem extends StatelessWidget {
                           style: TextStyle(
                               color: Colors.white.withOpacity(0.5),
                               fontSize:
-                                  MediaQuery.of(context).size.height / 50),
+                                  MediaQuery.of(context).size.height / 55),
                         ),
                 ],
               ),
@@ -607,12 +607,13 @@ class SongItem extends StatelessWidget {
                     }
                   },
                   itemBuilder: (context) => [
-                        PopupMenuItem(
-                            value: "AddToQueue",
-                            child: ListTile(
-                              leading: Icon(Icons.add_to_queue),
-                              title: Text("Añadir a la cola de reproducción"),
-                            )),
+                        if (accountType == "Premium")
+                          PopupMenuItem(
+                              value: "AddToQueue",
+                              child: ListTile(
+                                leading: Icon(Icons.add_to_queue),
+                                title: Text("Añadir a la cola de reproducción"),
+                              )),
                         if (!song.isLocal)
                           PopupMenuItem(
                               value: "Fav",
@@ -823,9 +824,13 @@ class LocalSongItem extends StatelessWidget {
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: MediaQuery.of(context).size.height / 40),
+                        fontSize: MediaQuery.of(context).size.height / 45),
                   ),
                   SizedBox(height: 5),
+                  Text("Cancion local",
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: MediaQuery.of(context).size.height / 63)),
                 ],
               ),
               Spacer(),
@@ -869,18 +874,13 @@ class LocalSongItem extends StatelessWidget {
                     }
                   },
                   itemBuilder: (context) => [
-                        PopupMenuItem(
-                            value: "AddToQueue",
-                            child: ListTile(
-                              leading: Icon(Icons.add_to_queue),
-                              title: Text("Añadir a la cola de reproducción"),
-                            )),
-                        PopupMenuItem(
-                            value: "Remove",
-                            child: ListTile(
-                              leading: Icon(CupertinoIcons.delete),
-                              title: Text("Eliminar canción de la aplicación"),
-                            )),
+                        if (accountType == "Premium")
+                          PopupMenuItem(
+                              value: "AddToQueue",
+                              child: ListTile(
+                                leading: Icon(Icons.add_to_queue),
+                                title: Text("Añadir a la cola de reproducción"),
+                              )),
                         PopupMenuItem(
                             value: "AddToPlaylist",
                             child: ListTile(
@@ -893,7 +893,14 @@ class LocalSongItem extends StatelessWidget {
                               child: ListTile(
                                 leading: Icon(CupertinoIcons.delete),
                                 title: Text("Eliminar canción de lista"),
-                              ))
+                              )),
+                        PopupMenuItem(
+                            value: "Remove",
+                            child: ListTile(
+                              leading: Icon(CupertinoIcons.delete,
+                                  color: Colors.red),
+                              title: Text("Eliminar canción de la aplicación"),
+                            )),
                       ])
             ],
           ),

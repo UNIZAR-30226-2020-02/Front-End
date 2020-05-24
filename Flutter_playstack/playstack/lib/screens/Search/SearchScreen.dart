@@ -145,21 +145,30 @@ class _SearchScreenState extends State<SearchScreen> {
                     style: TextStyle(fontFamily: 'Circular', fontSize: 25),
                   ),
                 ),
-                Container(
-                  height: MediaQuery.of(context).size.height / 5,
-                  width: MediaQuery.of(context).size.width,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    shrinkWrap: true,
-                    itemCount: recentlyPlayedPodcasts.isEmpty
-                        ? 0
-                        : recentlyPlayedPodcasts.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return PodcastItem(recentlyPlayedPodcasts[index],
-                          size.width, size.height);
-                    },
-                  ),
-                )
+                recentlyPlayedPodcasts.isEmpty
+                    ? Container(
+                        height: MediaQuery.of(context).size.height / 5,
+                        width: MediaQuery.of(context).size.width,
+                        child: Center(
+                            child: Text(
+                                "No hay podcasts reproducidos recientemente",
+                                style: TextStyle(color: Colors.grey[600]))),
+                      )
+                    : Container(
+                        height: MediaQuery.of(context).size.height / 5,
+                        width: MediaQuery.of(context).size.width,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          shrinkWrap: true,
+                          itemCount: recentlyPlayedPodcasts.isEmpty
+                              ? 0
+                              : recentlyPlayedPodcasts.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            return PodcastItem(recentlyPlayedPodcasts[index],
+                                size.width, size.height);
+                          },
+                        ),
+                      )
               ],
             ),
           );
@@ -180,23 +189,32 @@ class _SearchScreenState extends State<SearchScreen> {
                     style: TextStyle(fontFamily: 'Circular', fontSize: 25),
                   ),
                 ),
-                Container(
-                  height: MediaQuery.of(context).size.height / 5,
-                  width: MediaQuery.of(context).size.width,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    shrinkWrap: true,
-                    itemCount: recentlyPlayedSongs.isEmpty
-                        ? 0
-                        : recentlyPlayedSongs.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return SongTile(
-                          song: recentlyPlayedSongs[index],
-                          songsList: recentlyPlayedSongs,
-                          songsListName: "Reproducidas recientemente");
-                    },
-                  ),
-                )
+                recentlyPlayedSongs.isEmpty
+                    ? Container(
+                        height: MediaQuery.of(context).size.height / 5,
+                        width: MediaQuery.of(context).size.width,
+                        child: Center(
+                            child: Text(
+                                "No hay canciones reproducidas recientemente",
+                                style: TextStyle(color: Colors.grey[600]))),
+                      )
+                    : Container(
+                        height: MediaQuery.of(context).size.height / 5,
+                        width: MediaQuery.of(context).size.width,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          shrinkWrap: true,
+                          itemCount: recentlyPlayedSongs.isEmpty
+                              ? 0
+                              : recentlyPlayedSongs.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            return SongTile(
+                                song: recentlyPlayedSongs[index],
+                                songsList: recentlyPlayedSongs,
+                                songsListName: "Reproducidas recientemente");
+                          },
+                        ),
+                      )
               ],
             ),
           );
@@ -217,44 +235,56 @@ class _SearchScreenState extends State<SearchScreen> {
                     style: TextStyle(fontFamily: 'Circular', fontSize: 25),
                   ),
                 ),
-                Container(
-                  height: MediaQuery.of(context).size.height / 6,
-                  width: MediaQuery.of(context).size.width,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    shrinkWrap: true,
-                    itemCount: yourPlaylists.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return GestureDetector(
-                        onTap: () {
-                          currentPlaylist = yourPlaylists[index];
-                          searchIndex.value = 3;
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: Column(
-                            children: <Widget>[
-                              SizedBox(
-                                height: MediaQuery.of(context).size.height / 8,
-                                width: MediaQuery.of(context).size.width / 3,
-                                child: playListCover(
-                                    yourPlaylists[index].coverUrls),
-                              ),
-                              Padding(padding: EdgeInsets.all(5.0)),
-                              Text(
-                                yourPlaylists[index].title,
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(1.0),
-                                  fontSize: 15.0,
+                yourPlaylists.isEmpty
+                    ? Container(
+                        height: MediaQuery.of(context).size.height / 5,
+                        width: MediaQuery.of(context).size.width,
+                        child: Center(
+                            child: Text(
+                                "No tienes listas de reproducción propias",
+                                style: TextStyle(color: Colors.grey[600]))),
+                      )
+                    : Container(
+                        height: MediaQuery.of(context).size.height / 6,
+                        width: MediaQuery.of(context).size.width,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          shrinkWrap: true,
+                          itemCount: yourPlaylists.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            return GestureDetector(
+                              onTap: () {
+                                currentPlaylist = yourPlaylists[index];
+                                searchIndex.value = 3;
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: Column(
+                                  children: <Widget>[
+                                    SizedBox(
+                                      height:
+                                          MediaQuery.of(context).size.height /
+                                              8,
+                                      width:
+                                          MediaQuery.of(context).size.width / 3,
+                                      child: playListCover(
+                                          yourPlaylists[index].coverUrls),
+                                    ),
+                                    Padding(padding: EdgeInsets.all(5.0)),
+                                    Text(
+                                      yourPlaylists[index].title,
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(1.0),
+                                        fontSize: 15.0,
+                                      ),
+                                    )
+                                  ],
                                 ),
-                              )
-                            ],
-                          ),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
-                )
+                      )
               ],
             ),
           );

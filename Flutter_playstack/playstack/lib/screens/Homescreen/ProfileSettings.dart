@@ -13,24 +13,28 @@ class ProfileSettings extends StatefulWidget {
 class _ProfileSettingsState extends State<ProfileSettings> {
   //SnackBars
   final snackBarUpdatingPhoto = SnackBar(
+      duration: new Duration(seconds: 1),
       content: Text(
         'Actualizando foto de perfil...',
         style: TextStyle(color: Colors.white),
       ),
       backgroundColor: Colors.grey[700]);
   final snackBarPhotoUpdated = SnackBar(
+      duration: new Duration(seconds: 1),
       content: Text(
         'Foto de perfil actualizada!',
         style: TextStyle(color: Colors.white),
       ),
       backgroundColor: Colors.grey[700]);
   final snackBarUpdatingUsername = SnackBar(
+      duration: new Duration(seconds: 1),
       content: Text(
         'Actualizando nombre de usuario...',
         style: TextStyle(color: Colors.white),
       ),
       backgroundColor: Colors.grey[700]);
   final snackBarUsernameUpdated = SnackBar(
+      duration: new Duration(seconds: 1),
       content: Text(
         'Nombre de usuario actualizado!',
         style: TextStyle(color: Colors.white),
@@ -52,7 +56,9 @@ class _ProfileSettingsState extends State<ProfileSettings> {
       width: MediaQuery.of(context).size.width / 3,
       child: RaisedButton(
         onPressed: () async {
-          Scaffold.of(context).showSnackBar(snackBarUpdatingPhoto);
+          Future.delayed(Duration(seconds: 1), () {
+            Scaffold.of(context).showSnackBar(snackBarUpdatingPhoto);
+          });
           var image = await ImagePicker.pickImage(source: ImageSource.gallery);
           await uploadImage(image);
           await getProfilePhoto();

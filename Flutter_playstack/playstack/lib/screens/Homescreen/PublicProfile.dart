@@ -401,7 +401,10 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
                                         podcastsmostListenedTo.isEmpty
                                     ? Center(
                                         child: Text(
-                                            "Ninguna canción o podcast escuchado"))
+                                        "Ninguna canción o podcast escuchado",
+                                        style:
+                                            TextStyle(color: Colors.grey[700]),
+                                      ))
                                     : Container(
                                         height:
                                             MediaQuery.of(context).size.height /
@@ -428,7 +431,11 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
                                 ? Center(child: LoadingSongs())
                                 : likedGenres.isEmpty
                                     ? Center(
-                                        child: Text("Ningún género escuchado"))
+                                        child: Text(
+                                        "Ningún género escuchado",
+                                        style:
+                                            TextStyle(color: Colors.grey[700]),
+                                      ))
                                     : Container(
                                         height:
                                             MediaQuery.of(context).size.height /
@@ -454,7 +461,10 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
                                 : publicPlaylists.isEmpty
                                     ? Center(
                                         child: Text(
-                                            "Ninguna lista de reproducción pública"))
+                                        "Ninguna lista de reproducción pública",
+                                        style:
+                                            TextStyle(color: Colors.grey[700]),
+                                      ))
                                     : Container(
                                         height:
                                             MediaQuery.of(context).size.height /
@@ -475,8 +485,11 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
                                 ? Center(child: LoadingSongs())
                                 : recentlyPlayedSongs.isEmpty
                                     ? Center(
-                                        child:
-                                            Text("Ninguna canción escuchada"))
+                                        child: Text(
+                                        "Ninguna canción escuchada",
+                                        style:
+                                            TextStyle(color: Colors.grey[700]),
+                                      ))
                                     : Container(
                                         height:
                                             MediaQuery.of(context).size.height /
@@ -498,8 +511,9 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
                                 ? Center(child: LoadingSongs())
                                 : recentlyPlayedPodcasts.isEmpty
                                     ? Center(
-                                        child:
-                                            Text("Ningun o podcast escuchado"))
+                                        child: Text("Ningun  podcast escuchado",
+                                            style: TextStyle(
+                                                color: Colors.grey[700])))
                                     : Container(
                                         height:
                                             MediaQuery.of(context).size.height /
@@ -515,101 +529,4 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
             ),
           );
   }
-
-  /* @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 4,
-      child: Scaffold(
-        backgroundColor: Color(0xFF191414),
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          bottomOpacity: 1.0,
-          bottom: TabBar(
-            indicatorColor: Colors.orange[800],
-            tabs: [
-              Tab(
-                child: Text(
-                  'Canciones y podcasts más escuchados',
-                  style: TextStyle(fontFamily: 'Circular', fontSize: 20),
-                ),
-              ),
-              Tab(
-                child: Text(
-                  'Géneros más escuchados',
-                  style: TextStyle(fontFamily: 'Circular', fontSize: 20),
-                ),
-              ),
-              Tab(
-                child: Text(
-                  'Listas de reproducción públicas',
-                  style: TextStyle(fontFamily: 'Circular', fontSize: 20),
-                ),
-              ),
-              Tab(
-                child: Text(
-                  'Últimas canciones y podcast escuchados',
-                  style: TextStyle(fontFamily: 'Circular', fontSize: 20),
-                ),
-              ),
-            ],
-          ),
-          title: Text(
-            "Perfil",
-            style: TextStyle(fontFamily: 'Circular'),
-          ),
-        ),
-        body: Scaffold(
-          backgroundColor: Colors.transparent,
-          body: TabBarView(
-            children: [
-              _loadingMostListenedTo
-                  ? LoadingSongs()
-                  : mostListenedTo.isEmpty
-                      ? Center(
-                          child: Text("Ninguna canción o podcast escuchado"))
-                      : Column(
-                          children: <Widget>[
-                            _loading ? LoadingOthers() : photoAndButtons(),
-                            listItems('mostListenedTo'),
-                          ],
-                        ),
-              _loadingFavouriteGenres
-                  ? LoadingSongs()
-                  : likedGenres.isEmpty
-                      ? Center(child: Text("Ninguna género escuchado"))
-                      : Column(
-                          children: <Widget>[
-                            _loading ? LoadingOthers() : photoAndButtons(),
-                            listItems('likedGenres'),
-                          ],
-                        ),
-              _loadingPublicPlaylists
-                  ? LoadingSongs()
-                  : publicPlaylists.isEmpty
-                      ? Center(
-                          child: Text("Ninguna lista de reproducción pública"))
-                      : Column(
-                          children: <Widget>[
-                            _loading ? LoadingOthers() : photoAndButtons(),
-                            listItems('publicPlaylists'),
-                          ],
-                        ),
-              _loadingLastListenedTo
-                  ? LoadingSongs()
-                  : lastListenedTo.isEmpty
-                      ? Center(
-                          child: Text("Ninguna canción o podcast escuchado"))
-                      : Column(
-                          children: <Widget>[
-                            _loading ? LoadingOthers() : photoAndButtons(),
-                            listItems('lastListenedTo'),
-                          ],
-                        ),
-            ],
-          ),
-        ),
-      ),
-    );
-  } */
 }
