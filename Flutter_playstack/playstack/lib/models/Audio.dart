@@ -25,7 +25,6 @@ class Audio {
     return this.url;
   }
 
-  //TODO: esto hay que mejorarlo
   void setInfo(String title, List artists, String url, List albums,
       dynamic albumCovers, List genres, bool isFav) {
     this.title = title;

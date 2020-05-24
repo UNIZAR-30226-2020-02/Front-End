@@ -38,6 +38,8 @@ class MainScreenState extends State<MainScreen> {
     _res1 = await getProfilePhoto();
 
     _res2 = await setLastSongAsCurrent();
+    songsNextUp = new List();
+    songsNextUpName = "Último escuchado";
 
     if (_res1 && _res2) {
       if (mounted)

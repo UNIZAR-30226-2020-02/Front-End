@@ -89,6 +89,9 @@ class _AccountState extends State<Account> {
           accountType == "No Premium" ? updateAccountTypeButton() : Text(''),
       backgroundColor: backgroundColor,
       appBar: AppBar(
+        leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios),
+            onPressed: () => homeIndex.value = 2), //Settings,
         title: Text('Cuenta'),
         actions: <Widget>[
           IconButton(

@@ -1045,9 +1045,11 @@ Future<bool> setLastSongAsCurrent() async {
     currentAudio = new Audio();
     response.forEach((title, info) {
       if (info['Interlocutor'] != null) {
+        currentAudio = new Episode();
         currentAudio.setInfo(title, new List(), info['url'], new List(),
             info['Imagen'], new List(), false);
       } else {
+        currentAudio = new Song();
         currentAudio.setInfo(
             title,
             info['Artistas'],

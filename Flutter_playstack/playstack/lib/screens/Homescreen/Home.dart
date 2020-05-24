@@ -2,7 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:playstack/models/Genre.dart';
 import 'package:playstack/screens/GenresSongs.dart';
+import 'package:playstack/screens/Homescreen/Account.dart';
 import 'package:playstack/screens/Homescreen/HomeScreenElements.dart';
+import 'package:playstack/screens/Homescreen/ProfileSettings.dart';
 import 'package:playstack/screens/Homescreen/PublicProfile.dart';
 import 'package:playstack/screens/Homescreen/Settings.dart';
 import 'package:playstack/screens/Homescreen/Social/SearchPeople.dart';
@@ -223,6 +225,12 @@ class _HomeScreenState extends State<HomeScreen> {
         break;
       case 8:
         result = PodcastEpisodes(podcast: currentPodcast);
+        break;
+      case 9:
+        result = Account();
+        break;
+      case 10:
+        result = ProfileSettings();
         break;
     }
     return result;
