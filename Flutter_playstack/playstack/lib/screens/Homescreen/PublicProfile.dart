@@ -412,7 +412,7 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
                               child: playlistsDivider(),
                             ),
                             _loadingFavouriteGenres
-                                ? LoadingSongs()
+                                ? Center(child: LoadingSongs())
                                 : likedGenres.isEmpty
                                     ? Center(
                                         child: Text("Ninguna género escuchado"))
@@ -459,7 +459,7 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
                               child: playlistsDivider(),
                             ),
                             _loadingLastListenedTo
-                                ? LoadingSongs()
+                                ? Center(child: LoadingSongs())
                                 : recentlyPlayedSongs.isEmpty
                                     ? Center(
                                         child:
@@ -482,7 +482,7 @@ class _YourPublicProfileState extends State<YourPublicProfile> {
                               child: playlistsDivider(),
                             ),
                             _loadingLastListenedTo
-                                ? LoadingSongs()
+                                ? Center(child: LoadingSongs())
                                 : recentlyPlayedPodcasts.isEmpty
                                     ? Center(
                                         child:

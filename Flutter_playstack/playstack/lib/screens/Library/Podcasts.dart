@@ -510,156 +510,194 @@ class _PodcastEpisodesState extends State<PodcastEpisodes> {
         appBar: AppBar(
           leading: IconButton(
               icon: Icon(Icons.arrow_back_ios),
-              onPressed: () => podcastIndex.value = 0),
+              onPressed: () {
+                if (currentIndex.value == 0)
+                  homeIndex.value = 0;
+                else if (currentIndex.value == 1)
+                  searchIndex.value = 0;
+                else
+                  podcastIndex.value = 0;
+              }),
           centerTitle: true,
           title: Text(podcast.title,
               style: TextStyle(
                   fontFamily: 'Circular',
                   fontSize: MediaQuery.of(context).size.width / 18)),
         ),
-        body: _loading
-            ? Loading()
-            : episodesList.length > 0
-                ? ListView.builder(
-                    physics: BouncingScrollPhysics(),
-                    itemCount: episodesList.length,
-                    scrollDirection: Axis.vertical,
-                    itemBuilder: (context, int index) {
-                      return GestureDetector(
-                          onTap: () {
-                            setPodcastQueue(podcast.title, episodesList, index);
-                            onPlayerScreen = true;
-                            currentIndex.value = 3;
-                          },
-                          child: SizedBox(
-                              height: height / 5,
-                              width: width,
-                              child: Container(
-                                  decoration: BoxDecoration(
-                                      border: Border(
-                                          top: BorderSide(
-                                              width: 0.2,
-                                              color: Colors.white
-                                                  .withOpacity(0.7)),
-                                          bottom: BorderSide(
-                                              width: 0.2,
-                                              color: Colors.white
-                                                  .withOpacity(0.7)))),
-                                  child: Padding(
-                                      padding: EdgeInsets.fromLTRB(width / 20,
-                                          width / 20, width / 20, width / 20),
-                                      child: Row(children: <Widget>[
-                                        Container(
-                                            width: width / 5,
-                                            height: width / 5,
-                                            child: Stack(children: <Widget>[
-                                              Container(
-                                                  width: width / 6,
-                                                  child: ClipRRect(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              8.0),
-                                                      child: Image.network(
-                                                        episodesList[index]
-                                                            .albumCoverUrls
-                                                            .elementAt(0),
-                                                        fit: BoxFit.cover,
-                                                      ))),
-                                              Align(
-                                                  alignment:
-                                                      Alignment.bottomRight,
-                                                  child: ClipRRect(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              2.0),
-                                                      child: Container(
-                                                          width: width / 10,
-                                                          height: width / 15,
-                                                          color: Colors.white,
-                                                          child: Text(
+        body: WillPopScope(
+            onWillPop: () async {
+              if (currentIndex.value == 0)
+                homeIndex.value = 0;
+              else if (currentIndex.value == 1)
+                searchIndex.value = 0;
+              else
+                podcastIndex.value = 0;
+              return false;
+            },
+            child: _loading
+                ? Loading()
+                : episodesList.length > 0
+                    ? ListView.builder(
+                        physics: BouncingScrollPhysics(),
+                        itemCount: episodesList.length,
+                        scrollDirection: Axis.vertical,
+                        itemBuilder: (context, int index) {
+                          return GestureDetector(
+                              onTap: () {
+                                setPodcastQueue(
+                                    podcast.title, episodesList, index);
+                                onPlayerScreen = true;
+                                currentIndex.value = 3;
+                              },
+                              child: SizedBox(
+                                  height: height / 5,
+                                  width: width,
+                                  child: Container(
+                                      decoration: BoxDecoration(
+                                          border: Border(
+                                              top: BorderSide(
+                                                  width: 0.2,
+                                                  color: Colors.white
+                                                      .withOpacity(0.7)),
+                                              bottom: BorderSide(
+                                                  width: 0.2,
+                                                  color: Colors.white
+                                                      .withOpacity(0.7)))),
+                                      child: Padding(
+                                          padding: EdgeInsets.fromLTRB(
+                                              width / 20,
+                                              width / 20,
+                                              width / 20,
+                                              width / 20),
+                                          child: Row(children: <Widget>[
+                                            Container(
+                                                width: width / 5,
+                                                height: width / 5,
+                                                child: Stack(children: <Widget>[
+                                                  Container(
+                                                      width: width / 6,
+                                                      child: ClipRRect(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(
+                                                                      8.0),
+                                                          child: Image.network(
+                                                            episodesList[index]
+                                                                .albumCoverUrls
+                                                                .elementAt(0),
+                                                            fit: BoxFit.cover,
+                                                          ))),
+                                                  Align(
+                                                      alignment:
+                                                          Alignment.bottomRight,
+                                                      child: ClipRRect(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                  2.0),
+                                                          child: Container(
+                                                              width: width / 10,
+                                                              height:
+                                                                  width / 15,
+                                                              color:
+                                                                  Colors.white,
+                                                              child: Text(
+                                                                  episodesList[index]
+                                                                      .number
+                                                                      .toString(),
+                                                                  textAlign:
+                                                                      TextAlign
+                                                                          .center,
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                          width /
+                                                                              20,
+                                                                      color: Colors
+                                                                          .black)))))
+                                                ])),
+                                            Expanded(
+                                                child: Container(
+                                                    child: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: <Widget>[
+                                                  Expanded(
+                                                      flex: 2,
+                                                      child: Text(
+                                                          languageStrings[
+                                                                  'released'] +
+                                                              " " +
                                                               episodesList[
                                                                       index]
-                                                                  .number
-                                                                  .toString(),
-                                                              textAlign:
-                                                                  TextAlign
-                                                                      .center,
-                                                              style: TextStyle(
-                                                                  fontSize:
-                                                                      width /
-                                                                          20,
-                                                                  color: Colors
-                                                                      .black)))))
-                                            ])),
-                                        Expanded(
-                                            child: Container(
-                                                child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: <Widget>[
-                                              Expanded(
-                                                  flex: 2,
-                                                  child: Text(
-                                                      languageStrings[
-                                                              'released'] +
-                                                          " " +
-                                                          episodesList[index]
-                                                              .date,
-                                                      textAlign: TextAlign.left,
-                                                      style: TextStyle(
-                                                          fontSize: width / 30,
-                                                          color: Colors.white
-                                                              .withOpacity(
-                                                                  0.7)))),
-                                              Expanded(
-                                                  flex: 5,
-                                                  child: Padding(
-                                                      padding: EdgeInsets
-                                                          .fromLTRB(width / 20,
-                                                              0, 0, 0),
-                                                      child: Text(
-                                                          episodesList[
-                                                                  index]
-                                                              .title,
-                                                          overflow: TextOverflow
-                                                              .fade,
+                                                                  .date,
                                                           textAlign:
                                                               TextAlign.left,
                                                           style: TextStyle(
                                                               fontSize:
-                                                                  width / 25,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w500)))),
-                                              Expanded(
-                                                  flex: 2,
-                                                  child: Row(children: <Widget>[
-                                                    Spacer(),
-                                                    Container(
-                                                        alignment: Alignment
-                                                            .bottomRight,
-                                                        width: width / 20,
-                                                        child: Text(
-                                                            //TODO: Hay que mejorar
-                                                            episodesList[index]
-                                                                .duration
-                                                                .toString(),
-                                                            textAlign:
-                                                                TextAlign.right,
-                                                            style: TextStyle(
-                                                                fontSize:
-                                                                    width /
-                                                                        23.5,
-                                                                color: Colors
-                                                                    .white
-                                                                    .withOpacity(
-                                                                        0.7))))
-                                                  ]))
-                                            ])))
-                                      ])))));
-                    })
-                : noPodcastsFoundWidget(2, width, height));
+                                                                  width / 30,
+                                                              color: Colors
+                                                                  .white
+                                                                  .withOpacity(
+                                                                      0.7)))),
+                                                  Expanded(
+                                                      flex: 5,
+                                                      child: Padding(
+                                                          padding:
+                                                              EdgeInsets
+                                                                  .fromLTRB(
+                                                                      width /
+                                                                          20,
+                                                                      0,
+                                                                      0,
+                                                                      0),
+                                                          child: Text(
+                                                              episodesList[
+                                                                      index]
+                                                                  .title,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .fade,
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .left,
+                                                              style: TextStyle(
+                                                                  fontSize:
+                                                                      width /
+                                                                          25,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w500)))),
+                                                  Expanded(
+                                                      flex: 2,
+                                                      child: Row(
+                                                          children: <Widget>[
+                                                            Spacer(),
+                                                            Container(
+                                                                alignment: Alignment
+                                                                    .bottomRight,
+                                                                width:
+                                                                    width / 20,
+                                                                child: Text(
+                                                                    //TODO: Hay que mejorar
+                                                                    episodesList[
+                                                                            index]
+                                                                        .duration
+                                                                        .toString(),
+                                                                    textAlign:
+                                                                        TextAlign
+                                                                            .right,
+                                                                    style: TextStyle(
+                                                                        fontSize:
+                                                                            width /
+                                                                                23.5,
+                                                                        color: Colors
+                                                                            .white
+                                                                            .withOpacity(0.7))))
+                                                          ]))
+                                                ])))
+                                          ])))));
+                        })
+                    : noPodcastsFoundWidget(2, width, height)));
   }
 }
 

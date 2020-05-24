@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:playstack/models/Genre.dart';
 import 'package:playstack/screens/Homescreen/HomeScreenElements.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
+import 'package:playstack/screens/Library/Podcasts.dart';
+import 'package:playstack/screens/Search/SearchProcess.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
@@ -49,23 +51,48 @@ class _SearchScreenState extends State<SearchScreen> {
     return defSearchScreen();
   }
 
+  Widget searchScreen() {
+    return Padding(
+        padding: const EdgeInsets.fromLTRB(10, 20, 15, 0),
+        child: ListView(children: <Widget>[
+          Text(
+            'Search',
+            style: TextStyle(fontFamily: 'Circular', fontSize: 25),
+          ),
+          _searchBar(context),
+          yourPlaylistsList(),
+          recentlyPlayedSongsList(),
+          recentlyPlayedPodcastsList()
+        ]));
+  }
+
+  Widget showSearch(int index) {
+    Widget result;
+    switch (index) {
+      case 0:
+        result = searchScreen();
+        break;
+      case 1:
+        result = SearchProcess();
+        break;
+      case 2:
+        result = PodcastEpisodes(podcast: currentPodcast);
+        break;
+      case 3:
+        result = Playlist(currentPlaylist);
+        break;
+    }
+    return result;
+  }
+
   Widget defSearchScreen() {
     return Scaffold(
       backgroundColor: Color(0xFF191414),
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 20, 15, 0),
-        child: ListView(
-          children: <Widget>[
-            Text(
-              'Search',
-              style: TextStyle(fontFamily: 'Circular', fontSize: 25),
-            ),
-            _searchBar(context),
-            yourPlaylistsList(),
-            recentlyPlayedSongsList(),
-            recentlyPlayedPodcastsList()
-          ],
-        ),
+      body: ValueListenableBuilder(
+        builder: (BuildContext context, value, Widget child) {
+          return showSearch(searchIndex.value);
+        },
+        valueListenable: searchIndex,
       ),
     );
   }
@@ -76,8 +103,7 @@ class _SearchScreenState extends State<SearchScreen> {
         Expanded(
             child: FlatButton(
                 color: Colors.white,
-                onPressed: () =>
-                    Navigator.of(context).pushNamed('searchProcessScreen'),
+                onPressed: () => searchIndex.value = 1, // SearchProcess,
                 child: SizedBox(
                   width: double.infinity,
                   child: Row(
@@ -194,10 +220,10 @@ class _SearchScreenState extends State<SearchScreen> {
                     itemCount: yourPlaylists.length,
                     itemBuilder: (BuildContext context, int index) {
                       return GestureDetector(
-                        onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                                builder: (BuildContext context) =>
-                                    Playlist(yourPlaylists[index]))),
+                        onTap: () {
+                          currentPlaylist = yourPlaylists[index];
+                          searchIndex.value = 3;
+                        },
                         child: Padding(
                           padding: const EdgeInsets.only(right: 8.0),
                           child: Column(

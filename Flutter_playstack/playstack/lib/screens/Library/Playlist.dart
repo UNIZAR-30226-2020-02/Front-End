@@ -195,9 +195,12 @@ class _PlaylistState extends State<Playlist> {
             backgroundColor: Colors.transparent,
             leading: IconButton(
                 icon: Icon(CupertinoIcons.back),
-                onPressed: () => Navigator.of(context).pop()),
+                onPressed: () {
+                  if (currentIndex.value == 1) searchIndex.value = 0;
+                  //else if(currentIndex.value == 2) // Library
+                }),
           ),
-          bottomNavigationBar: bottomBar(context),
+          //bottomNavigationBar: bottomBar(context),
           backgroundColor: Colors.transparent,
           body: ListView(
             children: <Widget>[

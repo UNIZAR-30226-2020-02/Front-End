@@ -19,7 +19,6 @@ class Library extends StatefulWidget {
 }
 
 class _LibraryState extends State<Library> with TickerProviderStateMixin {
-  TabController libraryTabController;
   final TextEditingController newPLaylistController =
       new TextEditingController();
   final TextEditingController newFolderController = new TextEditingController();
@@ -37,11 +36,6 @@ class _LibraryState extends State<Library> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    libraryTabController = TabController(vsync: this, length: 2);
-    if (tappedOnPodcast) {
-      libraryTabController.animateTo(1);
-      tappedOnPodcast = false;
-    }
     getFolders();
     getPlaylists();
     getArtists();
@@ -494,7 +488,6 @@ class _LibraryState extends State<Library> with TickerProviderStateMixin {
             actions: <Widget>[
               Expanded(
                 child: TabBar(
-                  controller: libraryTabController,
                   indicatorColor: Colors.red[800],
                   tabs: [
                     Tab(
@@ -515,7 +508,6 @@ class _LibraryState extends State<Library> with TickerProviderStateMixin {
             ],
           ),
           body: TabBarView(
-            controller: libraryTabController,
             children: [
               musicTab(),
               podcastsTab(),

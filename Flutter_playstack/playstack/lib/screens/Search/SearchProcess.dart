@@ -118,8 +118,7 @@ class _SearchProcessState extends State<SearchProcess> {
           ],
         )),
         IconButton(
-            icon: Icon(Icons.cancel),
-            onPressed: () => Navigator.of(context).pop()),
+            icon: Icon(Icons.cancel), onPressed: () => searchIndex.value = 0),
       ],
     );
   }
