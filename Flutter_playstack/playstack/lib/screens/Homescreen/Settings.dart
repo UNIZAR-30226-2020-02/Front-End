@@ -115,6 +115,7 @@ class _SettingsState extends State<Settings> {
             userName = null;
             imagePath = null;
             currentAudio = null;
+            playerActive = false;
             homeIndex.value = 0;
           },
           child: Text("Cerrar sesión")),
