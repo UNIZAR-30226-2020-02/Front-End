@@ -8,7 +8,7 @@ import 'package:playstack/screens/Homescreen/ArtistProfile.dart';
 import 'package:playstack/screens/Library/Folder.dart';
 import 'package:playstack/screens/Library/Local_Music/LocalMusic.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
-import 'package:playstack/screens/Library/Podcasts.dart';
+import 'package:playstack/screens/Library/PodcastWidgets.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';

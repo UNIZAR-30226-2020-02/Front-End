@@ -3,7 +3,7 @@ import 'package:playstack/models/Genre.dart';
 import 'package:playstack/screens/Homescreen/ArtistProfile.dart';
 import 'package:playstack/screens/Homescreen/HomeScreenElements.dart';
 import 'package:playstack/screens/Library/Playlist.dart';
-import 'package:playstack/screens/Library/Podcasts.dart';
+import 'package:playstack/screens/Library/PodcastWidgets.dart';
 import 'package:playstack/screens/Search/SearchProcess.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';

@@ -14,7 +14,7 @@ import 'package:playstack/screens/Library/Playlist.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
-import 'package:playstack/screens/Library/Podcasts.dart';
+import 'package:playstack/screens/Library/PodcastWidgets.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
