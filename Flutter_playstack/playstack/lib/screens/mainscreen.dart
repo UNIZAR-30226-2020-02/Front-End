@@ -56,11 +56,14 @@ class MainScreenState extends State<MainScreen> {
 
   checkLoginStatus() async {
     sharedPreferences = await SharedPreferences.getInstance();
-    if (sharedPreferences.getString("LoggedIn") == null) {
+    userName = sharedPreferences.getString("UserName");
+    userEmail = sharedPreferences.getString("UserEmail");
+    if (sharedPreferences.getString("LoggedIn") == null || userName == null) {
       Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (BuildContext context) => AccessScreen()),
           (Route<dynamic> route) => false);
     } else {
+      print("Username was set to " + userName);
       checkAccountType();
       getUserData();
       createLocalDatabase();

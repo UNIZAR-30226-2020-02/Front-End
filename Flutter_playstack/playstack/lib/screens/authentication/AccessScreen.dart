@@ -55,6 +55,8 @@ class _AccessScreenState extends State<AccessScreen> {
       userName = credentials['NombreUsuario'];
       userEmail = credentials['Correo'];
       sharedPreferences.setString("LoggedIn", 'yes');
+      sharedPreferences.setString("UserName", userName);
+      sharedPreferences.setString("UserEmail", userEmail);
       Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (BuildContext context) => MainScreen()),
           (Route<dynamic> route) => false);

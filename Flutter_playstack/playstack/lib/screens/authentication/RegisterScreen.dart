@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:modal_progress_hud/modal_progress_hud.dart';
-import 'package:playstack/screens/mainscreen.dart';
+import 'package:playstack/screens/MainScreen.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:shared_preferences/shared_preferences.dart';
