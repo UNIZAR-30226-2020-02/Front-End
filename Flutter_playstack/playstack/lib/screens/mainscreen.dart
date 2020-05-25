@@ -27,9 +27,6 @@ class MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     checkLoginStatus();
-    checkAccountType();
-    getUserData();
-    createLocalDatabase();
   }
 
   void getUserData() async {
@@ -63,6 +60,10 @@ class MainScreenState extends State<MainScreen> {
       Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (BuildContext context) => AccessScreen()),
           (Route<dynamic> route) => false);
+    } else {
+      checkAccountType();
+      getUserData();
+      createLocalDatabase();
     }
   }
 

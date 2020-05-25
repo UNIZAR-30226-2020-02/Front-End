@@ -16,15 +16,19 @@ class _AccountState extends State<Account> {
         backgroundColor: Colors.blue[500]);
     bool res = await askToBecomePremium();
     if (res) {
-      Toast.show("Solicitud de premium enviada correctamente!", context,
-          gravity: Toast.CENTER,
-          duration: Toast.LENGTH_LONG,
-          backgroundColor: Colors.green[500]);
+      Future.delayed(Duration(seconds: 2), () {
+        Toast.show("Solicitud de premium enviada correctamente!", context,
+            gravity: Toast.CENTER,
+            duration: Toast.LENGTH_LONG,
+            backgroundColor: Colors.green[500]);
+      });
     } else {
-      Toast.show("Error al enviar solicitud de premium", context,
-          gravity: Toast.CENTER,
-          duration: Toast.LENGTH_LONG,
-          backgroundColor: Colors.red[500]);
+      Future.delayed(Duration(seconds: 2), () {
+        Toast.show("Error al enviar solicitud de premium", context,
+            gravity: Toast.CENTER,
+            duration: Toast.LENGTH_LONG,
+            backgroundColor: Colors.red[500]);
+      });
     }
   }
 
@@ -68,16 +72,26 @@ class _AccountState extends State<Account> {
 
   void checkIfAccepted() async {
     Toast.show("Actualizando...", context,
-        gravity: Toast.CENTER, backgroundColor: Colors.grey[700]);
+        gravity: Toast.CENTER,
+        backgroundColor: Colors.grey[700],
+        duration: Toast.LENGTH_SHORT);
     bool res = await checkAccountType();
     if (res) {
-      Toast.show("Actualizando correctamente", context,
-          gravity: Toast.CENTER, backgroundColor: Colors.grey[700]);
+      Future.delayed(Duration(seconds: 1), () {
+        Toast.show("Actualizado correctamente", context,
+            gravity: Toast.CENTER,
+            backgroundColor: Colors.green,
+            duration: Toast.LENGTH_LONG);
+      });
 
       setState(() {});
     } else {
-      Toast.show("Error actualizando", context,
-          gravity: Toast.CENTER, backgroundColor: Colors.grey[700]);
+      Future.delayed(Duration(seconds: 1), () {
+        Toast.show("Error actualizando", context,
+            gravity: Toast.CENTER,
+            backgroundColor: Colors.red,
+            duration: Toast.LENGTH_LONG);
+      });
     }
   }
 

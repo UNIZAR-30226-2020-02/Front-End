@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
             fontFamily: 'Poppins',
             textTheme: TextTheme(title: TextStyle(fontFamily: 'Circular'))),
         home: MainScreen(),
-        initialRoute: 'access',
+        //initialRoute: 'access',
         routes: {
           'access': (_) => AccessScreen(),
           'mainscreen': (context) => MainScreen(),

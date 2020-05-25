@@ -148,44 +148,65 @@ class _SocialState extends State<Social> {
   Widget showList(String listName) {
     switch (listName) {
       case "Following":
-        return Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: ListView.builder(
-            scrollDirection: Axis.vertical,
-            shrinkWrap: true,
-            itemCount: following.isEmpty ? 0 : following.length,
-            itemBuilder: (BuildContext context, int index) {
-              return userTile(following[index], "Following");
-            },
-          ),
-        );
+        return following.isEmpty
+            ? Center(
+                child: Text(
+                  "Aún no sigues a nadie",
+                  style: TextStyle(fontSize: 20, color: Colors.grey[700]),
+                ),
+              )
+            : Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: ListView.builder(
+                  scrollDirection: Axis.vertical,
+                  shrinkWrap: true,
+                  itemCount: following.isEmpty ? 0 : following.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return userTile(following[index], "Following");
+                  },
+                ),
+              );
 
         break;
 
       case "Followers":
-        return Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: ListView.builder(
-            scrollDirection: Axis.vertical,
-            shrinkWrap: true,
-            itemCount: followers.isEmpty ? 0 : followers.length,
-            itemBuilder: (BuildContext context, int index) {
-              return userTile(followers[index], "Followers");
-            },
-          ),
-        );
+        return followers.isEmpty
+            ? Center(
+                child: Text(
+                  "Aún no tienes ningún seguidor",
+                  style: TextStyle(fontSize: 20, color: Colors.grey[700]),
+                ),
+              )
+            : Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: ListView.builder(
+                  scrollDirection: Axis.vertical,
+                  shrinkWrap: true,
+                  itemCount: followers.isEmpty ? 0 : followers.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return userTile(followers[index], "Followers");
+                  },
+                ),
+              );
 
         break;
 
       default:
-        return ListView.builder(
-          scrollDirection: Axis.vertical,
-          shrinkWrap: true,
-          itemCount: followRequests.isEmpty ? 0 : followRequests.length,
-          itemBuilder: (BuildContext context, int index) {
-            return userTile(followRequests[index], "Requests");
-          },
-        );
+        return followRequests.isEmpty
+            ? Center(
+                child: Text(
+                  "No tienes nuevas solicitudes de amistad",
+                  style: TextStyle(fontSize: 18, color: Colors.grey[700]),
+                ),
+              )
+            : ListView.builder(
+                scrollDirection: Axis.vertical,
+                shrinkWrap: true,
+                itemCount: followRequests.isEmpty ? 0 : followRequests.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return userTile(followRequests[index], "Requests");
+                },
+              );
     }
   }
 

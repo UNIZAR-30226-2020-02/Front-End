@@ -19,8 +19,16 @@ class ArtistTile extends StatelessWidget {
         title: Text(artist.title),
         leading: CircleAvatar(
             radius: 30, backgroundImage: NetworkImage(artist.photo)),
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(
-            builder: (BuildContext context) => ArtistProfile(artist))),
+        onTap: () {
+          currentArtist = artist;
+          if (currentIndex.value == 1) {
+            //Search
+            searchIndex.value = 4;
+          } else {
+            //Library
+            musicIndex.value = 4;
+          }
+        },
       ),
     );
   }

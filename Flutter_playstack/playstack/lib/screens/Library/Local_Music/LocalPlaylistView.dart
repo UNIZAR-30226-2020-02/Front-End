@@ -190,9 +190,12 @@ class _LocalPlaylistViewState extends State<LocalPlaylistView> {
                       alignment: Alignment.center,
                       children: <Widget>[
                         SizedBox(
-                            height: MediaQuery.of(context).size.height / 3,
-                            width: MediaQuery.of(context).size.width,
-                            child: Image.asset(defaultCover)),
+                            height: MediaQuery.of(context).size.height / 4,
+                            width: MediaQuery.of(context).size.width / 2,
+                            child: Image.asset(
+                              defaultCover,
+                              fit: BoxFit.cover,
+                            )),
                         BackdropFilter(
                           filter:
                               ui.ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
@@ -216,10 +219,14 @@ class _LocalPlaylistViewState extends State<LocalPlaylistView> {
                     child: Container(
                       width: MediaQuery.of(context).size.width,
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: <Widget>[
-                          playlistOptionsButton(),
-                          shuffleButton(playlistName, songs, context),
+                          Expanded(flex: 1, child: playlistOptionsButton()),
+                          Expanded(
+                              flex: 2,
+                              child:
+                                  shuffleButton(playlistName, songs, context)),
+                          Expanded(flex: 1, child: Text(''))
                         ],
                       ),
                     ),

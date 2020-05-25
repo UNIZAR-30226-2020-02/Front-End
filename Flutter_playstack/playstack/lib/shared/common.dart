@@ -43,6 +43,8 @@ Genre currentGenre;
 
 FolderType currentFolder;
 
+bool enteredThroughProfile = false;
+
 PlaylistType currentPlaylist;
 bool currentPlaylistInNotOwn;
 
@@ -52,6 +54,7 @@ String friendUserName = '';
 User otherUser = new User('', '');
 
 int previousIndex = 0;
+int previousPreviousIndex;
 
 List<Song> recentlyPlayedSongs = new List();
 List<Podcast> recentlyPlayedPodcasts = new List();
@@ -107,7 +110,7 @@ enum PlayerState { stopped, playing, paused }
 // Para canciones de assets
 AudioCache audioCache = AudioCache();
 //Para canciones online SOLO HTTPS no HTTP
-AudioPlayer advancedPlayer = AudioPlayer();
+AudioPlayer advancedPlayer = AudioPlayer(mode: PlayerMode.LOW_LATENCY);
 AudioPlayerState audioPlayerState;
 
 PlayerState playerState = PlayerState.stopped;
@@ -543,7 +546,7 @@ class SongItem extends StatelessWidget {
                       style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: MediaQuery.of(context).size.height / 45),
+                          fontSize: MediaQuery.of(context).size.height / 48),
                     ),
                   ),
                   SizedBox(height: 5),
@@ -554,7 +557,7 @@ class SongItem extends StatelessWidget {
                           style: TextStyle(
                               color: Colors.white.withOpacity(0.5),
                               fontSize:
-                                  MediaQuery.of(context).size.height / 50),
+                                  MediaQuery.of(context).size.height / 55),
                         ),
                 ],
               ),
@@ -564,6 +567,10 @@ class SongItem extends StatelessWidget {
                   color: Colors.grey[800],
                   onSelected: (val) async {
                     switch (val) {
+                      case "AddToQueue":
+                        songsNextUp.insert(0, song);
+                        break;
+
                       case "Fav":
                         bool res = false;
                         if (song.isFav) {
@@ -626,12 +633,13 @@ class SongItem extends StatelessWidget {
                     }
                   },
                   itemBuilder: (context) => [
-                        PopupMenuItem(
-                            value: "AddToQueue",
-                            child: ListTile(
-                              leading: Icon(Icons.add_to_queue),
-                              title: Text("Añadir a la cola de reproducción"),
-                            )),
+                        if (accountType == "Premium")
+                          PopupMenuItem(
+                              value: "AddToQueue",
+                              child: ListTile(
+                                leading: Icon(Icons.add_to_queue),
+                                title: Text("Añadir a la cola de reproducción"),
+                              )),
                         if (!song.isLocal)
                           PopupMenuItem(
                               value: "Fav",
@@ -843,9 +851,13 @@ class LocalSongItem extends StatelessWidget {
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: MediaQuery.of(context).size.height / 40),
+                        fontSize: MediaQuery.of(context).size.height / 45),
                   ),
                   SizedBox(height: 5),
+                  Text("Cancion local",
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: MediaQuery.of(context).size.height / 63)),
                 ],
               ),
               Spacer(),
@@ -856,7 +868,7 @@ class LocalSongItem extends StatelessWidget {
                     switch (val) {
                       case "AddToQueue":
                         songsNextUp.insert(0, song);
-                        songsNextUpName = languageStrings['queue'];
+                        //songsNextUpName = languageStrings['queue'];
                         break;
                       case "Remove":
                         await deleteLocalSongFromEveryWhere(song, context);
@@ -889,12 +901,13 @@ class LocalSongItem extends StatelessWidget {
                     }
                   },
                   itemBuilder: (context) => [
-                        PopupMenuItem(
-                            value: "Remove",
-                            child: ListTile(
-                              leading: Icon(CupertinoIcons.delete),
-                              title: Text("Eliminar canción de la aplicación"),
-                            )),
+                        if (accountType == "Premium")
+                          PopupMenuItem(
+                              value: "AddToQueue",
+                              child: ListTile(
+                                leading: Icon(Icons.add_to_queue),
+                                title: Text("Añadir a la cola de reproducción"),
+                              )),
                         PopupMenuItem(
                             value: "AddToPlaylist",
                             child: ListTile(
@@ -907,7 +920,14 @@ class LocalSongItem extends StatelessWidget {
                               child: ListTile(
                                 leading: Icon(CupertinoIcons.delete),
                                 title: Text("Eliminar canción de lista"),
-                              ))
+                              )),
+                        PopupMenuItem(
+                            value: "Remove",
+                            child: ListTile(
+                              leading: Icon(CupertinoIcons.delete,
+                                  color: Colors.red),
+                              title: Text("Eliminar canción de la aplicación"),
+                            )),
                       ])
             ],
           ),
@@ -1773,6 +1793,8 @@ class GenreTile extends StatelessWidget {
       padding: const EdgeInsets.all(8.0),
       child: GestureDetector(
         onTap: () {
+          enteredThroughProfile = true;
+          previousPreviousIndex = previousIndex;
           currentGenre = genre;
           previousIndex = homeIndex.value;
           homeIndex.value = 3;

@@ -20,9 +20,9 @@ class RegisterScreen extends StatefulWidget {
 class RegisterState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _imageKey = GlobalKey<FormState>();
+  bool _isInAsyncCall = false;
   bool _obscureText = true;
   bool _loading = false;
-  bool _isInAsyncCall = false;
   int _step = 0;
   PageController _pageController = new PageController();
   var image;
@@ -105,14 +105,12 @@ class RegisterState extends State<RegisterScreen> {
     });
   }
 
-  void usernameNotTaken(String username) async {
-    setState(() => _isInAsyncCall = true);
+  Future<void> usernameNotTaken(String username) async {
     List matches = await getUsers(username);
     if (matches != null) {
-      taken = matches.contains(username);
+      taken = matches.isNotEmpty;
     }
     checked = true;
-    setState(() => _isInAsyncCall = false);
   }
 
   bool emailNotTaken(String username) {
@@ -265,12 +263,26 @@ class RegisterState extends State<RegisterScreen> {
                         borderRadius: new BorderRadius.circular(15.0),
                         side: BorderSide(color: Colors.black)),
                     color: Colors.red[400],
-                    onPressed: () {
+                    onPressed: () async {
                       // devolverá true si el formulario es válido, o falso si
                       // el formulario no es válido.
                       if (_formKey.currentState.validate()) {
                         // Si el formulario es válido, queremos mostrar un Snackbar
-                        goNext();
+                        setState(() {
+                          _isInAsyncCall = true;
+                        });
+                        await usernameNotTaken(_usernameController.text);
+                        if (checked && taken)
+                          Toast.show(languageStrings['usernameErr2'], context,
+                              duration: Toast.LENGTH_LONG,
+                              gravity: Toast.CENTER,
+                              backgroundColor: Colors.red[800]);
+                        else
+                          goNext();
+
+                        setState(() {
+                          _isInAsyncCall = false;
+                        });
                       } else {
                         Toast.show(
                             languageStrings['invalidCredentials'], context,
@@ -296,11 +308,7 @@ class RegisterState extends State<RegisterScreen> {
             if (value.length < 1)
               return languageStrings['usernameErr1'];
             else {
-              usernameNotTaken(value);
-              if (checked && taken)
-                return languageStrings['usernameErr2'];
-              else
-                return null;
+              return null;
             }
           }),
     );
@@ -568,7 +576,8 @@ class RegisterState extends State<RegisterScreen> {
                           thirdPage(),
                         ]),
                     inAsyncCall: _isInAsyncCall,
-                    progressIndicator: CircularProgressIndicator(),
+                    progressIndicator: CircularProgressIndicator(
+                        backgroundColor: Colors.transparent),
                   )),
                 ),
                 registerButtons(),

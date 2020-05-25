@@ -25,15 +25,11 @@ class _ArtistProfileState extends State<ArtistProfile> {
   @override
   void initState() {
     super.initState();
-    _getArtistSongs();
     _getArtisAlbums();
   }
 
-  void _getArtistSongs() async {
-    songs = await getArtistSongsDB(artist.title);
-  }
-
   void _getArtisAlbums() async {
+    songs = await getArtistSongsDB(artist.title);
     albums = await getArtistAlbumsDB(artist.title);
     setState(() {
       _loading = false;
@@ -58,7 +54,10 @@ class _ArtistProfileState extends State<ArtistProfile> {
                   leading: IconButton(
                     icon: Icon(Icons.arrow_back_ios),
                     onPressed: () {
-                      Navigator.of(context).pop();
+                      if (currentIndex.value == 1) //Search
+                        searchIndex.value = 1;
+                      else //Library
+                        musicIndex.value = 0;
                     },
                   ),
                   title: Text(artist.title),
@@ -92,19 +91,29 @@ class _ArtistProfileState extends State<ArtistProfile> {
                             style: TextStyle(fontSize: 20),
                           ),
                         ),
-                        ListView.builder(
-                          scrollDirection: Axis.vertical,
-                          shrinkWrap: true,
-                          itemCount: songs.isEmpty ? 0 : songs.length,
-                          itemBuilder: (BuildContext context, int index) {
-                            return new SongItem(
-                              songs[index],
-                              songs,
-                              artist.title,
-                              isNotOwn: true,
-                            );
-                          },
-                        ),
+                        songs.isEmpty
+                            ? Container(
+                                height: MediaQuery.of(context).size.height / 5,
+                                width: MediaQuery.of(context).size.width,
+                                child: Center(
+                                    child: Text(
+                                        "No hay canciones de este artista",
+                                        style: TextStyle(
+                                            color: Colors.grey[600]))),
+                              )
+                            : ListView.builder(
+                                scrollDirection: Axis.vertical,
+                                shrinkWrap: true,
+                                itemCount: songs.isEmpty ? 0 : songs.length,
+                                itemBuilder: (BuildContext context, int index) {
+                                  return new SongItem(
+                                    songs[index],
+                                    songs,
+                                    artist.title,
+                                    isNotOwn: true,
+                                  );
+                                },
+                              ),
                         albums.isNotEmpty
                             ? Padding(
                                 padding: const EdgeInsets.only(top: 8.0),

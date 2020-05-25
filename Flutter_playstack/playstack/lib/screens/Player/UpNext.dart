@@ -45,7 +45,9 @@ class _UpNextState extends State<UpNext> {
               shrinkWrap: true,
               itemCount: songsNextUp.isEmpty ? 0 : songsNextUp.length,
               itemBuilder: (BuildContext context, int index) {
-                return new GenericAudioItem(songsNextUp[index]);
+                return new SongItem(
+                    songsNextUp[index], songsNextUp, songsNextUpName,
+                    isNotOwn: false);
               },
             )
           ],
