@@ -1377,12 +1377,18 @@ Future<List> getCollaboratorPodcastsDB(String collaborator) async {
     response = jsonDecode(response.body);
     print("Podcasts con la presencia de $collaborator recuperados");
 
+    List<Podcast> podcastsSeguidos;
+    podcastsSeguidos = await getFollowedPodcastsDB();
+
     response.forEach((title, info) => podcasts.add(Podcast(
         title: title,
         coverUrl: info['Foto'],
         language: Language(info['Idioma']),
         hosts: hostList(info['Interlocutores']),
         desc: info['Descripcion'])));
+    podcasts.forEach((element) {
+      element.isFav = (podcastsSeguidos.contains(element));
+    });
   } else {
     print("Statuscode de podcasts con la colaboración de $collaborator" +
         response.statusCode.toString());
@@ -1400,6 +1406,9 @@ Future<List> getPodcastsByTopicDB(String topic) async {
   dynamic response = await http.get(
       'https://playstack.azurewebsites.net/get/podcast/bytema?NombreTema=$topic');
 
+  List<Podcast> podcastsSeguidos;
+  podcastsSeguidos = await getFollowedPodcastsDB();
+
   if (response.statusCode == 200) {
     response = jsonDecode(response.body);
     print("Podcasts de tema $topic recuperados");
@@ -1410,6 +1419,10 @@ Future<List> getPodcastsByTopicDB(String topic) async {
         language: Language(info['Idioma']),
         hosts: hostList(info['Interlocutores']),
         desc: info['Descripcion'])));
+
+    podcasts.forEach((element) {
+      element.isFav = (podcastsSeguidos.contains(element));
+    });
   } else {
     print("Statuscode de podcasts de tema $topic " +
         response.statusCode.toString());
