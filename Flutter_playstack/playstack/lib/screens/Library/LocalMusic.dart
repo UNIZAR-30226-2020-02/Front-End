@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+/* import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
@@ -22,7 +22,8 @@ class _LocalMusicState extends State<LocalMusic> {
   TextEditingController newSongController = new TextEditingController();
 
   List localPlaylistList = new List();
-  List localSongsList = new List();
+  List templocalSongsList = new List();
+  List<Song> localSongsList = new List();
 
   bool _loading = true;
   String _path;
@@ -35,18 +36,16 @@ class _LocalMusicState extends State<LocalMusic> {
   }
 
   Future<void> _getSongs() async {
-    localSongsList = await getLocalSongs();
-    List tempList = new List();
-    for (var song in localSongsList) {
+    templocalSongsList = await getLocalSongs();
+    for (var song in templocalSongsList) {
       Song newSong = new Song(
           title: song.name,
           url: song.path,
           isLocal: true,
           albums: new List(),
           albumCoverUrls: new List());
-      tempList.add(newSong);
+      localSongsList.add(newSong);
     }
-    localSongsList = tempList;
     print("Hay " + localSongsList.length.toString() + " canciones locales");
 
     if (mounted)
@@ -278,7 +277,7 @@ class _LocalMusicState extends State<LocalMusic> {
     );
   }
 
-  Widget localSongItem(Song song, List songsList, String songsListName) {
+  Widget localSongItem(Song song, List<Song> songsList, String songsListName) {
     /* final String songsListName;
   final List songsList;
   final Song song;
@@ -286,8 +285,8 @@ class _LocalMusicState extends State<LocalMusic> {
   final bool isNotOwn;
  */
 
-    void setQueue(List songsList) {
-      List tmpList = new List();
+    void setQueue(List<Song> songsList) {
+      List<Song> tmpList = new List();
       tmpList.addAll(songsList);
       tmpList.remove(song);
       songsNextUpName = songsListName;
@@ -360,6 +359,7 @@ class _LocalMusicState extends State<LocalMusic> {
                               gravity: Toast.CENTER,
                               duration: Toast.LENGTH_LONG,
                               backgroundColor: Colors.green);
+                          print("La elimina");
                           await _getSongs();
                           setState(() {});
                         } else {
@@ -605,3 +605,4 @@ class _LocalMusicState extends State<LocalMusic> {
         ));
   }
 }
+ */

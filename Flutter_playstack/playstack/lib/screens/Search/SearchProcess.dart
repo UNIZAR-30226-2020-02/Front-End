@@ -191,11 +191,11 @@ class _SearchProcessState extends State<SearchProcess> {
                 _playlists.length +
                 _albums.length +
                 _podcasts.length)) {
-          return podcastTile(
+          return PodcastItem(
+              _podcasts[
+                  index - (_songs.length + _playlists.length + _albums.length)],
               width,
-              height,
-              _podcasts[index -
-                  (_songs.length + _playlists.length + _albums.length)]);
+              height);
         } else if (index <
             (_songs.length +
                 _playlists.length +

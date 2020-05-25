@@ -37,11 +37,29 @@ class _LocalPlaylistViewState extends State<LocalPlaylistView> {
 
   void _getSongs() async {
     List<LocalSongsPlaylists> _tempList = await getSongsInPlaylists();
+    List<Song> allLocalSongs = new List();
+
+    List templocalSongsList = await getLocalSongs();
+    for (var song in templocalSongsList) {
+      Song newSong = new Song(
+          title: song.name,
+          url: song.path,
+          isLocal: true,
+          albums: new List(),
+          albumCoverUrls: new List());
+      allLocalSongs.add(newSong);
+    }
+
     songs.clear();
+
     for (var item in _tempList) {
       if (item.playlistName == playlistName) {
-        Song newSong = new Song(title: item.songName, isLocal: true);
-        songs.add(newSong);
+        for (Song song in allLocalSongs) {
+          if (song.title == item.songName) {
+            songs.add(song);
+            break;
+          }
+        }
       }
     }
     print("Hay ${songs.length.toString()} canciones en la playlist");
