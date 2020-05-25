@@ -5,6 +5,8 @@ import 'package:playstack/models/Audio.dart';
 import 'package:playstack/models/Episode.dart';
 import 'package:playstack/models/Podcast.dart';
 import 'package:playstack/screens/Library/Language.dart';
+import 'package:playstack/screens/Player/PlayerWidget.dart';
+import 'package:playstack/screens/Player/PlayingNow.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
@@ -189,7 +191,12 @@ Widget podcastTile(width, height, Podcast podcast) {
                           String aux = "";
                           String descP1 = "";
                           String descP2 = "";
-                          List<String> descList = podcast.desc.split(" ");
+                          List<String> descList = new List();
+                          if (podcast.desc != null)
+                            descList = podcast.desc.split(" ");
+                          else
+                            descList.add("");
+
                           int i = 0;
                           bool exceeded = false;
                           while (i < descList.length && !exceeded) {
@@ -574,6 +581,12 @@ class _PodcastEpisodesState extends State<PodcastEpisodes> {
                                         podcast.title, episodesList, index - 1);
                                     onPlayerScreen = true;
                                     currentIndex.value = 3;
+                                    mustPause.value = true;
+                                    if (player == null) player = PlayerWidget();
+                                    Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                            builder: (BuildContext context) =>
+                                                PlayingNowScreen()));
                                   },
                                   child: SizedBox(
                                       height: height / 5,

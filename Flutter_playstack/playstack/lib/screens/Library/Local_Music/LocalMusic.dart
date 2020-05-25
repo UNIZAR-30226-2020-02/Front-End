@@ -22,10 +22,11 @@ class _LocalMusicState extends State<LocalMusic> {
   TextEditingController newPLaylistController = new TextEditingController();
   TextEditingController newSongController = new TextEditingController();
 
-  List localSongsList = new List();
+  List<Song> localSongsList = new List();
 
   bool _loading = true;
   String _path;
+  bool cancelled = false;
 
   @override
   void initState() {
@@ -35,18 +36,18 @@ class _LocalMusicState extends State<LocalMusic> {
   }
 
   Future<void> _getSongs() async {
-    localSongsList = await getLocalSongs();
     List tempList = new List();
-    for (var song in localSongsList) {
+
+    tempList = await getLocalSongs();
+    for (var song in tempList) {
       Song newSong = new Song(
           title: song.name,
           url: song.path,
           isLocal: true,
           albums: new List(),
           albumCoverUrls: new List());
-      tempList.add(newSong);
+      localSongsList.add(newSong);
     }
-    localSongsList = tempList;
     print("Hay " + localSongsList.length.toString() + " canciones locales");
 
     if (mounted)
@@ -66,16 +67,20 @@ class _LocalMusicState extends State<LocalMusic> {
 
   void _saveSong() async {
     await _showAddingLocalSongDialog(context);
-    String path = await _getFilePath();
-    LocalSong newLocalSong =
-        new LocalSong(name: newSongController.text, path: path);
-    print("Inserting song with name " +
-        newSongController.text +
-        " and path " +
-        path);
-    insertSong(newLocalSong);
-    newSongController.clear();
-    _getSongs();
+    if (!cancelled) {
+      String path = await _getFilePath();
+      LocalSong newLocalSong =
+          new LocalSong(name: newSongController.text, path: path);
+      print("Inserting song with name " +
+          newSongController.text +
+          " and path " +
+          path);
+      insertSong(newLocalSong);
+      newSongController.clear();
+      _getSongs();
+    } else {
+      cancelled = false;
+    }
   }
 
   Future<String> _getFilePath() async {
@@ -243,7 +248,11 @@ class _LocalMusicState extends State<LocalMusic> {
                     Expanded(
                         flex: 1,
                         child: FlatButton(
-                            onPressed: () => Navigator.pop(context),
+                            onPressed: () {
+                              print("Cancela");
+                              cancelled = true;
+                              Navigator.pop(context);
+                            },
                             child: Text("Cancelar"))),
                     Expanded(
                         flex: 1,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:playstack/models/Album.dart';
 import 'package:playstack/models/Artist.dart';
+import 'package:playstack/models/Audio.dart';
+import 'package:playstack/models/Song.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/services/database.dart';
 import 'package:playstack/shared/common.dart';
@@ -17,7 +19,7 @@ class _ArtistProfileState extends State<ArtistProfile> {
   final Artist artist;
   bool _loading = true;
 
-  List songs = new List();
+  List<Audio> songs = new List();
   List albums = new List();
 
   _ArtistProfileState(this.artist);

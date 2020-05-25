@@ -13,6 +13,7 @@ import 'package:playstack/shared/common.dart';
 import 'package:playstack/screens/Player/UpNext.dart';
 import 'package:marquee/marquee.dart';
 import 'package:provider/provider.dart';
+import 'package:toast/toast.dart';
 
 class PlayerWidget extends StatefulWidget {
   PlayerWidget._constructor();
@@ -295,56 +296,117 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
   void skipSong(bool mustScroll) {
     print("Skipping ($currentPage/${allAudios.length})");
-
-    if (songsNextUp.isNotEmpty || _loopEnabled) {
-      if (isPlaying) mustPause.value = true;
-      if (songsNextUp.isNotEmpty) {
-        if (mounted) {
-          setState(() {
+    if (accountType != "Premium") {
+      if (skipsTimer == null) {
+        skipsTimer = new Timer(Duration(hours: 1), () {
+          skipsthisHour = 0;
+        });
+      } else if (skipsthisHour < 10) {
+        if (songsNextUp.isNotEmpty || _loopEnabled) {
+          if (isPlaying) mustPause.value = true;
+          if (songsNextUp.isNotEmpty) {
+            if (mounted) {
+              setState(() {
+                songsPlayed.add(currentAudio);
+                currentAudio = songsNextUp.first;
+                songsNextUp.removeAt(0);
+              });
+            } else {
+              songsPlayed.add(currentAudio);
+              currentAudio = songsNextUp.first;
+              songsNextUp.removeAt(0);
+            }
+          } else {
+            songsNextUp.addAll(allAudios);
+            removeDupes(songsNextUp);
+            if (shuffleEnabled) {
+              songsNextUp.shuffle();
+            }
+            buildPageLists(true);
             songsPlayed.add(currentAudio);
             currentAudio = songsNextUp.first;
             songsNextUp.removeAt(0);
-          });
+          }
+          if (mustScroll) {
+            _pageController.nextPage(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOut,
+            );
+            _backController.nextPage(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOut,
+            );
+          }
+          currentPage += 1;
+          currentAudio.markAsListened();
+          position = Duration(seconds: 0);
+
+          if (mustScroll) {
+            Future.delayed(
+                Duration(milliseconds: 400), () => _usingButtons = false);
+          }
+          position = Duration.zero;
+          //duration = Duration(seconds: 0);
+
+          //Navigator.of(context).pushReplacement(MaterialPageRoute(
+          //    builder: (BuildContext context) => PlayingNowScreen()));
+          skipsthisHour += 1;
+        }
+      } else {
+        Toast.show("No puede hacer más de 10 saltos por hora", context,
+            backgroundColor: Colors.red, duration: Toast.LENGTH_LONG);
+      }
+    } else {
+      if (songsNextUp.isNotEmpty || _loopEnabled) {
+        if (isPlaying) mustPause.value = true;
+        if (songsNextUp.isNotEmpty) {
+          if (mounted) {
+            setState(() {
+              songsPlayed.add(currentAudio);
+              currentAudio = songsNextUp.first;
+              songsNextUp.removeAt(0);
+            });
+          } else {
+            songsPlayed.add(currentAudio);
+            currentAudio = songsNextUp.first;
+            songsNextUp.removeAt(0);
+          }
         } else {
+          songsNextUp.addAll(allAudios);
+          removeDupes(songsNextUp);
+          if (shuffleEnabled) {
+            songsNextUp.shuffle();
+          }
+          buildPageLists(true);
           songsPlayed.add(currentAudio);
           currentAudio = songsNextUp.first;
           songsNextUp.removeAt(0);
         }
-      } else {
-        songsNextUp.addAll(allAudios);
-        removeDupes(songsNextUp);
-        if (shuffleEnabled) {
-          songsNextUp.shuffle();
+        if (mustScroll) {
+          _pageController.nextPage(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOut,
+          );
+          _backController.nextPage(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOut,
+          );
         }
-        buildPageLists(true);
-        songsPlayed.add(currentAudio);
-        currentAudio = songsNextUp.first;
-        songsNextUp.removeAt(0);
-      }
-      if (mustScroll) {
-        _pageController.nextPage(
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeInOut,
-        );
-        _backController.nextPage(
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeInOut,
-        );
-      }
-      currentPage += 1;
-      currentAudio.markAsListened();
-      position = Duration(seconds: 0);
+        currentPage += 1;
+        currentAudio.markAsListened();
+        position = Duration(seconds: 0);
 
-      if (mustScroll) {
-        Future.delayed(
-            Duration(milliseconds: 400), () => _usingButtons = false);
+        if (mustScroll) {
+          Future.delayed(
+              Duration(milliseconds: 400), () => _usingButtons = false);
+        }
+        position = Duration.zero;
+        //duration = Duration(seconds: 0);
+
+        //Navigator.of(context).pushReplacement(MaterialPageRoute(
+        //    builder: (BuildContext context) => PlayingNowScreen()));
+
       }
-      position = Duration.zero;
-      //duration = Duration(seconds: 0);
-
-      //Navigator.of(context).pushReplacement(MaterialPageRoute(
-      //    builder: (BuildContext context) => PlayingNowScreen()));
-
     }
   }
 
@@ -876,7 +938,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                                           currentIndex.value = 0;
                                         notifyAllListeners();
                                         audioIsNull.value = false;
-                                        //Navigator.of(context).pop();
+                                        Navigator.of(context).pop();
                                       }))),
                           Align(
                             alignment: Alignment.bottomCenter,

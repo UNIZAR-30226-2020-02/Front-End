@@ -40,6 +40,9 @@ final ValueNotifier<int> musicIndex = ValueNotifier<int>(0);
 final ValueNotifier<bool> mustPause = ValueNotifier<bool>(false);
 final ValueNotifier<bool> audioIsNull = ValueNotifier<bool>(true);
 
+Timer skipsTimer;
+int skipsthisHour = 0;
+
 Genre currentGenre;
 
 FolderType currentFolder;
@@ -592,7 +595,14 @@ class SongItem extends StatelessWidget {
                   onSelected: (val) async {
                     switch (val) {
                       case "AddToQueue":
-                        songsNextUp.insert(0, song);
+                        if (currentAudio == null) {
+                          currentAudio = song;
+
+                          if (player == null) player = PlayerWidget();
+                        } else {
+                          songsNextUp.insert(0, song);
+                        }
+
                         break;
 
                       case "Fav":
@@ -891,7 +901,13 @@ class LocalSongItem extends StatelessWidget {
                   onSelected: (val) async {
                     switch (val) {
                       case "AddToQueue":
-                        songsNextUp.insert(0, song);
+                        if (currentAudio == null) {
+                          currentAudio = song;
+
+                          if (player == null) player = PlayerWidget();
+                        } else {
+                          songsNextUp.insert(0, song);
+                        }
                         //songsNextUpName = languageStrings['queue'];
                         break;
                       case "Remove":
@@ -1049,10 +1065,12 @@ class GenericAudioItem extends StatelessWidget {
                     width: width / 5.8,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8.0),
-                      child: Image.network(
-                        audio.albumCoverUrls.elementAt(0),
-                        fit: BoxFit.cover,
-                      ),
+                      child: currentAudio.isLocal
+                          ? Image.asset(defaultCover, fit: BoxFit.cover)
+                          : Image.network(
+                              audio.albumCoverUrls.elementAt(0),
+                              fit: BoxFit.cover,
+                            ),
                     ),
                   ),
                 ],
