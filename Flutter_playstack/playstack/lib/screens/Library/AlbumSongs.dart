@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:playstack/models/Album.dart';
 import 'package:playstack/shared/Loading.dart';
+import 'package:playstack/models/Song.dart';
 import 'package:playstack/shared/common.dart';
 import 'package:playstack/services/database.dart';
 import 'dart:ui' as ui;
@@ -17,7 +18,7 @@ class _AlbumSongsState extends State<AlbumSongs> {
   _AlbumSongsState(this.album);
 
   bool _loading = true;
-  List songs = new List();
+  List<Song> songs = new List();
 
   final Album album;
 

@@ -21,7 +21,7 @@ class LocalPlaylistView extends StatefulWidget {
 class _LocalPlaylistViewState extends State<LocalPlaylistView> {
   String playlistName;
   // Contiene los nombres de las canciones de la playlist
-  List songs = new List();
+  List<Song> songs = new List();
   bool _loading = true;
 
   _LocalPlaylistViewState(this.playlistName);

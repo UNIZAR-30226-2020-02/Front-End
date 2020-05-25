@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
+import 'package:playstack/models/Song.dart';
 import 'package:playstack/services/database.dart';
 import 'dart:ui' as ui;
 
@@ -18,7 +19,7 @@ class _ArtistsSongsState extends State<ArtistsSongs> {
   _ArtistsSongsState(this.artistName, this.artistPhoto);
 
   bool _loading = true;
-  List songs = new List();
+  List<Song> songs = new List();
 
   final String artistName;
   final String artistPhoto;

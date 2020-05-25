@@ -27,7 +27,7 @@ class _PlaylistState extends State<Playlist> {
   final TextEditingController playlistNameController =
       new TextEditingController();
 
-  List songs = new List();
+  List<Song> songs = new List();
   List localSongs = new List();
   bool _loading = true;
 

@@ -7,6 +7,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:playstack/models/Audio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:playstack/models/Song.dart';
+import 'package:playstack/screens/Player/PlayingNow.dart';
 import 'package:playstack/shared/Loading.dart';
 import 'package:playstack/shared/common.dart';
 import 'package:playstack/screens/Player/UpNext.dart';
@@ -64,7 +65,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
     _pageController.addListener(() {
       _backController.jumpTo(_pageController.offset);
       print(absoluteChangeInPage);
-      if ((_pageController.page - currentPage).abs() > 0.9) {
+      if ((_pageController.page - currentPage).abs() > 0.99) {
         if (absoluteChangeInPage > 0) {
           skipSong(false);
         } else if (absoluteChangeInPage < 0) {
@@ -89,7 +90,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
       durationSubscription = advancedPlayer.onDurationChanged.listen((value) {
         if (mounted) setState(() => duration = value);
-
+/*
         // Para que aparezca en la barra de notificaciones la reproducción, sólo implementado para iOS
         if (Theme.of(context).platform == TargetPlatform.iOS) {
           // (Optional) listen for notification updates in the background
@@ -107,7 +108,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                   const Duration(seconds: 30), // default is 30s
               duration: duration,
               elapsedTime: Duration(seconds: 0));
-        }
+        }*/
       });
 
       // Listener para actualizar la posición de la canción
@@ -132,7 +133,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
         print('advancedPlayer error : $msg');
         setState(() {
           playerState = PlayerState.stopped;
-          duration = Duration(seconds: 0);
+          //duration = Duration(seconds: 0);
           position = Duration(seconds: 0);
         });
       });
@@ -174,15 +175,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
   void buildPageLists(bool onlyNext) {
     if (!onlyNext) {
-      songsPlayed.forEach((value) {
-        allAudios.add(value);
-      });
+      allAudios.addAll(songsPlayed);
       allAudios.add(currentAudio);
     }
-
-    songsNextUp.forEach((value) {
-      allAudios.add(value);
-    });
+    allAudios.addAll(songsNextUp);
   }
 
   Future<int> _pause() async {
@@ -262,27 +258,46 @@ class _PlayerWidgetState extends State<PlayerWidget>
           duration: const Duration(milliseconds: 400),
           curve: Curves.easeInOut,
         );
-        Future.delayed(
-            Duration(milliseconds: 400), () => _usingButtons = false);
-        currentPage -= 1;
       }
       currentAudio.markAsListened();
-      //position.value = Duration(seconds: 0);
-      //duration = Duration(seconds: 0);
-      Future.delayed(Duration(milliseconds: mustScroll ? 900 : 500), () {
-        if (!isPlaying) togglePlayPause();
-      });
+      currentPage -= 1;
+      if (mustScroll) {
+        Future.delayed(
+            Duration(milliseconds: 400), () => _usingButtons = false);
+      }
 
+      position = Duration.zero;
+      //duration = Duration(seconds: 0);
       //Navigator.of(context).pushReplacement(MaterialPageRoute(
       //    builder: (BuildContext context) => PlayingNowScreen()));
 
     }
   }
 
+  void removeDupes(List<Audio> list) {
+    int i = 0;
+    while (i < list.length) {
+      int j = i + 1;
+      while (j < list.length) {
+        Audio el1 = list.elementAt(i);
+        Audio el2 = list.elementAt(j);
+        if (el1.title == el2.title &&
+            el1.artists == el2.artists &&
+            !el1.isLocal &&
+            !el2.isLocal) {
+          list.remove(j);
+        }
+        j++;
+      }
+      i++;
+    }
+  }
+
   void skipSong(bool mustScroll) {
-    print("Skipping...");
+    print("Skipping ($currentPage/${allAudios.length})");
 
     if (songsNextUp.isNotEmpty || _loopEnabled) {
+      if (isPlaying) mustPause.value = true;
       if (songsNextUp.isNotEmpty) {
         if (mounted) {
           setState(() {
@@ -296,14 +311,15 @@ class _PlayerWidgetState extends State<PlayerWidget>
           songsNextUp.removeAt(0);
         }
       } else {
-        songsNextUp = allAudios;
+        songsNextUp.addAll(allAudios);
+        removeDupes(songsNextUp);
         if (shuffleEnabled) {
-          int element = rng.nextInt(songsNextUp.length);
-          Song newCurrentSong = songsNextUp.elementAt(element);
-          setShuffleQueue(songsNextUpName, songsNextUp, newCurrentSong);
-        } else {
-          setQueue(songsNextUp, songsNextUp.elementAt(0), songsNextUpName);
+          songsNextUp.shuffle();
         }
+        buildPageLists(true);
+        songsPlayed.add(currentAudio);
+        currentAudio = songsNextUp.first;
+        songsNextUp.removeAt(0);
       }
       if (mustScroll) {
         _pageController.nextPage(
@@ -314,16 +330,17 @@ class _PlayerWidgetState extends State<PlayerWidget>
           duration: const Duration(milliseconds: 400),
           curve: Curves.easeInOut,
         );
-        Future.delayed(
-            Duration(milliseconds: 400), () => _usingButtons = false);
       }
       currentPage += 1;
       currentAudio.markAsListened();
       position = Duration(seconds: 0);
+
+      if (mustScroll) {
+        Future.delayed(
+            Duration(milliseconds: 400), () => _usingButtons = false);
+      }
+      position = Duration.zero;
       //duration = Duration(seconds: 0);
-      Future.delayed(Duration(milliseconds: mustScroll ? 900 : 500), () {
-        if (!isPlaying) togglePlayPause();
-      });
 
       //Navigator.of(context).pushReplacement(MaterialPageRoute(
       //    builder: (BuildContext context) => PlayingNowScreen()));
@@ -399,7 +416,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
   Widget songImage(Audio audio, double width) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: EdgeInsets.all(width * 0.01),
       child: Container(
         height: width * 0.7,
         width: width * 0.7,
@@ -562,6 +579,24 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 ))));
   }
 
+  Widget shuffleButton(double width) {
+    return Container(
+        height: width / 10,
+        child: Center(
+            child: Material(
+                color: Colors.transparent,
+                child: GestureDetector(
+                  child: Icon(
+                    Icons.shuffle,
+                    color: shuffleEnabled
+                        ? Colors.red
+                        : Colors.white.withOpacity(0.8),
+                    size: width / 17.62,
+                  ),
+                  onTap: () => setState(() => shuffleEnabled = !shuffleEnabled),
+                ))));
+  }
+
   Widget favButton(double width) {
     return Container(
         height: width / 10,
@@ -641,9 +676,16 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   Expanded(
-                      //Bucle
                       flex: 10,
-                      child: loopButton(width)),
+                      child: Column(
+                        children: <Widget>[
+                          loopButton(width),
+                          shuffleButton(width)
+                        ],
+                      )
+                      //Bucle
+
+                      ),
                   Expanded(
                       //Atrás
                       flex: 15,
@@ -682,118 +724,164 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
   Widget extendedBottomBarControls(context) {
     double height = MediaQuery.of(context).size.height * 0.15;
-    return Container(
-      color: Colors.grey[900],
-      child: Row(children: <Widget>[
-        songImage(currentAudio, height),
-        Align(
-            alignment: Alignment.centerRight,
-            child: Row(children: <Widget>[
-              nextOrBackButton(height * 2, true),
-              playPauseButton(height * 2),
-              nextOrBackButton(height * 2, false)
-            ])),
-        Expanded(
-            child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: height * 0.005),
-                child: Material(
-                    color: Colors.transparent,
-                    child: slidingText(
-                      condicion: true,
-                      texto: currentAudio.isLocal
-                          ? '${currentAudio.title}'
-                          : '${currentAudio.title} - ${getSongArtists(currentAudio.artists)}',
-                      estilo: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: height / 6),
-                    ))))
-      ]),
-    );
+    double width = MediaQuery.of(context).size.width;
+    return Stack(children: <Widget>[
+      Container(
+        color: Colors.grey[900],
+        child: Row(children: <Widget>[
+          songImage(currentAudio, height),
+          Align(
+              alignment: Alignment.centerRight,
+              child: Row(children: <Widget>[
+                nextOrBackButton(height * 2, true),
+                playPauseButton(height * 2),
+                nextOrBackButton(height * 2, false)
+              ])),
+          Expanded(
+              child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: height * 0.005),
+                  child: Material(
+                      color: Colors.transparent,
+                      child: slidingText(
+                        condicion: true,
+                        texto: currentAudio.isLocal
+                            ? '${currentAudio.title}'
+                            : '${currentAudio.title} - ${getSongArtists(currentAudio.artists)}',
+                        estilo: TextStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: height / 6),
+                      ))))
+        ]),
+      ),
+      Align(
+          alignment: Alignment.centerLeft,
+          child: Container(
+              width: height * 0.75,
+              height: height,
+              color: Colors.transparent,
+              child: GestureDetector(onTap: () {
+                onPlayerScreen = true;
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (BuildContext context) => PlayingNowScreen()));
+              }))),
+      Align(
+          alignment: Alignment.centerRight,
+          child: Container(
+              height: height,
+              width: width - height * 1.65,
+              color: Colors.transparent,
+              child: GestureDetector(onTap: () {
+                onPlayerScreen = true;
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (BuildContext context) => PlayingNowScreen()));
+              }))),
+    ]);
   }
 
   @override
   Widget build(BuildContext context) {
     width = MediaQuery.of(context).size.width;
-    print("Buildea el player");
+    super.build(context);
     return MultiProvider(
         providers: [
           StreamProvider<Duration>.value(
               initialData: Duration(),
               value: advancedPlayer.onAudioPositionChanged),
         ],
-        child: onPlayerScreen
-            ? (currentAudio != null
-                ? WillPopScope(
-                    onWillPop: () async {
-                      onPlayerScreen = false;
-                      if (currentIndex.value == 3) currentIndex.value = 0;
-                      return false;
-                    },
-                    child: Stack(children: <Widget>[
-                      Container(
-                        height: MediaQuery.of(context).size.height,
-                        child: PageView.builder(
-                            itemCount: allAudios.length,
-                            controller: _backController,
-                            pageSnapping: false,
-                            physics: new NeverScrollableScrollPhysics(),
-                            itemBuilder: (context, int index) =>
-                                fondo(allAudios[index])),
-                      ),
-                      BackdropFilter(
-                        //Difuminado
-                        filter: ui.ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                        child: Container(
-                          height: MediaQuery.of(context).size.height,
-                          width: MediaQuery.of(context).size.width,
-                          decoration: new BoxDecoration(
-                              color: Colors.black54.withOpacity(0.5)),
-                        ),
-                      ),
-                      Container(
-                          height:
-                              MediaQuery.of(context).size.height - width * 0.5,
-                          color: Colors.transparent,
-                          child: Center(
-                              child: Container(
-                                  height: width * 0.9905,
-                                  child: PageView.builder(
-                                      itemCount: allAudios.length,
-                                      onPageChanged: (newpage) {
-                                        if (!_usingButtons) {
-                                          if (newpage - currentPage > 0) {
-                                            absoluteChangeInPage += 1;
-                                          } else {
-                                            absoluteChangeInPage -= 1;
-                                          }
-                                        }
-                                      },
-                                      controller: _pageController,
-                                      //physics: new NeverScrollableScrollPhysics(),
-                                      itemBuilder: (context, int index) =>
-                                          infoCancion(allAudios[index]))))),
-                      Positioned(
-                          top: width / 20,
-                          //Equis para cerrar
-                          child: Material(
+        child: ValueListenableBuilder(
+          valueListenable: mustPause,
+          builder: (context, value, child) {
+            if (mustPause.value && isPlaying) {
+              togglePlayPause();
+              position = Duration.zero;
+            }
+            if (mustPause.value) {
+              Future.delayed(Duration(milliseconds: 900), () {
+                if (!isPlaying) togglePlayPause();
+              });
+            }
+            print("Buildea el player");
+            mustPause.value = false;
+            return onPlayerScreen
+                ? (currentAudio != null
+                    ? WillPopScope(
+                        onWillPop: () async {
+                          onPlayerScreen = false;
+                          if (currentIndex.value == 3) currentIndex.value = 0;
+                          notifyAllListeners();
+                          audioIsNull.value = false;
+                          return true;
+                        },
+                        child: Stack(children: <Widget>[
+                          Container(
+                            height: MediaQuery.of(context).size.height,
+                            child: PageView.builder(
+                                itemCount: allAudios.length,
+                                controller: _backController,
+                                pageSnapping: false,
+                                physics: new NeverScrollableScrollPhysics(),
+                                itemBuilder: (context, int index) =>
+                                    fondo(allAudios[index])),
+                          ),
+                          BackdropFilter(
+                            //Difuminado
+                            filter:
+                                ui.ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                            child: Container(
+                              height: MediaQuery.of(context).size.height,
+                              width: MediaQuery.of(context).size.width,
+                              decoration: new BoxDecoration(
+                                  color: Colors.black54.withOpacity(0.5)),
+                            ),
+                          ),
+                          Container(
+                              height: MediaQuery.of(context).size.height -
+                                  width * 0.5,
                               color: Colors.transparent,
-                              child: IconButton(
-                                  icon: Icon(
-                                    CupertinoIcons.clear,
-                                    size: 35,
-                                  ),
-                                  onPressed: () {
-                                    onPlayerScreen = false;
-                                    if (currentIndex.value == 3)
-                                      currentIndex.value = 0;
-                                    Navigator.of(context).pop();
-                                  }))),
-                      Align(
-                        alignment: Alignment.bottomCenter,
-                        child: controls(width),
-                      )
-                    ]))
-                : Loading())
-            : extendedBottomBarControls(context));
+                              child: Center(
+                                  child: Container(
+                                      height: width * 0.9905,
+                                      child: PageView.builder(
+                                          itemCount: allAudios.length,
+                                          onPageChanged: (newpage) {
+                                            if (!_usingButtons) {
+                                              if (newpage - currentPage > 0) {
+                                                absoluteChangeInPage += 1;
+                                              } else {
+                                                absoluteChangeInPage -= 1;
+                                              }
+                                            }
+                                          },
+                                          controller: _pageController,
+                                          //physics: new NeverScrollableScrollPhysics(),
+                                          itemBuilder: (context, int index) =>
+                                              infoCancion(allAudios[index]))))),
+                          Positioned(
+                              top: width / 20,
+                              //Equis para cerrar
+                              child: Material(
+                                  color: Colors.transparent,
+                                  child: IconButton(
+                                      icon: Icon(
+                                        CupertinoIcons.clear,
+                                        size: 35,
+                                      ),
+                                      onPressed: () {
+                                        onPlayerScreen = false;
+                                        if (currentIndex.value == 3)
+                                          currentIndex.value = 0;
+                                        notifyAllListeners();
+                                        audioIsNull.value = false;
+                                        Navigator.of(context).pop();
+                                      }))),
+                          Align(
+                            alignment: Alignment.bottomCenter,
+                            child: controls(width),
+                          )
+                        ]))
+                    : Loading())
+                : extendedBottomBarControls(context);
+          },
+        ));
   }
 }

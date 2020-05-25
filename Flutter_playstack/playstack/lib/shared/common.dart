@@ -36,6 +36,8 @@ import 'package:playstack/services/SQLite.dart';
 final ValueNotifier<int> homeIndex = ValueNotifier<int>(0);
 final ValueNotifier<int> searchIndex = ValueNotifier<int>(0);
 final ValueNotifier<int> musicIndex = ValueNotifier<int>(0);
+final ValueNotifier<bool> mustPause = ValueNotifier<bool>(false);
+final ValueNotifier<bool> audioIsNull = ValueNotifier<bool>(true);
 
 Genre currentGenre;
 
@@ -85,8 +87,8 @@ String currentTopic;
 Map<String, dynamic> languageStrings = new Map<String, dynamic>();
 
 String songsNextUpName;
-List songsNextUp = new List();
-List songsPlayed = new List();
+List<Audio> songsNextUp = new List();
+List<Audio> songsPlayed = new List();
 List following = new List();
 List followers = new List();
 List localPlaylistList = new List();
@@ -119,7 +121,7 @@ bool playerActive = false;
 
 List<Audio> allAudios = [];
 bool onPlayerScreen = false;
-bool shuffleEnabled;
+bool shuffleEnabled = false;
 
 PlayingRouteState playingRouteState = PlayingRouteState.SPEAKERS;
 StreamSubscription durationSubscription;
@@ -139,6 +141,23 @@ Future<Database> database;
 
 /////////////////////////////////////////////////////////////////////////////////////
 
+void notifyAllListeners() {
+  switch (currentIndex.value) {
+    case 0:
+      homeIndex.value = homeIndex.value;
+      break;
+
+    case 1:
+      searchIndex.value = searchIndex.value;
+      break;
+
+    case 2:
+      musicIndex.value = musicIndex.value;
+      podcastIndex.value = podcastIndex.value;
+      break;
+  }
+}
+
 Future<String> loadLanguagesString() {
   Future<String> jsonString =
       rootBundle.loadString('assets/languages/spanish.json');
@@ -147,16 +166,20 @@ Future<String> loadLanguagesString() {
 
 Widget extendedBottomBarWith(context, Widget widget) {
   var height = MediaQuery.of(context).size.height;
-  return (onPlayerScreen || currentAudio == null || player == null)
-      ? widget
-      : Container(
-          height: height,
-          child: Column(
-            children: <Widget>[
-              Expanded(child: widget),
-              SizedBox(height: height * 0.15, child: player),
-            ],
-          ));
+  return ValueListenableBuilder(
+      valueListenable: audioIsNull,
+      builder: (BuildContext context, value, Widget child) {
+        return (onPlayerScreen || currentAudio == null || player == null)
+            ? widget
+            : Container(
+                height: height,
+                child: Column(
+                  children: <Widget>[
+                    Expanded(child: widget),
+                    SizedBox(height: height * 0.15, child: player),
+                  ],
+                ));
+      });
 }
 
 Widget bottomBar(context) {
@@ -215,6 +238,7 @@ Widget show(int index) {
       break;
     case 3:
       onPlayerScreen = true;
+      mustPause.value = true;
       if (player == null) player = PlayerWidget();
       return PlayingNowScreen();
       break;
@@ -250,8 +274,9 @@ class ProfilePictureState extends State<ProfilePicture> {
   }
 }
 
-void setShuffleQueue(String songsListName, List songsList, Song firstSong) {
-  List tmpList = new List();
+void setShuffleQueue(
+    String songsListName, List<Audio> songsList, Song firstSong) {
+  List<Audio> tmpList = new List();
   tmpList.addAll(songsList);
   tmpList.remove(firstSong);
   songsNextUpName = songsListName;
@@ -274,7 +299,7 @@ Widget playlistsDivider() {
 }
 
 Widget shuffleButton(
-    String songsListName, List songslist, BuildContext context) {
+    String songsListName, List<Audio> songslist, BuildContext context) {
   Song song;
 
   if (songslist.isNotEmpty) {
@@ -287,7 +312,7 @@ Widget shuffleButton(
       onPressed: () {
         onPlayerScreen = true;
         shuffleEnabled = true;
-
+        mustPause.value = true;
         setShuffleQueue(songsListName, songslist, song);
         if (player == null) player = PlayerWidget();
         Navigator.of(context).push(MaterialPageRoute(
@@ -436,8 +461,8 @@ Future<void> showAddingSongToPlaylistDialog(
   );
 }
 
-void setQueue(List songsList, Song song, String songsListName) {
-  List tmpList = new List();
+void setQueue(List<Audio> songsList, Song song, String songsListName) {
+  List<Audio> tmpList = new List();
   tmpList.addAll(songsList);
   tmpList.remove(song);
   songsNextUpName = songsListName;
@@ -453,7 +478,7 @@ void setQueue(List songsList, Song song, String songsListName) {
 
 class SongItem extends StatelessWidget {
   final String songsListName;
-  final List songsList;
+  final List<Audio> songsList;
   final Song song;
   final PlaylistType playlist;
   final bool isNotOwn;
@@ -468,6 +493,7 @@ class SongItem extends StatelessWidget {
       onTap: () {
         setQueue(songsList, song, songsListName);
         onPlayerScreen = true;
+        mustPause.value = true;
         if (player == null) player = PlayerWidget();
         Navigator.of(context).push(MaterialPageRoute(
             builder: (BuildContext context) => PlayingNowScreen()));
@@ -763,7 +789,7 @@ Future<void> _showAddingSongToPlaylistDialog(
 
 class LocalSongItem extends StatelessWidget {
   final Song song;
-  final List songsList;
+  final List<Audio> songsList;
   final String songsListName;
   final String playlistName;
   final onDeletedCallBack;
@@ -777,6 +803,7 @@ class LocalSongItem extends StatelessWidget {
       onTap: () {
         setQueue(songsList, song, songsListName);
         onPlayerScreen = true;
+        mustPause.value = true;
         if (player == null) player = PlayerWidget();
         Navigator.of(context).push(MaterialPageRoute(
             builder: (BuildContext context) => PlayingNowScreen()));
@@ -959,6 +986,7 @@ class GenericAudioItem extends StatelessWidget {
         // Se notifica que la canción se escucha
         currentAudio.markAsListened();
         onPlayerScreen = true;
+        mustPause.value = true;
         if (player == null) player = PlayerWidget();
         Navigator.of(context).pushReplacement(MaterialPageRoute(
             builder: (BuildContext context) => PlayingNowScreen()));
@@ -1658,6 +1686,7 @@ class SongTile extends StatelessWidget {
         onTap: () {
           setQueue(songsList, song, songsListName);
           onPlayerScreen = true;
+          mustPause.value = true;
           if (player == null) player = PlayerWidget();
           Navigator.of(context).push(MaterialPageRoute(
               builder: (BuildContext context) => PlayingNowScreen()));

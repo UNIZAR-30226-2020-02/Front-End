@@ -301,6 +301,7 @@ class _LocalMusicState extends State<LocalMusic> {
       onTap: () {
         setQueue(songsList);
         onPlayerScreen = true;
+        mustPause.value = true;
         if (player == null) player = PlayerWidget();
         Navigator.of(context).push(MaterialPageRoute(
             builder: (BuildContext context) => PlayingNowScreen()));
