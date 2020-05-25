@@ -552,7 +552,7 @@ Future<void> getLastSongsListenedToDB(String user) async {
 Future<List> getArtistSongsDB(String artist) async {
   print("Recuperando canciones de artista $artist");
 
-  List<Song> songs = new List();
+  List songs = new List();
   dynamic response = await http.get(
       'https://playstack.azurewebsites.net/get/song/byartist?NombreArtista=$artist&NombreUsuario=$userName');
 
@@ -774,7 +774,7 @@ Future<List> updatePlaylistCoversDB(String playlistName) async {
 }
 
 Future<List> getPlaylistSongsDB(String playlistName, {bool isNotOwn}) async {
-  List<Song> playlistSongs = new List();
+  List playlistSongs = new List();
   dynamic response;
   if (isNotOwn == null) isNotOwn = false;
   if (isNotOwn) {
@@ -1184,7 +1184,7 @@ addSongToList(List songs, String title, List artists, List albums,
 }
 
 Future<List> getFavoriteSongs() async {
-  List<Song> favSongs = new List();
+  List favSongs = new List();
 
   print("Recuperando favoritas de " + userName);
   dynamic response = await http.get(
@@ -1377,18 +1377,12 @@ Future<List> getCollaboratorPodcastsDB(String collaborator) async {
     response = jsonDecode(response.body);
     print("Podcasts con la presencia de $collaborator recuperados");
 
-    List<Podcast> podcastsSeguidos;
-    podcastsSeguidos = await getFollowedPodcastsDB();
-
     response.forEach((title, info) => podcasts.add(Podcast(
         title: title,
         coverUrl: info['Foto'],
         language: Language(info['Idioma']),
         hosts: hostList(info['Interlocutores']),
         desc: info['Descripcion'])));
-    podcasts.forEach((element) {
-      element.isFav = (podcastsSeguidos.contains(element));
-    });
   } else {
     print("Statuscode de podcasts con la colaboración de $collaborator" +
         response.statusCode.toString());
@@ -1406,9 +1400,6 @@ Future<List> getPodcastsByTopicDB(String topic) async {
   dynamic response = await http.get(
       'https://playstack.azurewebsites.net/get/podcast/bytema?NombreTema=$topic');
 
-  List<Podcast> podcastsSeguidos;
-  podcastsSeguidos = await getFollowedPodcastsDB();
-
   if (response.statusCode == 200) {
     response = jsonDecode(response.body);
     print("Podcasts de tema $topic recuperados");
@@ -1419,10 +1410,6 @@ Future<List> getPodcastsByTopicDB(String topic) async {
         language: Language(info['Idioma']),
         hosts: hostList(info['Interlocutores']),
         desc: info['Descripcion'])));
-
-    podcasts.forEach((element) {
-      element.isFav = (podcastsSeguidos.contains(element));
-    });
   } else {
     print("Statuscode de podcasts de tema $topic " +
         response.statusCode.toString());
