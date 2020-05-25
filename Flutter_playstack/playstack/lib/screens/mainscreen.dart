@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:playstack/screens/Player/PlayerWidget.dart';
@@ -26,6 +28,13 @@ class MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
+    setState(() => _loading = true);
+    Future<String> futureString = loadLanguagesString();
+    futureString.then((value) {
+      languageStrings = jsonDecode(value);
+      print("Loaded ${languageStrings['language']}");
+      setState(() => _loading = false);
+    });
     checkLoginStatus();
   }
 
@@ -123,7 +132,7 @@ class MainScreenState extends State<MainScreen> {
         valueListenable: currentIndex,
         builder: (BuildContext context, int value, Widget child) {
           return Scaffold(
-              body: loadingUserData
+              body: loadingUserData || _loading
                   ? Loading()
                   : extendedBottomBarWith(context, show(currentIndex.value)),
               bottomNavigationBar: loadingUserData ? null : bottomBar(context));

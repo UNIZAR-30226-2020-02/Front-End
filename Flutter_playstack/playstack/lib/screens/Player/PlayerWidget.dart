@@ -605,9 +605,13 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 color: Colors.transparent,
                 child: GestureDetector(
                     child: Icon(
-                      currentAudio.isFav
-                          ? Icons.favorite
-                          : Icons.favorite_border,
+                      currentAudio.runtimeType == Song
+                          ? currentAudio.isFav
+                              ? Icons.favorite
+                              : Icons.favorite_border
+                          : currentAudio.isFav
+                              ? Icons.notifications_active
+                              : Icons.notifications_none,
                       color: currentAudio.isFav
                           ? Colors.red
                           : Colors.white.withOpacity(0.8),
@@ -810,7 +814,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                           if (currentIndex.value == 3) currentIndex.value = 0;
                           notifyAllListeners();
                           audioIsNull.value = false;
-                          return true;
+                          return false;
                         },
                         child: Stack(children: <Widget>[
                           Container(
@@ -872,7 +876,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                                           currentIndex.value = 0;
                                         notifyAllListeners();
                                         audioIsNull.value = false;
-                                        Navigator.of(context).pop();
+                                        //Navigator.of(context).pop();
                                       }))),
                           Align(
                             alignment: Alignment.bottomCenter,

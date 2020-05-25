@@ -1457,7 +1457,8 @@ Future<List<Podcast>> getFollowedPodcastsDB() async {
         coverUrl: info['Foto'],
         language: Language(info['Idioma']),
         hosts: hostList(info['Interlocutores']),
-        desc: info['Descripcion'])));
+        desc: info['Descripcion'],
+        isFav: true)));
   } else {
     print("Statuscode de podcasts suscritos de $userName" +
         response.statusCode.toString());
@@ -1468,16 +1469,16 @@ Future<List<Podcast>> getFollowedPodcastsDB() async {
   return followed;
 }
 
-Future<List> getPodcastEpisodesDB(String podcast) async {
-  print("Recuperando episodios de $podcast");
+Future<List> getPodcastEpisodesDB(Podcast podcast) async {
+  print("Recuperando episodios de ${podcast.title}");
 
   List<Episode> episodes = new List();
   dynamic response = await http.get(
-      'https://playstack.azurewebsites.net/get/podcast/all?NombrePodcast=$podcast');
+      'https://playstack.azurewebsites.net/get/podcast/all?NombrePodcast=${podcast.title}');
 
   if (response.statusCode == 200) {
     response = jsonDecode(response.body);
-    print("Episodios de $podcast recuperados");
+    print("Episodios de ${podcast.title} recuperados");
 
     for (Map episodeMap in response['capitulos']) {
       episodes.add(Episode(
@@ -1488,14 +1489,47 @@ Future<List> getPodcastEpisodesDB(String podcast) async {
           albumCoverUrls: [response['Foto']],
           date: DateTime.parse(episodeMap['fecha']),
           duration: 0,
-          url: episodeMap['url']));
+          url: episodeMap['url'],
+          podcast: podcast));
     }
   } else {
-    print(
-        "Statuscode de episodios de $podcast" + response.statusCode.toString());
-    print('Error buscando episodios de $podcast, body: ' +
+    print("Statuscode de episodios de ${podcast.title}" +
+        response.statusCode.toString());
+    print('Error buscando episodios de ${podcast.title}, body: ' +
         response.body.toString());
   }
   print("El podcast tiene " + episodes.length.toString() + " episodios");
   return episodes;
+}
+
+Future<bool> toggleSubscribe(String podcastTitle, bool add) async {
+  print(
+      "Cambiando estado de fav con " + userName + " y cancion " + podcastTitle);
+  dynamic data = {'NombreUsuario': userName, 'NombrePodcast': podcastTitle};
+
+  data = jsonEncode(data);
+
+  dynamic response;
+  if (add) {
+    response = await http.post(
+        "https://playstack.azurewebsites.net/user/follow/podcast",
+        headers: {"Content-Type": "application/json"},
+        body: data);
+    print("Statuscode subscribirse: " + response.statusCode.toString());
+  } else {
+    print("Desubscribiendo...");
+    response = await http.post(
+        "https://playstack.azurewebsites.net/user/unfollow/podcast",
+        headers: {"Content-Type": "application/json"},
+        body: data);
+    print("Statuscode desubscribirse: " + response.statusCode.toString());
+  }
+
+  if (response.statusCode == 200) {
+    print("Usuario subscrito / desubscrito de podcast");
+    return true;
+  } else {
+    //print("Status code not 200, body: " + response.body.toString());
+    return false;
+  }
 }

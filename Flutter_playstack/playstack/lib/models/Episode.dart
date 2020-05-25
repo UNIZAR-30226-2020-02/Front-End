@@ -14,6 +14,8 @@ class Episode extends Audio {
   String url;
   List albumCoverUrls;
   String podcastUrl;
+  Podcast podcast;
+  get isFav => podcast.isFav;
 
   Episode(
       {this.number,
@@ -23,7 +25,8 @@ class Episode extends Audio {
       this.topics,
       this.albumCoverUrls,
       this.date,
-      this.duration});
+      this.duration,
+      this.podcast});
 
   Map getInfo() {
     Map songInfo = {
@@ -34,6 +37,7 @@ class Episode extends Audio {
       "artists": artists,
       "albumCoverUrls": albumCoverUrls,
       "date": date,
+      "podcast": podcast,
     };
     return songInfo;
   }
@@ -42,8 +46,16 @@ class Episode extends Audio {
   void setInfo(String title, List artists, String url, List albums,
       dynamic albumCovers, List genres, bool isFav) {}
 
-  void setEInfo(String title, List artists, String url, List albums,
-      dynamic albumCovers, List genres, DateTime date, int duration) {
+  void setEInfo(
+      String title,
+      List artists,
+      String url,
+      List albums,
+      dynamic albumCovers,
+      List genres,
+      DateTime date,
+      int duration,
+      Podcast podcast) {
     if (albumCovers is String) {
       albumCovers = albumCovers.toList();
     }
@@ -55,9 +67,20 @@ class Episode extends Audio {
     this.genres = genres;
     this.date = date;
     this.duration = duration;
+    this.podcast = podcast;
   }
 
   String getCover() {
     return albumCoverUrls.elementAt(0);
+  }
+
+  @override
+  Future setAsFav() async {
+    await podcast.setAsFav();
+  }
+
+  @override
+  Future removeFromFavs() async {
+    await podcast.removeFromFavs();
   }
 }

@@ -50,6 +50,8 @@
     "noPodcasts4": "This podcast is empty",
     "noPodcasts5": "Subscribe to the podcast to receive notificatinos when an episode is uploaded.",
     "queue": "the song queue",
+    "subscribe": "Subscribe",
+    "desubscribe": "Desubscribe",
     "released": "Released on:",
     "spanish": "Spanish",
     "english": "English",

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:playstack/models/Audio.dart';
 import 'package:playstack/screens/Library/Language.dart';
+import 'package:playstack/services/database.dart';
 
 class Podcast {
   String coverUrl;
@@ -56,11 +57,17 @@ class Podcast {
     return this.coverUrl;
   }
 
-  Future subscribe() async {
-    return true;
+  Future setAsFav() async {
+    bool added = await toggleSubscribe(this.title, true);
+    if (added) {
+      this.isFav = true;
+    }
   }
 
-  Future unsubscribe() async {
-    return true;
+  Future removeFromFavs() async {
+    bool removed = await toggleSubscribe(this.title, false);
+    if (removed) {
+      this.isFav = false;
+    }
   }
 }

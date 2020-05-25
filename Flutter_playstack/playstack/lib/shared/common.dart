@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:playstack/models/Artist.dart';
 import 'package:flutter/foundation.dart';
 import 'package:playstack/models/Audio.dart';
+import 'package:playstack/models/Episode.dart';
 import 'package:playstack/models/Genre.dart';
 import 'package:playstack/models/LocalSongsPlaylists.dart';
 import 'package:playstack/models/Podcast.dart';
@@ -479,10 +480,33 @@ void setQueue(List<Audio> songsList, Song song, String songsListName) {
   song.markAsListened();
 }
 
+void setPodcastQueue(
+    String podcastName, List<Episode> episodes, int currentIndex) {
+  List<Episode> tmpList = new List();
+  List<Episode> tmpList2 = new List();
+  tmpList.addAll(episodes);
+  for (int i = 0; i < currentIndex; i++) {
+    tmpList2.add(tmpList.first);
+    tmpList.removeAt(0);
+  }
+  tmpList.removeAt(0);
+  songsNextUpName = podcastName;
+  currentAudio = episodes[currentIndex];
+  songsNextUp = tmpList;
+  songsPlayed = tmpList2;
+  print("Tocada se marcara como escuchada");
+  currentAudio.markAsListened();
+  allAudios.clear();
+  allAudios.add(currentAudio);
+  for (var item in songsNextUp) {
+    allAudios.add(item);
+  }
+}
+
 class SongItem extends StatelessWidget {
   final String songsListName;
   final List<Audio> songsList;
-  final Song song;
+  final Audio song;
   final PlaylistType playlist;
   final bool isNotOwn;
   final onChangedCallback;
