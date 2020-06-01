@@ -552,7 +552,7 @@ Future<void> getLastSongsListenedToDB(String user) async {
 Future<List> getArtistSongsDB(String artist) async {
   print("Recuperando canciones de artista $artist");
 
-  List<Song> songs = new List();
+  List songs = new List();
   dynamic response = await http.get(
       'https://playstack.azurewebsites.net/get/song/byartist?NombreArtista=$artist&NombreUsuario=$userName');
 
@@ -774,7 +774,7 @@ Future<List> updatePlaylistCoversDB(String playlistName) async {
 }
 
 Future<List> getPlaylistSongsDB(String playlistName, {bool isNotOwn}) async {
-  List<Song> playlistSongs = new List();
+  List playlistSongs = new List();
   dynamic response;
   if (isNotOwn == null) isNotOwn = false;
   if (isNotOwn) {
@@ -1184,7 +1184,7 @@ addSongToList(List songs, String title, List artists, List albums,
 }
 
 Future<List> getFavoriteSongs() async {
-  List<Song> favSongs = new List();
+  List favSongs = new List();
 
   print("Recuperando favoritas de " + userName);
   dynamic response = await http.get(
