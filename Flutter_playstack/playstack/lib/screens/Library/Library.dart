@@ -432,7 +432,8 @@ class _LibraryState extends State<Library> with TickerProviderStateMixin {
                 : Toast.show(
                     "Necesitas tener alguna playlist para poder crear carpetas",
                     context,
-                    gravity: Toast.CENTER);
+                    gravity: Toast.CENTER,
+                    backgroundColor: Colors.red);
           },
         ),
         ListTile(

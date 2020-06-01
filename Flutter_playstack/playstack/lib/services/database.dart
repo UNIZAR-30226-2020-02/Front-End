@@ -270,7 +270,7 @@ Future<List> getAllPodcastsDB() async {
 Future<List> getAlbumSongs(String album) async {
   print("Recuperando camciones de album $album");
 
-  List songs = new List();
+  List<Song> songs = new List();
   dynamic response = await http.get(
       'https://playstack.azurewebsites.net/get/song/byalbum?NombreUsuario=$userName&NombreAlbum=$album');
 

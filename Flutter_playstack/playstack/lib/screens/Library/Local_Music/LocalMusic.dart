@@ -37,6 +37,7 @@ class _LocalMusicState extends State<LocalMusic> {
 
   Future<void> _getSongs() async {
     List tempList = new List();
+    localSongsList.clear();
 
     tempList = await getLocalSongs();
     for (var song in tempList) {
