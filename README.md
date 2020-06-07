@@ -1,5 +1,10 @@
 # Front-End
 
+App móvil:
+
+flutter run
+
+
 ionic serve //iniciar en navegador
 
 ionic build //preparar para móvil
